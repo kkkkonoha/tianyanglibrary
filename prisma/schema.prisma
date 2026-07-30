@@ -1,0 +1,145 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum ResourceType {
+  BOOK
+  COMIC
+  VIDEO
+  OTHER
+}
+
+enum ActivityType {
+  UPLOAD
+  RECOMMEND
+  CREATE_COLLECTION
+  ADD_TO_COLLECTION
+  COMMENT
+}
+
+model User {
+  id               String               @id @default(cuid())
+  email            String               @unique
+  username         String               @unique
+  passwordHash     String
+  avatar           String?
+  bio              String?
+  role             String               @default("user")
+  createdAt        DateTime             @default(now())
+  updatedAt        DateTime             @updatedAt
+  resources        Resource[]
+  collections      Collection[]
+  comments         Comment[]
+  recommendations  Recommendation[]
+  favorites        FavoriteCollection[]
+  activities       Activity[]
+}
+
+model Resource {
+  id              String             @id @default(cuid())
+  title           String
+  description     String?
+  coverImage      String?
+  type            ResourceType       @default(OTHER)
+  fileUrl         String?
+  uploaderId      String
+  uploader        User               @relation(fields: [uploaderId], references: [id], onDelete: Cascade)
+  tags            ResourceTag[]
+  comments        Comment[]
+  recommendations Recommendation[]
+  collections     CollectionResource[]
+  activities      Activity[]
+  createdAt       DateTime           @default(now())
+  updatedAt       DateTime           @updatedAt
+}
+
+model Tag {
+  id        String        @id @default(cuid())
+  name      String        @unique
+  resources ResourceTag[]
+}
+
+model ResourceTag {
+  resourceId String
+  tagId      String
+  resource   Resource @relation(fields: [resourceId], references: [id], onDelete: Cascade)
+  tag        Tag      @relation(fields: [tagId], references: [id], onDelete: Cascade)
+  @@id([resourceId, tagId])
+}
+
+model Collection {
+  id          String               @id @default(cuid())
+  title       String
+  description String?
+  coverImage  String?
+  isPublic    Boolean              @default(true)
+  creatorId   String
+  creator     User                 @relation(fields: [creatorId], references: [id], onDelete: Cascade)
+  resources   CollectionResource[]
+  comments    Comment[]
+  favorites   FavoriteCollection[]
+  activities  Activity[]
+  createdAt   DateTime             @default(now())
+  updatedAt   DateTime             @updatedAt
+}
+
+model CollectionResource {
+  id           String     @id @default(cuid())
+  collectionId String
+  collection   Collection @relation(fields: [collectionId], references: [id], onDelete: Cascade)
+  resourceId   String
+  resource     Resource   @relation(fields: [resourceId], references: [id], onDelete: Cascade)
+  addedAt      DateTime   @default(now())
+  @@unique([collectionId, resourceId])
+}
+
+model Comment {
+  id           String      @id @default(cuid())
+  content      String
+  userId       String
+  user         User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  resourceId   String?
+  resource     Resource?   @relation(fields: [resourceId], references: [id], onDelete: Cascade)
+  collectionId String?
+  collection   Collection? @relation(fields: [collectionId], references: [id], onDelete: Cascade)
+  createdAt    DateTime    @default(now())
+}
+
+model Recommendation {
+  id         String   @id @default(cuid())
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  resourceId String
+  resource   Resource @relation(fields: [resourceId], references: [id], onDelete: Cascade)
+  note       String?
+  createdAt  DateTime @default(now())
+  @@unique([userId, resourceId])
+}
+
+model FavoriteCollection {
+  id           String     @id @default(cuid())
+  userId       String
+  user         User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  collectionId String
+  collection   Collection @relation(fields: [collectionId], references: [id], onDelete: Cascade)
+  createdAt    DateTime   @default(now())
+  @@unique([userId, collectionId])
+}
+
+model Activity {
+  id           String       @id @default(cuid())
+  type         ActivityType
+  userId       String
+  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  resourceId   String?
+  resource     Resource?    @relation(fields: [resourceId], references: [id])
+  collectionId String?
+  collection   Collection?  @relation(fields: [collectionId], references: [id])
+  metadata     String?
+  createdAt    DateTime     @default(now())
+}
