@@ -34,6 +34,10 @@ yarn-error.log*
 .env*.local
 .env
 
+# database
+*.db
+*.db-journal
+
 # uploads
 /uploads
 
