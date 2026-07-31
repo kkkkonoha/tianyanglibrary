@@ -162,6 +162,7 @@ export default async function ExplorePage({
                     <img
                       src={resource.coverImage}
                       alt={resource.title}
+                      loading="lazy" decoding="async"
                       className="h-44 w-full object-contain transition-transform duration-300 group-hover:scale-105 bg-muted/30"
                     />
                   </ImagePreview>

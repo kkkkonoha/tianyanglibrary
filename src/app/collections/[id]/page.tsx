@@ -115,7 +115,7 @@ export default async function CollectionPage({
             <div className="flex gap-4 p-4">
               <Link href={`/resource/${cr.resource.id}`} className="shrink-0">
                 {cr.resource.coverImage ? (
-                  <img src={cr.resource.coverImage} alt={cr.resource.title} className="h-24 w-16 rounded object-contain bg-muted/30" />
+                  <img src={cr.resource.coverImage} alt={cr.resource.title} loading="lazy" decoding="async" className="h-24 w-16 rounded object-contain bg-muted/30" />
                 ) : (
                   <div className="flex h-24 w-16 items-center justify-center rounded bg-muted text-xl">📄</div>
                 )}

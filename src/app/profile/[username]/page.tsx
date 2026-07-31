@@ -121,7 +121,7 @@ export default async function ProfilePage({
                 <Link key={r.id} href={`/resource/${r.id}`}>
                   <Card className="h-full overflow-hidden transition-shadow hover:shadow-md">
                     {r.coverImage ? (
-                      <img src={r.coverImage} alt={r.title} className="h-32 w-full object-contain bg-muted/30" />
+                      <img src={r.coverImage} alt={r.title} loading="lazy" decoding="async" className="h-32 w-full object-contain bg-muted/30" />
                     ) : (
                       <div className="flex h-32 items-center justify-center bg-muted">
                         <span className="text-3xl font-bold text-muted-foreground/30">{typeIcons[r.type]}</span>
@@ -191,7 +191,7 @@ export default async function ProfilePage({
                   <Card className="transition-shadow hover:shadow-md">
                     <CardContent className="flex items-center gap-3 p-4">
                       {rec.resource.coverImage ? (
-                        <img src={rec.resource.coverImage} alt={rec.resource.title} className="h-12 w-9 shrink-0 rounded object-contain bg-muted/30" />
+                        <img src={rec.resource.coverImage} alt={rec.resource.title} loading="lazy" decoding="async" className="h-12 w-9 shrink-0 rounded object-contain bg-muted/30" />
                       ) : null}
                       <div className="min-w-0 flex-1">
                         <h4 className="font-medium text-sm">{rec.resource.title}</h4>

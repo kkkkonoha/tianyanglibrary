@@ -41,7 +41,7 @@ export default async function UserRecommendationsPage({
         <>
           <div className="space-y-3">
             {recs.map((rec) => (
-              <Link key={rec.id} href={`/resource/${rec.resource.id}`}><Card className="transition-shadow hover:shadow-md"><CardContent className="flex items-center gap-3 p-4">{rec.resource.coverImage ? <img src={rec.resource.coverImage} alt={rec.resource.title} className="h-12 w-9 shrink-0 rounded object-contain bg-muted/30" /> : null}<div className="min-w-0 flex-1"><h4 className="font-medium text-sm">{rec.resource.title}</h4><Badge variant="secondary" className="text-xs mt-1">{typeLabels[rec.resource.type]}</Badge>{rec.note && <p className="text-xs text-muted-foreground mt-1 line-clamp-1">&ldquo;{rec.note}&rdquo;</p>}</div></CardContent></Card></Link>
+              <Link key={rec.id} href={`/resource/${rec.resource.id}`}><Card className="transition-shadow hover:shadow-md"><CardContent className="flex items-center gap-3 p-4">{rec.resource.coverImage ? <img src={rec.resource.coverImage} alt={rec.resource.title} loading="lazy" decoding="async" className="h-12 w-9 shrink-0 rounded object-contain bg-muted/30" /> : null}<div className="min-w-0 flex-1"><h4 className="font-medium text-sm">{rec.resource.title}</h4><Badge variant="secondary" className="text-xs mt-1">{typeLabels[rec.resource.type]}</Badge>{rec.note && <p className="text-xs text-muted-foreground mt-1 line-clamp-1">&ldquo;{rec.note}&rdquo;</p>}</div></CardContent></Card></Link>
             ))}
           </div>
           {totalPages > 1 && <Pagination path={`/profile/${user.username}/recommendations`} page={currentPage} total={totalPages} />}

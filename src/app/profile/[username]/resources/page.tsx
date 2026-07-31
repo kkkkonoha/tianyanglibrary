@@ -50,7 +50,7 @@ export default async function UserResourcesPage({
             {resources.map((r) => (
               <Link key={r.id} href={`/resource/${r.id}`}>
                 <Card className="h-full overflow-hidden transition-shadow hover:shadow-md">
-                  {r.coverImage ? <img src={r.coverImage} alt={r.title} className="h-32 w-full object-contain bg-muted/30" />
+                  {r.coverImage ? <img src={r.coverImage} alt={r.title} loading="lazy" decoding="async" className="h-32 w-full object-contain bg-muted/30" />
                     : <div className="flex h-32 items-center justify-center bg-muted"><span className="text-3xl font-bold text-muted-foreground/30">{typeIcons[r.type]}</span></div>}
                   <CardContent className="p-3"><Badge variant="secondary" className="text-xs mb-1">{typeLabels[r.type]}</Badge><h3 className="font-medium text-sm line-clamp-1">{r.title}</h3><p className="text-xs text-muted-foreground mt-1">{r._count.recommendations} 推荐 · {r._count.comments} 评论</p></CardContent>
                 </Card>

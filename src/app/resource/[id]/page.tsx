@@ -273,7 +273,7 @@ export default async function ResourcePage({
                 {relatedItems.map((item) => (
                   <Link key={item.id} href={`/resource/${item.id}`} className="flex items-start gap-2.5 rounded-lg p-1.5 -mx-1.5 transition-colors hover:bg-muted/50">
                     {item.coverImage ? (
-                      <img src={item.coverImage} alt={item.title} className="h-10 w-7 shrink-0 rounded object-contain bg-muted/30" />
+                      <img src={item.coverImage} alt={item.title} loading="lazy" decoding="async" className="h-10 w-7 shrink-0 rounded object-contain bg-muted/30" />
                     ) : (
                       <div className="flex h-10 w-7 shrink-0 items-center justify-center rounded bg-muted text-xs">{typeLabels[item.type]?.charAt(0) ?? "?"}</div>
                     )}
