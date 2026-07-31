@@ -44,16 +44,23 @@ export async function POST(req: NextRequest) {
   const filePath = join(process.cwd(), "public", "uploads", "files", storedName)
   await writeFile(filePath, buffer)
 
+  const lastFile = await prisma.resourceFile.findFirst({
+    where: { resourceId },
+    orderBy: { order: "desc" },
+    select: { order: true },
+  })
+
   const record = await prisma.resourceFile.create({
     data: {
       resourceId,
       fileName: file.name,
       fileUrl: `/uploads/files/${storedName}`,
       fileSize: file.size,
+      order: (lastFile?.order ?? -1) + 1,
     },
   })
 
   await prisma.$disconnect()
 
-  return NextResponse.json({ success: true, file: { id: record.id, fileName: file.name, fileUrl: record.fileUrl, fileSize: file.size } })
+  return NextResponse.json({ success: true, file: { id: record.id, fileName: file.name, fileUrl: record.fileUrl, fileSize: file.size, order: record.order } })
 }

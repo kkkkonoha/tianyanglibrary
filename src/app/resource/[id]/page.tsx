@@ -44,7 +44,7 @@ export default async function ResourcePage({
         },
         orderBy: { createdAt: "asc" },
       },
-      files: { orderBy: { createdAt: "asc" } },
+      files: { orderBy: { order: "asc" } },
       _count: { select: { recommendations: true, comments: true } },
     },
   })
@@ -179,13 +179,14 @@ export default async function ResourcePage({
                 <CardTitle className="text-lg">文件下载 ({resource.files.length})</CardTitle>
               </CardHeader>
               <CardContent className="space-y-2">
-                {resource.files.map((f) => (
+                {resource.files.map((f, i) => (
                   <a
                     key={f.id}
                     href={`/api/download?path=${encodeURIComponent(f.fileUrl)}${f.fileName ? `&name=${encodeURIComponent(f.fileName)}` : ""}`}
                     download
                     className="flex items-center gap-2 rounded-lg bg-secondary px-4 py-2 text-sm font-medium transition-colors hover:bg-secondary/80"
                   >
+                    <span className="w-6 shrink-0 text-center text-xs text-muted-foreground">{i + 1}</span>
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></svg>
                     <span className="flex-1 truncate">{f.fileName}</span>
                     <span className="text-xs text-muted-foreground shrink-0">{(f.fileSize / 1024 / 1024).toFixed(1)} MB</span>
