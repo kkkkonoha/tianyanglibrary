@@ -1,10 +1,10 @@
 #!/bin/bash
-cd ~/library
-BACKUP_DIR=~/backups
+set -e
+BACKUP_DIR="$HOME/backups"
 mkdir -p "$BACKUP_DIR"
-TIMESTAMP=$(date +%Y%m%d_%H%M%S)
-cp dev.db "$BACKUP_DIR/library_$TIMESTAMP.db"
-echo "Backup created: library_$TIMESTAMP.db"
-
-# Keep only last 30 backups
-ls -t "$BACKUP_DIR"/library_*.db 2>/dev/null | tail -n +31 | xargs rm -f 2>/dev/null
+DB="$HOME/library/dev.db"
+NAME="library_$(date +%Y%m%d_%H%M%S).db"
+cp "$DB" "$BACKUP_DIR/$NAME"
+# keep last 30 backups
+ls -t "$BACKUP_DIR"/library_*.db 2>/dev/null | tail -n +31 | xargs -r rm
+echo "backup: $NAME $(ls -lh "$BACKUP_DIR/$NAME" | awk '{print $5}')"
