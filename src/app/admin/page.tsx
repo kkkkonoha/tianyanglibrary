@@ -3,10 +3,11 @@ import { prisma } from "@/lib/db"
 import { isSuperAdmin } from "@/lib/permissions"
 import { redirect } from "next/navigation"
 import Link from "next/link"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { SetRoleButton } from "./set-role-button"
+import { ApproveRejectButton } from "./approve-reject-button"
 
 export default async function AdminPage() {
   const session = await auth()
@@ -19,6 +20,7 @@ export default async function AdminPage() {
       username: true,
       email: true,
       role: true,
+      status: true,
       createdAt: true,
       _count: { select: { resources: true, activities: true } },
     },
@@ -29,20 +31,53 @@ export default async function AdminPage() {
     admin: "管理员",
     user: "普通用户",
   }
-
   const roleVariants: Record<string, "default" | "secondary" | "destructive"> = {
     super_admin: "destructive",
     admin: "default",
     user: "secondary",
   }
+  const statusLabels: Record<string, string> = {
+    active: "已通过",
+    pending: "待审核",
+    rejected: "已拒绝",
+  }
+
+  const pendingUsers = users.filter(u => u.status === "pending")
+  const approvedUsers = users.filter(u => u.status !== "pending")
 
   return (
     <div className="container mx-auto max-w-4xl px-4 py-12">
       <div className="mb-10">
         <h1 className="text-3xl font-bold tracking-tight">管理面板</h1>
-        <p className="mt-1.5 text-muted-foreground">用户管理与权限控制</p>
+        <p className="mt-1.5 text-muted-foreground">用户管理与审核</p>
       </div>
 
+      {pendingUsers.length > 0 && (
+        <div className="mb-8">
+          <h2 className="mb-3 text-lg font-semibold">待审核用户 ({pendingUsers.length})</h2>
+          <div className="space-y-3">
+            {pendingUsers.map((user) => (
+              <Card key={user.id} className="border-amber-200 bg-amber-50/30 dark:border-amber-900 dark:bg-amber-950/10">
+                <CardContent className="flex items-center justify-between p-4">
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <span className="font-semibold">{user.username}</span>
+                      <Badge variant="secondary" className="text-xs">待审核</Badge>
+                    </div>
+                    <div className="mt-0.5 text-xs text-muted-foreground">QQ: {user.email}</div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <ApproveRejectButton userId={user.id} action="approve" />
+                    <ApproveRejectButton userId={user.id} action="reject" />
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </div>
+      )}
+
+      <h2 className="mb-3 text-lg font-semibold">所有用户 ({users.length})</h2>
       <div className="space-y-3">
         {users.map((user) => (
           <Card key={user.id}>
@@ -53,9 +88,14 @@ export default async function AdminPage() {
                   <Badge variant={roleVariants[user.role] ?? "secondary"}>
                     {roleLabels[user.role] ?? user.role}
                   </Badge>
+                  {user.status !== "active" && (
+                    <Badge variant="outline" className="text-xs">
+                      {statusLabels[user.status] ?? user.status}
+                    </Badge>
+                  )}
                 </div>
                 <div className="mt-1 flex gap-3 text-xs text-muted-foreground">
-                  <span>{user.email}</span>
+                  <span>QQ: {user.email}</span>
                   <span>{user._count.resources} 资源</span>
                   <span>{user._count.activities} 动态</span>
                 </div>
@@ -65,10 +105,7 @@ export default async function AdminPage() {
                   <Link href={`/profile/${user.username}`}>
                     <Button variant="outline" size="sm">查看主页</Button>
                   </Link>
-                  <SetRoleButton
-                    userId={user.id}
-                    role={user.role}
-                  />
+                  <SetRoleButton userId={user.id} role={user.role} />
                 </div>
               )}
             </CardContent>

@@ -1,7 +1,9 @@
 import { NextRequest, NextResponse } from "next/server"
 import { auth } from "@/lib/auth"
-import { writeFile } from "fs/promises"
+import { writeFile, unlink } from "fs/promises"
 import { join } from "path"
+import { existsSync } from "fs"
+import sharp from "sharp"
 import { PrismaClient } from "@/generated/prisma/client"
 import { PrismaLibSql } from "@prisma/adapter-libsql"
 
@@ -28,20 +30,36 @@ export async function POST(req: NextRequest) {
 
   const userId = session.user.id as string
 
-  const ext = file.name.split(".").pop() ?? "jpg"
-  const filename = `avatar-${userId}-${Date.now()}.${ext}`
   const arrayBuffer = await file.arrayBuffer()
   const buffer = Buffer.from(arrayBuffer)
 
-  const filePath = join(process.cwd(), "public", "uploads", "avatars", filename)
-  await writeFile(filePath, buffer)
+  let output: Buffer = buffer
+  try {
+    output = await sharp(buffer)
+      .rotate()
+      .resize(256, 256, { fit: "cover" })
+      .webp({ quality: 80 })
+      .toBuffer()
+  } catch {
+    // not a decodable image, save as-is
+  }
 
+  const filename = `avatar-${userId}-${Date.now()}.webp`
+  const filePath = join(process.cwd(), "public", "uploads", "avatars", filename)
+  await writeFile(filePath, output)
+
+  const user = await prisma.user.findUnique({ where: { id: userId } })
   await prisma.user.update({
     where: { id: userId },
     data: { avatar: `/uploads/avatars/${filename}` },
   })
 
   await prisma.$disconnect()
+
+  if (user?.avatar?.startsWith("/uploads/avatars/")) {
+    const oldPath = join(process.cwd(), "public", user.avatar)
+    if (existsSync(oldPath)) unlink(oldPath).catch(() => {})
+  }
 
   return NextResponse.json({ success: true, avatar: `/uploads/avatars/${filename}` })
 }

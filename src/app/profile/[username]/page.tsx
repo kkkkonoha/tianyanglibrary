@@ -12,15 +12,11 @@ import { Button } from "@/components/ui/button"
 const typeLabels: Record<string, string> = {
   BOOK: "📖 电子书",
   COMIC: "📘 漫画",
-  VIDEO: "🎬 视频",
-  OTHER: "📁 其他",
 }
 
 const typeIcons: Record<string, string> = {
   BOOK: "BOOK",
   COMIC: "COMIC",
-  VIDEO: "VIDEO",
-  OTHER: "FILE",
 }
 
 const SECTION_LIMIT = 6
@@ -152,102 +148,106 @@ export default async function ProfilePage({
       </Section>
 
       {/* Collections */}
-      {collections.length > 0 && (
-        <Section title="目录" count={totalCollections}>
-          <div className="grid gap-4 sm:grid-cols-2">
-            {collections.map((c) => (
-              <Link key={c.id} href={`/collections/${c.id}`}>
-                <Card className="h-full transition-shadow hover:shadow-md">
-                  <CardContent className="p-4">
-                    <h3 className="font-medium">{c.title}</h3>
-                    <div className="mt-2 flex gap-2 text-xs text-muted-foreground">
-                      <span>{c._count.resources} 资源</span>
-                      <span>{c._count.favorites} 收藏</span>
-                    </div>
-                  </CardContent>
-                </Card>
-              </Link>
-            ))}
-          </div>
-          {totalCollections > SECTION_LIMIT && (
-            <div className="mt-3 text-center">
-              <Link href={`/profile/${user.username}/collections`}>
-                <Button variant="outline" size="sm">查看更多目录 ({totalCollections})</Button>
-              </Link>
+      <Section title="目录" count={totalCollections}>
+        {collections.length === 0 ? (
+          <Empty>还没有创建目录</Empty>
+        ) : (
+          <>
+            <div className="grid gap-4 sm:grid-cols-2">
+              {collections.map((c) => (
+                <Link key={c.id} href={`/collections/${c.id}`}>
+                  <Card className="h-full transition-shadow hover:shadow-md">
+                    <CardContent className="p-4">
+                      <h3 className="font-medium">{c.title}</h3>
+                      <div className="mt-2 flex gap-2 text-xs text-muted-foreground">
+                        <span>{c._count.resources} 资源</span>
+                        <span>{c._count.favorites} 收藏</span>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </Link>
+              ))}
             </div>
-          )}
-        </Section>
-      )}
+            {totalCollections > SECTION_LIMIT && (
+              <div className="mt-3 text-center">
+                <Link href={`/profile/${user.username}/collections`}>
+                  <Button variant="outline" size="sm">查看更多目录 ({totalCollections})</Button>
+                </Link>
+              </div>
+            )}
+          </>
+        )}
+      </Section>
 
       {/* Recommendations */}
-      {recommendations.length > 0 && (
-        <Section title="推荐" count={totalRecommendations}>
-          <div className="space-y-3">
-            {recommendations.map((rec) => (
-              <Link key={rec.id} href={`/resource/${rec.resource.id}`}>
-                <Card className="transition-shadow hover:shadow-md">
-                  <CardContent className="flex items-center gap-3 p-4">
-                    {rec.resource.coverImage ? (
-                      <img src={rec.resource.coverImage} alt={rec.resource.title} className="h-12 w-9 shrink-0 rounded object-contain bg-muted/30" />
-                    ) : null}
-                    <div className="min-w-0 flex-1">
-                      <h4 className="font-medium text-sm">{rec.resource.title}</h4>
-                      <Badge variant="secondary" className="text-xs mt-1">{typeLabels[rec.resource.type]}</Badge>
-                      {rec.note && <p className="text-xs text-muted-foreground mt-1 line-clamp-1">&ldquo;{rec.note}&rdquo;</p>}
-                    </div>
-                  </CardContent>
-                </Card>
-              </Link>
-            ))}
-          </div>
-          {totalRecommendations > SECTION_LIMIT && (
-            <div className="mt-3 text-center">
-              <Link href={`/profile/${user.username}/recommendations`}>
-                <Button variant="outline" size="sm">查看更多推荐 ({totalRecommendations})</Button>
-              </Link>
+      <Section title="推荐" count={totalRecommendations}>
+        {recommendations.length === 0 ? (
+          <Empty>还没有推荐过资源</Empty>
+        ) : (
+          <>
+            <div className="space-y-3">
+              {recommendations.map((rec) => (
+                <Link key={rec.id} href={`/resource/${rec.resource.id}`}>
+                  <Card className="transition-shadow hover:shadow-md">
+                    <CardContent className="flex items-center gap-3 p-4">
+                      {rec.resource.coverImage ? (
+                        <img src={rec.resource.coverImage} alt={rec.resource.title} className="h-12 w-9 shrink-0 rounded object-contain bg-muted/30" />
+                      ) : null}
+                      <div className="min-w-0 flex-1">
+                        <h4 className="font-medium text-sm">{rec.resource.title}</h4>
+                        <Badge variant="secondary" className="text-xs mt-1">{typeLabels[rec.resource.type]}</Badge>
+                        {rec.note && <p className="text-xs text-muted-foreground mt-1 line-clamp-1">&ldquo;{rec.note}&rdquo;</p>}
+                      </div>
+                    </CardContent>
+                  </Card>
+                </Link>
+              ))}
             </div>
-          )}
-        </Section>
-      )}
+            {totalRecommendations > SECTION_LIMIT && (
+              <div className="mt-3 text-center">
+                <Link href={`/profile/${user.username}/recommendations`}>
+                  <Button variant="outline" size="sm">查看更多推荐 ({totalRecommendations})</Button>
+                </Link>
+              </div>
+            )}
+          </>
+        )}
+      </Section>
 
       {/* Favorites */}
-      {favorites.length > 0 && (
-        <Section title="收藏" count={totalFavorites}>
-          <div className="grid gap-4 sm:grid-cols-2">
-            {favorites.map((fav) => (
-              <Link key={fav.id} href={`/collections/${fav.collection.id}`}>
-                <Card className="h-full transition-shadow hover:shadow-md">
-                  <CardContent className="p-4">
-                    <h3 className="font-medium">{fav.collection.title}</h3>
-                    <div className="mt-2 flex gap-2 text-xs text-muted-foreground">
-                      <span>{fav.collection.creator.username}</span>
-                      <span>·</span>
-                      <span>{fav.collection._count.resources} 资源</span>
-                      <span>·</span>
-                      <span>{fav.collection._count.favorites} 收藏</span>
-                    </div>
-                  </CardContent>
-                </Card>
-              </Link>
-            ))}
-          </div>
-          {totalFavorites > SECTION_LIMIT && (
-            <div className="mt-3 text-center">
-              <Link href={`/profile/${user.username}/favorites`}>
-                <Button variant="outline" size="sm">查看更多收藏 ({totalFavorites})</Button>
-              </Link>
+      <Section title="收藏" count={totalFavorites}>
+        {favorites.length === 0 ? (
+          <Empty>还没有收藏目录</Empty>
+        ) : (
+          <>
+            <div className="grid gap-4 sm:grid-cols-2">
+              {favorites.map((fav) => (
+                <Link key={fav.id} href={`/collections/${fav.collection.id}`}>
+                  <Card className="h-full transition-shadow hover:shadow-md">
+                    <CardContent className="p-4">
+                      <h3 className="font-medium">{fav.collection.title}</h3>
+                      <div className="mt-2 flex gap-2 text-xs text-muted-foreground">
+                        <span>{fav.collection.creator.username}</span>
+                        <span>·</span>
+                        <span>{fav.collection._count.resources} 资源</span>
+                        <span>·</span>
+                        <span>{fav.collection._count.favorites} 收藏</span>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </Link>
+              ))}
             </div>
-          )}
-        </Section>
-      )}
-
-      {/* Show empty sections only if it's owner or if any section has content */}
-      {/* Show empty state only if owner and has nothing at all */}
-      {isOwner && totalResources === 0 && totalCollections === 0 && totalRecommendations === 0 && totalFavorites === 0 && (
-        <Section title="资源" count={0}>
-          <Empty>还没有上传资源</Empty>
-        </Section>
-      )}
+            {totalFavorites > SECTION_LIMIT && (
+              <div className="mt-3 text-center">
+                <Link href={`/profile/${user.username}/favorites`}>
+                  <Button variant="outline" size="sm">查看更多收藏 ({totalFavorites})</Button>
+                </Link>
+              </div>
+            )}
+          </>
+        )}
+      </Section>
     </div>
   )
 }

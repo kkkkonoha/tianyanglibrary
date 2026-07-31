@@ -11,7 +11,7 @@ import { isAdmin } from "@/lib/permissions"
 const resourceSchema = z.object({
   title: z.string().min(1, "标题不能为空").max(200),
   description: z.string().max(2000).optional(),
-  type: z.enum(["BOOK", "COMIC", "VIDEO", "OTHER"]),
+  type: z.enum(["BOOK", "COMIC"]),
   tags: z.string().optional(),
 })
 

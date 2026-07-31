@@ -15,14 +15,17 @@ export default function RegisterPage() {
 
   useEffect(() => {
     if (result?.success) {
-      router.push("/login?registered=true")
+      router.push("/login?registered=pending")
     }
   }, [result, router])
 
   if (result?.success) {
     return (
       <div className="flex min-h-screen items-center justify-center">
-        <p className="text-muted-foreground">注册成功，正在跳转...</p>
+        <div className="text-center">
+          <p className="text-lg font-medium text-muted-foreground">注册成功</p>
+          <p className="mt-2 text-sm text-muted-foreground">请等待管理员审核通过后方可登录</p>
+        </div>
       </div>
     )
   }
@@ -42,8 +45,8 @@ export default function RegisterPage() {
               </div>
             )}
             <div className="space-y-2">
-              <Label htmlFor="email">邮箱</Label>
-              <Input id="email" name="email" type="email" placeholder="your@email.com" required />
+              <Label htmlFor="qq">QQ 号</Label>
+              <Input id="qq" name="qq" type="text" placeholder="你的 QQ 号" required />
             </div>
             <div className="space-y-2">
               <Label htmlFor="username">用户名</Label>

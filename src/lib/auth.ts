@@ -22,6 +22,8 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         })
 
         if (!user) return null
+        if (user.status === "pending") throw new Error("您的账号正在等待管理员审核")
+        if (user.status === "rejected") throw new Error("您的账号已被拒绝")
 
         const isValid = await bcrypt.compare(password, user.passwordHash)
         if (!isValid) return null

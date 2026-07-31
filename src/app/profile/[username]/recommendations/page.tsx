@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 
 const PAGE_SIZE = 24
-const typeLabels: Record<string, string> = { BOOK: "📖 电子书", COMIC: "📘 漫画", VIDEO: "🎬 视频", OTHER: "📁 其他" }
+const typeLabels: Record<string, string> = { BOOK: "📖 电子书", COMIC: "📘 漫画" }
 
 export default async function UserRecommendationsPage({
   params, searchParams,

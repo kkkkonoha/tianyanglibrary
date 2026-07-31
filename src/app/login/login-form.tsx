@@ -50,7 +50,12 @@ export function LoginForm() {
           <CardContent className="space-y-4">
             {registered === "true" && (
               <div className="rounded-md bg-green-50 p-3 text-sm text-green-700 dark:bg-green-900/20 dark:text-green-400">
-                注册成功！请登录。
+                注册成功！请等待管理员审核通过后方可登录。
+              </div>
+            )}
+            {registered === "pending" && (
+              <div className="rounded-md bg-amber-50 p-3 text-sm text-amber-700 dark:bg-amber-900/20 dark:text-amber-400">
+                注册成功！请等待管理员审核通过后方可登录。
               </div>
             )}
             {error && (
@@ -59,8 +64,8 @@ export function LoginForm() {
               </div>
             )}
             <div className="space-y-2">
-              <Label htmlFor="email">邮箱</Label>
-              <Input id="email" name="email" type="email" placeholder="your@email.com" required />
+              <Label htmlFor="email">QQ 号</Label>
+              <Input id="email" name="email" type="text" placeholder="你的 QQ 号" required />
             </div>
             <div className="space-y-2">
               <Label htmlFor="password">密码</Label>

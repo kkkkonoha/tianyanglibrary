@@ -1,12 +1,13 @@
 "use server"
 
 import bcrypt from "bcryptjs"
-import { signIn } from "@/lib/auth"
 import { prisma } from "@/lib/db"
 import { z } from "zod"
 
 const registerSchema = z.object({
-  email: z.string().email("请输入有效的邮箱"),
+  qq: z
+    .string()
+    .regex(/^[1-9]\d{4,10}$/, "请输入有效的 QQ 号（5-11位数字）"),
   username: z
     .string()
     .min(2, "用户名至少2个字符")
@@ -17,7 +18,7 @@ const registerSchema = z.object({
 
 export async function register(prevState: unknown, formData: FormData) {
   const validated = registerSchema.safeParse({
-    email: formData.get("email"),
+    qq: formData.get("qq"),
     username: formData.get("username"),
     password: formData.get("password"),
   })
@@ -26,11 +27,11 @@ export async function register(prevState: unknown, formData: FormData) {
     return { error: validated.error.issues[0].message }
   }
 
-  const { email, username, password } = validated.data
+  const { qq, username, password } = validated.data
 
-  const existingEmail = await prisma.user.findUnique({ where: { email } })
-  if (existingEmail) {
-    return { error: "该邮箱已被注册" }
+  const existingQQ = await prisma.user.findUnique({ where: { email: qq } })
+  if (existingQQ) {
+    return { error: "该 QQ 号已被注册" }
   }
 
   const existingUsername = await prisma.user.findUnique({ where: { username } })
@@ -42,11 +43,12 @@ export async function register(prevState: unknown, formData: FormData) {
 
   await prisma.user.create({
     data: {
-      email,
+      email: qq,
       username,
       passwordHash,
+      status: "pending",
     },
   })
 
-  return { success: true }
+  return { success: true, message: "注册成功，请等待管理员审核通过后方可登录" }
 }

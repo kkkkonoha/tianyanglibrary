@@ -13,8 +13,6 @@ import { Badge } from "@/components/ui/badge"
 const resourceTypes = [
   { value: "BOOK", label: "📖 电子书" },
   { value: "COMIC", label: "📘 漫画" },
-  { value: "VIDEO", label: "🎬 视频" },
-  { value: "OTHER", label: "📁 其他" },
 ]
 
 interface Props {

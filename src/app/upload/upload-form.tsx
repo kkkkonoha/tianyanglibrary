@@ -13,15 +13,13 @@ import { Badge } from "@/components/ui/badge"
 const resourceTypes = [
   { value: "BOOK", label: "📖 电子书" },
   { value: "COMIC", label: "📘 漫画" },
-  { value: "VIDEO", label: "🎬 视频" },
-  { value: "OTHER", label: "📁 其他" },
 ]
 
 export function UploadForm() {
   const router = useRouter()
   const [error, setError] = useState("")
   const [loading, setLoading] = useState(false)
-  const [type, setType] = useState("OTHER")
+  const [type, setType] = useState("BOOK")
   const [tags, setTags] = useState("")
   const [tagList, setTagList] = useState<string[]>([])
 

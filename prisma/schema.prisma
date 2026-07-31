@@ -10,8 +10,6 @@ datasource db {
 enum ResourceType {
   BOOK
   COMIC
-  VIDEO
-  OTHER
 }
 
 enum ActivityType {
@@ -30,6 +28,7 @@ model User {
   avatar           String?
   bio              String?
   role             String               @default("user")
+  status           String               @default("pending")
   createdAt        DateTime             @default(now())
   updatedAt        DateTime             @updatedAt
   resources        Resource[]
@@ -46,7 +45,7 @@ model Resource {
   title           String
   description     String?
   coverImage      String?
-  type            ResourceType       @default(OTHER)
+  type            ResourceType       @default(BOOK)
   uploaderId      String
   uploader        User               @relation(fields: [uploaderId], references: [id], onDelete: Cascade)
   tags            ResourceTag[]

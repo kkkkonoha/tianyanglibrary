@@ -10,15 +10,11 @@ import { ImagePreview } from "@/components/image-preview"
 const typeLabels: Record<string, string> = {
   BOOK: "电子书",
   COMIC: "漫画",
-  VIDEO: "视频",
-  OTHER: "其他",
 }
 
 const typeIcons: Record<string, string> = {
   BOOK: "📖",
   COMIC: "📘",
-  VIDEO: "🎬",
-  OTHER: "📁",
 }
 
 export default async function ExplorePage({
@@ -110,8 +106,6 @@ export default async function ExplorePage({
           { value: "ALL", label: "全部" },
           { value: "BOOK", label: "电子书" },
           { value: "COMIC", label: "漫画" },
-          { value: "VIDEO", label: "视频" },
-          { value: "OTHER", label: "其他" },
         ].map((t) => (
           <Link
             key={t.value}

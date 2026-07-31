@@ -1,10 +1,11 @@
 import { NextRequest, NextResponse } from "next/server"
 import { auth } from "@/lib/auth"
-import { writeFile } from "fs/promises"
+import { writeFile, unlink } from "fs/promises"
 import { join } from "path"
+import { existsSync } from "fs"
+import sharp from "sharp"
 import { PrismaClient } from "@/generated/prisma/client"
 import { PrismaLibSql } from "@prisma/adapter-libsql"
-import { revalidatePath } from "next/cache"
 
 export async function POST(req: NextRequest) {
   const session = await auth()
@@ -37,20 +38,36 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "无权操作" }, { status: 403 })
   }
 
-  const ext = file.name.split(".").pop() ?? "jpg"
-  const filename = `cover-${resourceId}-${Date.now()}.${ext}`
   const arrayBuffer = await file.arrayBuffer()
   const buffer = Buffer.from(arrayBuffer)
 
-  const filePath = join(process.cwd(), "public", "uploads", "covers", filename)
-  await writeFile(filePath, buffer)
+  let output: Buffer = buffer
+  try {
+    output = await sharp(buffer)
+      .rotate()
+      .resize({ width: 1200, withoutEnlargement: true })
+      .webp({ quality: 85 })
+      .toBuffer()
+  } catch {
+    // not a decodable image, save as-is
+  }
 
+  const filename = `cover-${resourceId}-${Date.now()}.webp`
+  const filePath = join(process.cwd(), "public", "uploads", "covers", filename)
+  await writeFile(filePath, output)
+
+  const oldCover = resource.coverImage
   await prisma.resource.update({
     where: { id: resourceId },
     data: { coverImage: `/uploads/covers/${filename}` },
   })
 
   await prisma.$disconnect()
+
+  if (oldCover?.startsWith("/uploads/covers/")) {
+    const oldPath = join(process.cwd(), "public", oldCover)
+    if (existsSync(oldPath)) unlink(oldPath).catch(() => {})
+  }
 
   return NextResponse.json({ success: true, coverImage: `/uploads/covers/${filename}` })
 }
