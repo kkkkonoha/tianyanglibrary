@@ -1,9 +1,8 @@
 import { NextRequest, NextResponse } from "next/server"
 import { auth } from "@/lib/auth"
+import { prisma } from "@/lib/db"
 import { writeFile } from "fs/promises"
 import { join } from "path"
-import { PrismaClient } from "@/generated/prisma/client"
-import { PrismaLibSql } from "@prisma/adapter-libsql"
 
 export async function POST(req: NextRequest) {
   const session = await auth()
@@ -27,12 +26,8 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "文件大小不能超过 500MB" }, { status: 400 })
   }
 
-  const adapter = new PrismaLibSql({ url: process.env.DATABASE_URL! })
-  const prisma = new PrismaClient({ adapter })
-
   const resource = await prisma.resource.findUnique({ where: { id: resourceId } })
   if (!resource || resource.uploaderId !== (session.user as { id: string }).id) {
-    await prisma.$disconnect()
     return NextResponse.json({ error: "无权操作" }, { status: 403 })
   }
 
@@ -59,8 +54,6 @@ export async function POST(req: NextRequest) {
       order: (lastFile?.order ?? -1) + 1,
     },
   })
-
-  await prisma.$disconnect()
 
   return NextResponse.json({ success: true, file: { id: record.id, fileName: file.name, fileUrl: record.fileUrl, fileSize: file.size, order: record.order } })
 }

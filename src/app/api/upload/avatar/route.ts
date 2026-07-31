@@ -1,11 +1,10 @@
 import { NextRequest, NextResponse } from "next/server"
 import { auth } from "@/lib/auth"
+import { prisma } from "@/lib/db"
 import { writeFile, unlink } from "fs/promises"
 import { join } from "path"
 import { existsSync } from "fs"
 import sharp from "sharp"
-import { PrismaClient } from "@/generated/prisma/client"
-import { PrismaLibSql } from "@prisma/adapter-libsql"
 
 export async function POST(req: NextRequest) {
   const session = await auth()
@@ -24,9 +23,6 @@ export async function POST(req: NextRequest) {
   if (file.size > maxSize) {
     return NextResponse.json({ error: "头像文件不能超过 5MB" }, { status: 400 })
   }
-
-  const adapter = new PrismaLibSql({ url: process.env.DATABASE_URL! })
-  const prisma = new PrismaClient({ adapter })
 
   const userId = session.user.id as string
 
@@ -53,8 +49,6 @@ export async function POST(req: NextRequest) {
     where: { id: userId },
     data: { avatar: `/uploads/avatars/${filename}` },
   })
-
-  await prisma.$disconnect()
 
   if (user?.avatar?.startsWith("/uploads/avatars/")) {
     const oldPath = join(process.cwd(), "public", user.avatar)

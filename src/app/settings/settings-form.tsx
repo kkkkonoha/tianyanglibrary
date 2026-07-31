@@ -16,6 +16,7 @@ export function SettingsForm({ username, bio, avatar }: { username: string; bio:
   const [pwMsg, setPwMsg] = useState("")
   const [avatarMsg, setAvatarMsg] = useState("")
   const [previewAvatar, setPreviewAvatar] = useState(avatar)
+  const [localPreview, setLocalPreview] = useState<string | null>(null)
   const fileRef = useRef<HTMLInputElement>(null)
 
   async function handleBioSave() {
@@ -46,8 +47,18 @@ export function SettingsForm({ username, bio, avatar }: { username: string; bio:
     if (data.success) {
       setPreviewAvatar(data.avatar)
       setAvatarMsg("上传成功")
+      if (localPreview) URL.revokeObjectURL(localPreview)
+      setLocalPreview(null)
     } else {
       setAvatarMsg(data.error ?? "上传失败")
+    }
+  }
+
+  function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const f = e.target.files?.[0]
+    if (f) {
+      if (localPreview) URL.revokeObjectURL(localPreview)
+      setLocalPreview(URL.createObjectURL(f))
     }
   }
 
@@ -64,10 +75,11 @@ export function SettingsForm({ username, bio, avatar }: { username: string; bio:
           <CardDescription>更换头像（最大 5MB）</CardDescription>
         </CardHeader>
         <CardContent className="space-y-3">
-          {previewAvatar && (
-            <img src={previewAvatar} alt="头像预览" className="h-20 w-20 rounded-full object-cover border" />
+          {(localPreview || previewAvatar) && (
+            <img src={localPreview ?? previewAvatar!} alt="头像预览" className="h-20 w-20 rounded-full object-cover border" />
           )}
-          <input ref={fileRef} type="file" accept="image/*" className="block w-full text-sm file:mr-3 file:rounded-md file:border-0 file:bg-secondary file:px-3 file:py-1 file:text-sm file:font-medium" />
+          <input ref={fileRef} type="file" accept="image/*" onChange={handleFileChange}
+            className="block w-full text-sm file:mr-3 file:rounded-md file:border-0 file:bg-secondary file:px-3 file:py-1 file:text-sm file:font-medium" />
           <div className="flex gap-2">
             <Button onClick={handleAvatarUpload} size="sm">上传</Button>
           </div>
