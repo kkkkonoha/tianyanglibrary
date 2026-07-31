@@ -7,6 +7,9 @@ import { revalidatePath } from "next/cache"
 import { redirect } from "next/navigation"
 import { z } from "zod"
 import { isAdmin } from "@/lib/permissions"
+import { unlink } from "fs/promises"
+import { existsSync } from "fs"
+import { join } from "path"
 
 const resourceSchema = z.object({
   title: z.string().min(1, "标题不能为空").max(200),
@@ -127,13 +130,31 @@ export async function deleteResource(formData: FormData) {
   if (!session?.user) return { error: "请先登录" }
 
   const id = formData.get("id") as string
-  const resource = await prisma.resource.findUnique({ where: { id } })
+  const resource = await prisma.resource.findUnique({
+    where: { id },
+    include: { files: { select: { fileUrl: true } } },
+  })
   if (!resource) return { error: "资源不存在" }
   if (!isAdmin(session) && resource.uploaderId !== (session.user.id as string)) {
     return { error: "无权操作" }
   }
 
+  const filePaths = resource.files.map((f) => {
+    const rel = f.fileUrl.startsWith("/") ? f.fileUrl.slice(1) : f.fileUrl
+    return join(process.cwd(), "public", rel)
+  })
+  const coverPath = resource.coverImage
+    ? join(process.cwd(), "public", resource.coverImage.startsWith("/") ? resource.coverImage.slice(1) : resource.coverImage)
+    : null
+
   await prisma.resource.delete({ where: { id } })
+
+  for (const p of filePaths) {
+    unlink(p).catch(() => {})
+  }
+  if (coverPath && existsSync(coverPath)) {
+    unlink(coverPath).catch(() => {})
+  }
 
   revalidatePath("/")
   revalidatePath("/explore")
