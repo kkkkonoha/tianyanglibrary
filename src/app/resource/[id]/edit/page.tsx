@@ -32,6 +32,7 @@ export default async function EditResourcePage({
       title={resource.title}
       description={resource.description ?? ""}
       type={resource.type}
+      coverImage={resource.coverImage}
       tags={resource.tags.map((rt) => rt.tag.name)}
       existingFiles={resource.files.map((f) => ({ id: f.id, fileName: f.fileName, fileSize: f.fileSize }))}
     />

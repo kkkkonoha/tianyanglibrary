@@ -32,11 +32,12 @@ interface Props {
   title: string
   description: string
   type: string
+  coverImage: string | null
   tags: string[]
   existingFiles: Array<{ id: string; fileName: string; fileSize: number }>
 }
 
-export function EditResourceForm({ id, title, description, type, tags, existingFiles }: Props) {
+export function EditResourceForm({ id, title, description, type, coverImage, tags, existingFiles }: Props) {
   const router = useRouter()
   const [error, setError] = useState("")
   const [loading, setLoading] = useState(false)
@@ -44,6 +45,7 @@ export function EditResourceForm({ id, title, description, type, tags, existingF
   const [currentTags, setCurrentTags] = useState<string[]>(tags)
   const [tagInput, setTagInput] = useState("")
   const [coverFile, setCoverFile] = useState<File | null>(null)
+  const [coverPreview, setCoverPreview] = useState<string | null>(null)
   const [coverMessage, setCoverMessage] = useState("")
   const [files, setFiles] = useState<FileItem[]>(
     existingFiles.map((f) => ({ ...f, status: "done", progress: 100 }))
@@ -85,6 +87,19 @@ export function EditResourceForm({ id, title, description, type, tags, existingF
     const res = await fetch("/api/upload/cover", { method: "POST", body: formData })
     const data = await res.json()
     if (!data.success) setCoverMessage(data.error ?? "上传失败")
+    if (coverPreview) URL.revokeObjectURL(coverPreview)
+  }
+
+  function handleCoverChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const f = e.target.files?.[0] ?? null
+    setCoverFile(f)
+    if (f) {
+      if (coverPreview) URL.revokeObjectURL(coverPreview)
+      setCoverPreview(URL.createObjectURL(f))
+    } else {
+      if (coverPreview) URL.revokeObjectURL(coverPreview)
+      setCoverPreview(null)
+    }
   }
 
   function uploadOne(file: File, onProgress: (p: number) => void) {
@@ -267,7 +282,10 @@ export function EditResourceForm({ id, title, description, type, tags, existingF
 
             <div className="space-y-2">
               <Label>封面</Label>
-              <input type="file" accept="image/*" onChange={(e) => setCoverFile(e.target.files?.[0] ?? null)}
+              {(coverPreview || coverImage) && (
+                <img src={coverPreview ?? coverImage!} alt="封面预览" className="h-32 w-full rounded-lg border object-contain bg-muted/30" />
+              )}
+              <input type="file" accept="image/*" onChange={handleCoverChange}
                 className="block w-full text-sm file:mr-3 file:rounded-md file:border-0 file:bg-secondary file:px-3 file:py-1 file:text-sm file:font-medium" />
               {coverMessage && <p className="text-sm text-muted-foreground">{coverMessage}</p>}
             </div>
