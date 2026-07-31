@@ -77,6 +77,11 @@ export function UploadForm() {
             </div>
 
             <div className="space-y-2">
+              <Label htmlFor="author">作者</Label>
+              <Input id="author" name="author" placeholder="作者名" />
+            </div>
+
+            <div className="space-y-2">
               <Label htmlFor="description">描述</Label>
               <Textarea
                 id="description"

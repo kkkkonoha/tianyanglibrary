@@ -30,6 +30,7 @@ export default async function EditResourcePage({
     <EditResourceForm
       id={resource.id}
       title={resource.title}
+      author={resource.author}
       description={resource.description ?? ""}
       type={resource.type}
       coverImage={resource.coverImage}

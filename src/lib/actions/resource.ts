@@ -10,6 +10,7 @@ import { isAdmin } from "@/lib/permissions"
 
 const resourceSchema = z.object({
   title: z.string().min(1, "标题不能为空").max(200),
+  author: z.string().max(100).optional(),
   description: z.string().max(2000).optional(),
   type: z.enum(["BOOK", "COMIC"]),
   tags: z.string().optional(),
@@ -30,11 +31,12 @@ export async function createResource(formData: FormData) {
     return { error: validated.error.issues[0].message }
   }
 
-  const { title, description, type, tags } = validated.data
+  const { title, author, description, type, tags } = validated.data
 
   const resource = await prisma.resource.create({
     data: {
       title,
+      author: author ?? null,
       description: description ?? null,
       type,
       uploaderId: session.user.id as string,
@@ -80,6 +82,7 @@ export async function updateResource(formData: FormData) {
 
   const validated = resourceSchema.safeParse({
     title: formData.get("title"),
+    author: formData.get("author"),
     description: formData.get("description"),
     type: formData.get("type"),
     tags: formData.get("tags"),
@@ -89,11 +92,11 @@ export async function updateResource(formData: FormData) {
     return { error: validated.error.issues[0].message }
   }
 
-  const { title, description, type, tags } = validated.data
+  const { title, author, description, type, tags } = validated.data
 
   await prisma.resource.update({
     where: { id },
-    data: { title, description: description ?? null, type },
+    data: { title, author: author ?? null, description: description ?? null, type },
   })
 
   if (tags !== undefined) {

@@ -43,6 +43,7 @@ model User {
 model Resource {
   id              String             @id @default(cuid())
   title           String
+  author          String?
   description     String?
   coverImage      String?
   type            ResourceType       @default(BOOK)

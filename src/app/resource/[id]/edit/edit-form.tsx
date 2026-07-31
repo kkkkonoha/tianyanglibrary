@@ -30,6 +30,7 @@ interface FileItem {
 interface Props {
   id: string
   title: string
+  author: string | null
   description: string
   type: string
   coverImage: string | null
@@ -37,7 +38,7 @@ interface Props {
   existingFiles: Array<{ id: string; fileName: string; fileSize: number }>
 }
 
-export function EditResourceForm({ id, title, description, type, coverImage, tags, existingFiles }: Props) {
+export function EditResourceForm({ id, title, author, description, type, coverImage, tags, existingFiles }: Props) {
   const router = useRouter()
   const [error, setError] = useState("")
   const [loading, setLoading] = useState(false)
@@ -250,6 +251,11 @@ export function EditResourceForm({ id, title, description, type, coverImage, tag
             <div className="space-y-2">
               <Label htmlFor="title">标题 *</Label>
               <Input id="title" name="title" defaultValue={title} required />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="author">作者</Label>
+              <Input id="author" name="author" defaultValue={author ?? ""} />
             </div>
 
             <div className="space-y-2">

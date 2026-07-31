@@ -121,6 +121,9 @@ export default async function ResourcePage({
               )}
               <div className="flex-1">
                 <h1 className="text-2xl font-bold">{resource.title}</h1>
+                {resource.author && (
+                  <p className="mt-1 text-sm text-muted-foreground">{resource.author}</p>
+                )}
                 <div className="mt-2 flex items-center gap-2">
                   <Badge variant="secondary">{typeLabels[resource.type]}</Badge>
                   {resource.tags.map((rt) => (

@@ -36,6 +36,7 @@ export default async function ExplorePage({
     andConditions.push({
       OR: [
         { title: { contains: q } },
+        { author: { contains: q } },
         { description: { contains: q } },
         { tags: { some: { tag: { name: { contains: q } } } } },
         { uploader: { username: { contains: q } } },
@@ -94,7 +95,7 @@ export default async function ExplorePage({
         {tag && <input type="hidden" name="tag" value={tag} />}
         <Input
           name="q"
-          placeholder="搜索标题、描述或标签..."
+          placeholder="搜索标题、作者、描述或标签..."
           defaultValue={q ?? ""}
           className="max-w-sm bg-background"
         />
@@ -176,6 +177,9 @@ export default async function ExplorePage({
                 )}
                 <CardContent className="p-4">
                   <h3 className="font-semibold line-clamp-1 group-hover:text-primary transition-colors">{resource.title}</h3>
+                  {resource.author && (
+                    <p className="mt-0.5 text-xs text-muted-foreground line-clamp-1">{resource.author}</p>
+                  )}
                   <div className="mt-2.5 flex items-center gap-2 text-xs text-muted-foreground">
                     <Link href={`/profile/${resource.uploader.username}`} className="relative z-20 flex items-center gap-2 hover:text-foreground">
                       <Avatar className="h-5 w-5">
