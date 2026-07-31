@@ -40,6 +40,12 @@ yarn-error.log*
 
 # uploads
 /uploads
+public/uploads/covers/*
+public/uploads/files/*
+public/uploads/avatars/*
+!public/uploads/covers/.gitkeep
+!public/uploads/files/.gitkeep
+!public/uploads/avatars/.gitkeep
 
 # generated
 /src/generated/prisma

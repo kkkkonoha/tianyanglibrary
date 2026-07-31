@@ -1,8 +1,7 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useActionState } from "react"
 import { useRouter } from "next/navigation"
-import { useActionState } from "react"
 import { register } from "@/lib/actions/auth"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
@@ -14,9 +13,18 @@ export default function RegisterPage() {
   const router = useRouter()
   const [result, formAction] = useActionState(register, null)
 
+  useEffect(() => {
+    if (result?.success) {
+      router.push("/login?registered=true")
+    }
+  }, [result, router])
+
   if (result?.success) {
-    router.push("/login?registered=true")
-    return null
+    return (
+      <div className="flex min-h-screen items-center justify-center">
+        <p className="text-muted-foreground">注册成功，正在跳转...</p>
+      </div>
+    )
   }
 
   return (
@@ -24,7 +32,7 @@ export default function RegisterPage() {
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
           <CardTitle className="text-2xl">注册账号</CardTitle>
-          <CardDescription>加入动漫社共享图书馆</CardDescription>
+          <CardDescription>加入天央图书馆</CardDescription>
         </CardHeader>
         <form action={formAction}>
           <CardContent className="space-y-4">

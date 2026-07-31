@@ -52,7 +52,7 @@ export async function addToCollection(collectionId: string, resourceId: string) 
     where: { id: collectionId },
   })
 
-  if (!collection) return { error: "书单不存在" }
+  if (!collection) return { error: "目录不存在" }
   if (collection.creatorId !== (session.user.id as string)) {
     return { error: "无权操作" }
   }
@@ -61,7 +61,7 @@ export async function addToCollection(collectionId: string, resourceId: string) 
     where: { collectionId_resourceId: { collectionId, resourceId } },
   })
 
-  if (existing) return { error: "该资源已在书单中" }
+  if (existing) return { error: "该资源已在目录中" }
 
   await prisma.collectionResource.create({
     data: { collectionId, resourceId },
@@ -103,4 +103,89 @@ export async function toggleFavoriteCollection(collectionId: string) {
 
   revalidatePath(`/collections/${collectionId}`)
   return { success: true, favorited: true }
+}
+
+export async function deleteCollection(collectionId: string) {
+  const session = await auth()
+  if (!session?.user) return { error: "请先登录" }
+
+  const { isAdmin } = await import("@/lib/permissions")
+
+  const collection = await prisma.collection.findUnique({ where: { id: collectionId } })
+  if (!collection) return { error: "目录不存在" }
+
+  if (!isAdmin(session) && collection.creatorId !== (session.user.id as string)) {
+    return { error: "无权操作" }
+  }
+
+  await prisma.collection.delete({ where: { id: collectionId } })
+
+  revalidatePath("/collections")
+  revalidatePath("/")
+  return { success: true }
+}
+
+export async function updateCollection(formData: FormData) {
+  const session = await auth()
+  if (!session?.user) return { error: "请先登录" }
+
+  const id = formData.get("id") as string
+  const collection = await prisma.collection.findUnique({ where: { id } })
+  if (!collection) return { error: "目录不存在" }
+  if (collection.creatorId !== (session.user.id as string)) return { error: "无权操作" }
+
+  const validated = collectionSchema.safeParse({
+    title: formData.get("title"),
+    description: formData.get("description"),
+  })
+
+  if (!validated.success) return { error: validated.error.issues[0].message }
+
+  await prisma.collection.update({
+    where: { id },
+    data: { title: validated.data.title, description: validated.data.description ?? null },
+  })
+
+  revalidatePath(`/collections/${id}`)
+  revalidatePath("/collections")
+  return { success: true }
+}
+
+export async function removeFromCollection(collectionId: string, resourceId: string) {
+  const session = await auth()
+  if (!session?.user) return { error: "请先登录" }
+
+  const collection = await prisma.collection.findUnique({ where: { id: collectionId } })
+  if (!collection) return { error: "目录不存在" }
+  if (collection.creatorId !== (session.user.id as string)) return { error: "无权操作" }
+
+  await prisma.collectionResource.delete({
+    where: { collectionId_resourceId: { collectionId, resourceId } },
+  })
+
+  revalidatePath(`/collections/${collectionId}`)
+  return { success: true }
+}
+
+export async function setCollectionResourceNote(formData: FormData) {
+  const session = await auth()
+  if (!session?.user) return { error: "请先登录" }
+
+  const collectionResourceId = formData.get("crId") as string
+  const note = (formData.get("note") as string)?.trim() || null
+
+  const cr = await prisma.collectionResource.findUnique({
+    where: { id: collectionResourceId },
+    include: { collection: { select: { creatorId: true } } },
+  })
+  if (!cr) return { error: "记录不存在" }
+  if (cr.collection.creatorId !== (session.user.id as string)) return { error: "无权操作" }
+
+  await prisma.collectionResource.update({
+    where: { id: collectionResourceId },
+    data: { note },
+  })
+
+  revalidatePath(`/collections/${cr.collectionId}`)
+  return { success: true }
 }

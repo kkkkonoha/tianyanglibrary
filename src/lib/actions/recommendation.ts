@@ -4,6 +4,7 @@ import { auth } from "@/lib/auth"
 import { prisma } from "@/lib/db"
 import { createActivity } from "@/lib/activity"
 import { revalidatePath } from "next/cache"
+import { randomUUID } from "crypto"
 
 export async function toggleRecommendation(formData: FormData) {
   const session = await auth()
@@ -18,16 +19,30 @@ export async function toggleRecommendation(formData: FormData) {
   })
 
   if (existing) {
-    await prisma.recommendation.delete({
-      where: { id: existing.id },
-    })
+    await prisma.recommendation.delete({ where: { id: existing.id } })
     revalidatePath(`/resource/${resourceId}`)
     return { success: true, recommended: false }
   }
 
+  const resource = await prisma.resource.findUnique({
+    where: { id: resourceId },
+    select: { uploaderId: true, title: true },
+  })
+
   await prisma.recommendation.create({
     data: { userId, resourceId, note },
   })
+
+  // Notify the resource owner
+  if (resource && resource.uploaderId !== userId) {
+    await prisma.$executeRawUnsafe(
+      `INSERT INTO Notification (id, userId, type, content, link, "read", createdAt) VALUES (?, ?, ?, ?, ?, 0, ?)`,
+      randomUUID(), resource.uploaderId, "RECOMMEND",
+      `${session.user.name} 推荐了《${resource.title}》`,
+      `/resource/${resourceId}`,
+      new Date().toISOString()
+    )
+  }
 
   await createActivity({
     type: "RECOMMEND",

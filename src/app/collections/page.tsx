@@ -4,14 +4,32 @@ import Link from "next/link"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
+import { Input } from "@/components/ui/input"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 
-export default async function CollectionsPage() {
+export default async function CollectionsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ q?: string; sort?: string }>
+}) {
   const session = await auth()
+  const { q, sort } = await searchParams
+
+  const where: any = { isPublic: true }
+  if (q) {
+    where.OR = [
+      { title: { contains: q } },
+      { creator: { username: { contains: q } } },
+    ]
+  }
+
+  const orderBy = sort === "hot"
+    ? { favorites: { _count: "desc" as const } }
+    : { createdAt: "desc" as const }
 
   const collections = await prisma.collection.findMany({
-    where: { isPublic: true },
-    orderBy: { createdAt: "desc" },
+    where,
+    orderBy,
     take: 100,
     include: {
       creator: { select: { id: true, username: true, avatar: true } },
@@ -20,26 +38,48 @@ export default async function CollectionsPage() {
   })
 
   return (
-    <div className="container mx-auto max-w-4xl px-4 py-8">
+    <div className="container mx-auto max-w-4xl px-4 py-12">
       <div className="mb-8 flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold">书单</h1>
-          <p className="mt-2 text-muted-foreground">看看大家创建的主题书单</p>
+          <h1 className="text-3xl font-bold tracking-tight">目录</h1>
+          <p className="mt-1.5 text-muted-foreground">看看大家创建的主题目录</p>
         </div>
         {session?.user && (
           <Link href="/collections/new">
-            <Button>创建书单</Button>
+            <Button>创建目录</Button>
           </Link>
         )}
       </div>
 
+      <form className="mb-6 flex gap-2">
+        <Input name="q" placeholder="搜索目录名或创建人..." defaultValue={q ?? ""} className="max-w-sm bg-background" />
+        <Button type="submit">搜索</Button>
+      </form>
+
+      <div className="mb-4 flex items-center gap-1.5">
+        <span className="text-xs text-muted-foreground">排序：</span>
+        {[
+          { value: "new", label: "最新" },
+          { value: "hot", label: "最热" },
+        ].map((s) => (
+          <Link
+            key={s.value}
+            href={`/collections?${s.value !== "new" ? `sort=${s.value}&` : ""}${q ? `q=${encodeURIComponent(q)}` : ""}`}
+          >
+            <Badge variant={(sort ?? "new") === s.value ? "default" : "secondary"}>
+              {s.label}
+            </Badge>
+          </Link>
+        ))}
+      </div>
+
       {collections.length === 0 ? (
-        <Card>
+        <Card className="border-dashed">
           <CardContent className="flex flex-col items-center justify-center py-12 text-center">
-            <p className="text-lg text-muted-foreground">还没有书单</p>
+            <p className="text-lg text-muted-foreground">还没有目录</p>
             {session?.user && (
               <Link href="/collections/new" className="mt-4">
-                <span className="text-primary underline">创建第一个书单</span>
+                <span className="text-primary underline">创建第一个目录</span>
               </Link>
             )}
           </CardContent>

@@ -44,7 +44,7 @@ export function LoginForm() {
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
           <CardTitle className="text-2xl">欢迎回来</CardTitle>
-          <CardDescription>登录动漫社共享图书馆</CardDescription>
+          <CardDescription>登录天央图书馆</CardDescription>
         </CardHeader>
         <form onSubmit={handleSubmit}>
           <CardContent className="space-y-4">

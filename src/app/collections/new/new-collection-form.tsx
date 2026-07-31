@@ -34,7 +34,7 @@ export function NewCollectionForm() {
     <div className="container mx-auto max-w-lg px-4 py-8">
       <Card>
         <CardHeader>
-          <CardTitle>创建书单</CardTitle>
+          <CardTitle>创建目录</CardTitle>
           <CardDescription>整理你喜欢的资源，分享给其他人</CardDescription>
         </CardHeader>
         <CardContent>
@@ -46,8 +46,8 @@ export function NewCollectionForm() {
             )}
 
             <div className="space-y-2">
-              <Label htmlFor="title">书单名称 *</Label>
-              <Input id="title" name="title" placeholder="给书单取个名字" required />
+              <Label htmlFor="title">目录名称 *</Label>
+              <Input id="title" name="title" placeholder="给目录取个名字" required />
             </div>
 
             <div className="space-y-2">
@@ -55,13 +55,13 @@ export function NewCollectionForm() {
               <Textarea
                 id="description"
                 name="description"
-                placeholder="描述一下这个书单..."
+                placeholder="描述一下这个目录..."
                 rows={3}
               />
             </div>
 
             <Button type="submit" className="w-full" disabled={loading}>
-              {loading ? "创建中..." : "创建书单"}
+              {loading ? "创建中..." : "创建目录"}
             </Button>
           </form>
         </CardContent>

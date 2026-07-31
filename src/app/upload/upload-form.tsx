@@ -1,8 +1,8 @@
 "use client"
 
-import { useState, useRef } from "react"
+import { useState } from "react"
 import { useRouter } from "next/navigation"
-import { createResource, uploadCover } from "@/lib/actions/resource"
+import { createResource } from "@/lib/actions/resource"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -21,11 +21,9 @@ export function UploadForm() {
   const router = useRouter()
   const [error, setError] = useState("")
   const [loading, setLoading] = useState(false)
-  const [resourceId, setResourceId] = useState<string | null>(null)
   const [type, setType] = useState("OTHER")
   const [tags, setTags] = useState("")
   const [tagList, setTagList] = useState<string[]>([])
-  const coverRef = useRef<HTMLInputElement>(null)
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
@@ -41,20 +39,8 @@ export function UploadForm() {
       setError(result.error)
       setLoading(false)
     } else if (result.success && result.id) {
-      setResourceId(result.id)
-      setLoading(false)
+      router.push(`/resource/${result.id}`)
     }
-  }
-
-  async function handleCoverUpload() {
-    if (!resourceId || !coverRef.current?.files?.[0]) return
-
-    const formData = new FormData()
-    formData.set("resourceId", resourceId)
-    formData.set("cover", coverRef.current.files[0])
-
-    await uploadCover(formData)
-    router.push(`/resource/${resourceId}`)
   }
 
   function addTag(e: React.KeyboardEvent<HTMLInputElement>) {
@@ -72,40 +58,12 @@ export function UploadForm() {
     setTagList(tagList.filter((t) => t !== tag))
   }
 
-  if (resourceId) {
-    return (
-      <div className="container mx-auto max-w-md px-4 py-16 text-center">
-        <Card>
-          <CardHeader>
-            <CardTitle>资源创建成功！</CardTitle>
-            <CardDescription>是否上传封面图片？</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <Input ref={coverRef} type="file" accept="image/*" />
-            <div className="flex gap-3">
-              <Button onClick={handleCoverUpload} variant="default" className="flex-1">
-                上传封面
-              </Button>
-              <Button
-                onClick={() => router.push(`/resource/${resourceId}`)}
-                variant="outline"
-                className="flex-1"
-              >
-                跳过
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-    )
-  }
-
   return (
     <div className="container mx-auto max-w-lg px-4 py-8">
       <Card>
         <CardHeader>
           <CardTitle>上传资源</CardTitle>
-          <CardDescription>分享资源到公共图书馆</CardDescription>
+          <CardDescription>分享资源到公共图书馆，创建后可到编辑页添加封面和文件</CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">

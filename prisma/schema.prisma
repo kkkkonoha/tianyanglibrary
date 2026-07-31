@@ -38,6 +38,7 @@ model User {
   recommendations  Recommendation[]
   favorites        FavoriteCollection[]
   activities       Activity[]
+  notifications    Notification[]
 }
 
 model Resource {
@@ -46,7 +47,6 @@ model Resource {
   description     String?
   coverImage      String?
   type            ResourceType       @default(OTHER)
-  fileUrl         String?
   uploaderId      String
   uploader        User               @relation(fields: [uploaderId], references: [id], onDelete: Cascade)
   tags            ResourceTag[]
@@ -54,8 +54,19 @@ model Resource {
   recommendations Recommendation[]
   collections     CollectionResource[]
   activities      Activity[]
+  files           ResourceFile[]
   createdAt       DateTime           @default(now())
   updatedAt       DateTime           @updatedAt
+}
+
+model ResourceFile {
+  id         String   @id @default(cuid())
+  resourceId String
+  resource   Resource @relation(fields: [resourceId], references: [id], onDelete: Cascade)
+  fileName   String
+  fileUrl    String
+  fileSize   Int      @default(0)
+  createdAt  DateTime @default(now())
 }
 
 model Tag {
@@ -94,6 +105,7 @@ model CollectionResource {
   collection   Collection @relation(fields: [collectionId], references: [id], onDelete: Cascade)
   resourceId   String
   resource     Resource   @relation(fields: [resourceId], references: [id], onDelete: Cascade)
+  note         String?
   addedAt      DateTime   @default(now())
   @@unique([collectionId, resourceId])
 }
@@ -107,7 +119,21 @@ model Comment {
   resource     Resource?   @relation(fields: [resourceId], references: [id], onDelete: Cascade)
   collectionId String?
   collection   Collection? @relation(fields: [collectionId], references: [id], onDelete: Cascade)
+  parentId     String?
+  parent       Comment?    @relation("CommentReplies", fields: [parentId], references: [id], onDelete: SetNull)
+  replies      Comment[]   @relation("CommentReplies")
   createdAt    DateTime    @default(now())
+}
+
+model Notification {
+  id         String   @id @default(cuid())
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type       String
+  content    String
+  link       String?
+  read       Boolean  @default(false)
+  createdAt  DateTime @default(now())
 }
 
 model Recommendation {

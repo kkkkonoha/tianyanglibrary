@@ -11,18 +11,30 @@ async function main() {
   const passwordHash = await bcrypt.hash("password123", 12)
 
   const user1 = await prisma.user.upsert({
+    where: { email: "super@library.local" },
+    update: {},
+    create: {
+      email: "super@library.local",
+      username: "超级管理员",
+      passwordHash,
+      bio: "天央图书馆超级管理员",
+      role: "super_admin",
+    },
+  })
+
+  const user2 = await prisma.user.upsert({
     where: { email: "admin@library.local" },
     update: {},
     create: {
       email: "admin@library.local",
       username: "管理员",
       passwordHash,
-      bio: "动漫社共享图书馆管理员",
+      bio: "天央图书馆管理员",
       role: "admin",
     },
   })
 
-  const user2 = await prisma.user.upsert({
+  const user3 = await prisma.user.upsert({
     where: { email: "member@library.local" },
     update: {},
     create: {
@@ -33,7 +45,7 @@ async function main() {
     },
   })
 
-  console.log(`Created users: ${user1.username}, ${user2.username}`)
+  console.log(`Created users: ${user1.username}, ${user2.username}, ${user3.username}`)
 
   const tags = {
     轻小说: await prisma.tag.upsert({ where: { name: "轻小说" }, create: { name: "轻小说" }, update: {} }),
@@ -48,7 +60,7 @@ async function main() {
       title: "涼宮ハルヒの憂鬱",
       description: "「ただの人間には興味ありません。この中に宇宙人、未来人、異世界人、超能力者がいたら、あたしのところに来なさい。以上。」",
       type: "BOOK",
-      uploaderId: user1.id,
+      uploaderId: user2.id,
       tags: { create: [{ tagId: tags.轻小说.id }, { tagId: tags.校园.id }] },
     },
   })
@@ -58,7 +70,7 @@ async function main() {
       title: "魔法少女まどか☆マギカ",
       description: "鹿目まどかは平凡な中学生。ある日、謎の転校生・暁美ほむらと出会い、彼女の日常は一変する。",
       type: "COMIC",
-      uploaderId: user1.id,
+      uploaderId: user2.id,
       tags: { create: [{ tagId: tags.奇幻.id }] },
     },
   })
@@ -68,7 +80,7 @@ async function main() {
       title: "STEINS;GATE",
       description: "岡部倫太郎、通称オカリン。彼が偶然発明した「電話レンジ(仮)」は、過去にメールを送ることができる装置だった。",
       type: "BOOK",
-      uploaderId: user2.id,
+      uploaderId: user3.id,
       tags: { create: [{ tagId: tags.轻小说.id }, { tagId: tags.科幻.id }] },
     },
   })
@@ -76,14 +88,14 @@ async function main() {
   console.log(`Created resources: ${resource1.title}, ${resource2.title}, ${resource3.title}`)
 
   await prisma.recommendation.create({
-    data: { userId: user2.id, resourceId: resource1.id, note: "神作，一生推！" },
+    data: { userId: user3.id, resourceId: resource1.id, note: "神作，一生推！" },
   })
 
   const collection = await prisma.collection.create({
     data: {
       title: "入门必看杰作",
-      description: "入坑必看的经典作品",
-      creatorId: user1.id,
+      description: "入坑必看的经典作品作为目录收藏",
+      creatorId: user2.id,
     },
   })
 
@@ -97,13 +109,13 @@ async function main() {
 
   await prisma.activity.createMany({
     data: [
-      { type: "UPLOAD", userId: user1.id, resourceId: resource1.id },
-      { type: "UPLOAD", userId: user1.id, resourceId: resource2.id },
-      { type: "UPLOAD", userId: user2.id, resourceId: resource3.id },
-      { type: "RECOMMEND", userId: user2.id, resourceId: resource1.id, metadata: "神作，一生推！" },
-      { type: "CREATE_COLLECTION", userId: user1.id, collectionId: collection.id },
-      { type: "ADD_TO_COLLECTION", userId: user1.id, resourceId: resource1.id, collectionId: collection.id },
-      { type: "ADD_TO_COLLECTION", userId: user1.id, resourceId: resource2.id, collectionId: collection.id },
+      { type: "UPLOAD", userId: user2.id, resourceId: resource1.id },
+      { type: "UPLOAD", userId: user2.id, resourceId: resource2.id },
+      { type: "UPLOAD", userId: user3.id, resourceId: resource3.id },
+      { type: "RECOMMEND", userId: user3.id, resourceId: resource1.id, metadata: "神作，一生推！" },
+      { type: "CREATE_COLLECTION", userId: user2.id, collectionId: collection.id },
+      { type: "ADD_TO_COLLECTION", userId: user2.id, resourceId: resource1.id, collectionId: collection.id },
+      { type: "ADD_TO_COLLECTION", userId: user2.id, resourceId: resource2.id, collectionId: collection.id },
     ],
   })
 

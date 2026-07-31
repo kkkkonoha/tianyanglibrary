@@ -5,143 +5,237 @@ import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { ImagePreview } from "@/components/image-preview"
 
 const typeLabels: Record<string, string> = {
-  BOOK: "📖 电子书",
-  COMIC: "📘 漫画",
-  VIDEO: "🎬 视频",
-  OTHER: "📁 其他",
+  BOOK: "电子书",
+  COMIC: "漫画",
+  VIDEO: "视频",
+  OTHER: "其他",
 }
 
-const typeColors: Record<string, string> = {
-  BOOK: "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200",
-  COMIC: "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200",
-  VIDEO: "bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200",
-  OTHER: "bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200",
+const typeIcons: Record<string, string> = {
+  BOOK: "📖",
+  COMIC: "📘",
+  VIDEO: "🎬",
+  OTHER: "📁",
 }
 
 export default async function ExplorePage({
   searchParams,
 }: {
-  searchParams: Promise<{ q?: string; type?: string }>
+  searchParams: Promise<{ q?: string; type?: string; tag?: string; page?: string; sort?: string }>
 }) {
-  const { q, type } = await searchParams
+  const { q, type, tag, page, sort } = await searchParams
+  const currentPage = Math.max(1, parseInt(page ?? "1") || 1)
+  const PAGE_SIZE = 24
+  const orderBy = sort === "hot"
+    ? { recommendations: { _count: "desc" as const } }
+    : { createdAt: "desc" as const }
 
   const where: any = {}
+  const andConditions: any[] = []
+
   if (q) {
-    where.OR = [
-      { title: { contains: q, mode: "insensitive" } },
-      { description: { contains: q, mode: "insensitive" } },
-    ]
+    andConditions.push({
+      OR: [
+        { title: { contains: q } },
+        { description: { contains: q } },
+        { tags: { some: { tag: { name: { contains: q } } } } },
+        { uploader: { username: { contains: q } } },
+      ],
+    })
   }
   if (type && type !== "ALL") {
-    where.type = type
+    andConditions.push({ type })
+  }
+  if (tag) {
+    andConditions.push({
+      tags: { some: { tag: { name: tag } } },
+    })
   }
 
-  const resources = await prisma.resource.findMany({
-    where,
-    orderBy: { createdAt: "desc" },
-    take: 100,
-    include: {
-      uploader: { select: { id: true, username: true, avatar: true } },
-      tags: { include: { tag: true } },
-      _count: { select: { recommendations: true, comments: true } },
-    },
-  })
+  if (andConditions.length > 0) {
+    where.AND = andConditions
+  }
+
+  const [resources, totalCount] = await Promise.all([
+    prisma.resource.findMany({
+      where,
+      orderBy,
+      skip: (currentPage - 1) * PAGE_SIZE,
+      take: PAGE_SIZE,
+      include: {
+        uploader: { select: { id: true, username: true, avatar: true } },
+        tags: { include: { tag: true } },
+        _count: { select: { recommendations: true, comments: true } },
+      },
+    }),
+    prisma.resource.count({ where }),
+  ])
+
+  const totalPages = Math.ceil(totalCount / PAGE_SIZE)
+
+  function buildUrl(params: { type?: string; q?: string; tag?: string; page?: number; sort?: string }) {
+    const parts: string[] = []
+    if (params.type && params.type !== "ALL") parts.push(`type=${params.type}`)
+    if (params.q) parts.push(`q=${encodeURIComponent(params.q)}`)
+    if (params.tag) parts.push(`tag=${encodeURIComponent(params.tag)}`)
+    if (params.page && params.page > 1) parts.push(`page=${params.page}`)
+    if (params.sort && params.sort !== "new") parts.push(`sort=${params.sort}`)
+    return parts.length ? `/explore?${parts.join("&")}` : "/explore"
+  }
 
   return (
-    <div className="container mx-auto max-w-6xl px-4 py-8">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold">探索资源</h1>
-        <p className="mt-2 text-muted-foreground">浏览动漫社共享图书馆的所有资源</p>
+    <div className="container mx-auto max-w-6xl px-4 py-12">
+      <div className="mb-10">
+        <h1 className="text-3xl font-bold tracking-tight">探索资源</h1>
+        <p className="mt-1.5 text-muted-foreground">浏览天央图书馆的所有资源</p>
       </div>
 
       <form className="mb-6 flex gap-2">
         <input type="hidden" name="type" value={type ?? "ALL"} />
+        {tag && <input type="hidden" name="tag" value={tag} />}
         <Input
           name="q"
-          placeholder="搜索资源..."
+          placeholder="搜索标题、描述或标签..."
           defaultValue={q ?? ""}
-          className="max-w-sm"
+          className="max-w-sm bg-background"
         />
         <Button type="submit">搜索</Button>
       </form>
 
-      <div className="mb-4 flex flex-wrap gap-2">
+      <div className="mb-4 flex flex-wrap items-center gap-1.5">
         {[
           { value: "ALL", label: "全部" },
-          { value: "BOOK", label: "📖 电子书" },
-          { value: "COMIC", label: "📘 漫画" },
-          { value: "VIDEO", label: "🎬 视频" },
-          { value: "OTHER", label: "📁 其他" },
+          { value: "BOOK", label: "电子书" },
+          { value: "COMIC", label: "漫画" },
+          { value: "VIDEO", label: "视频" },
+          { value: "OTHER", label: "其他" },
         ].map((t) => (
           <Link
             key={t.value}
-            href={`/explore?type=${t.value}${q ? `&q=${encodeURIComponent(q)}` : ""}`}
+            href={buildUrl({ type: t.value, q: q ?? "", tag })}
           >
-            <Badge variant={type === t.value || (!type && t.value === "ALL") ? "default" : "outline"}>
+            <Badge variant={type === t.value || (!type && t.value === "ALL") ? "default" : "secondary"}>
               {t.label}
             </Badge>
           </Link>
         ))}
       </div>
 
+      <div className="mb-4 flex items-center gap-1.5">
+        <span className="text-xs text-muted-foreground">排序：</span>
+        {[
+          { value: "new", label: "最新" },
+          { value: "hot", label: "最热" },
+        ].map((s) => (
+          <Link key={s.value} href={buildUrl({ type: type ?? "", q: q ?? "", tag, sort: s.value })}>
+            <Badge variant={(sort ?? "new") === s.value ? "default" : "secondary"}>
+              {s.label}
+            </Badge>
+          </Link>
+        ))}
+      </div>
+
+      {tag && (
+        <div className="mb-4 flex items-center gap-2 text-sm">
+          <span className="text-muted-foreground">标签过滤：</span>
+          <Badge variant="default" className="gap-1">
+            {tag}
+            <Link href={buildUrl({ type: type ?? "", q: q ?? "" })} className="ml-0.5 hover:text-destructive">✕</Link>
+          </Badge>
+        </div>
+      )}
+
       {resources.length === 0 ? (
-        <Card>
-          <CardContent className="flex flex-col items-center justify-center py-12 text-center">
-            <p className="text-lg text-muted-foreground">没有找到资源</p>
-            <p className="text-sm text-muted-foreground">尝试其他搜索条件</p>
+        <Card className="border-dashed">
+          <CardContent className="flex flex-col items-center justify-center py-16 text-center">
+            <p className="text-lg font-medium">没有找到资源</p>
+            <p className="mt-1 text-sm text-muted-foreground">尝试其他搜索条件</p>
           </CardContent>
         </Card>
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {resources.map((resource) => (
-            <Link key={resource.id} href={`/resource/${resource.id}`}>
-              <Card className="h-full transition-shadow hover:shadow-md">
+            <div key={resource.id} className="group relative">
+              <Link href={`/resource/${resource.id}`} className="absolute inset-0 z-10">
+                <span className="sr-only">{resource.title}</span>
+              </Link>
+              <Card className="h-full overflow-hidden border-transparent shadow-sm transition-all group-hover:border-border group-hover:shadow-md">
                 {resource.coverImage ? (
-                  <img
-                    src={resource.coverImage}
-                    alt={resource.title}
-                    className="h-40 w-full rounded-t-lg object-cover"
-                  />
+                  <ImagePreview src={resource.coverImage} alt={resource.title} className="block">
+                    <img
+                      src={resource.coverImage}
+                      alt={resource.title}
+                      className="h-44 w-full object-contain transition-transform duration-300 group-hover:scale-105 bg-muted/30"
+                    />
+                  </ImagePreview>
                 ) : (
-                  <div className="flex h-40 items-center justify-center rounded-t-lg bg-muted">
-                    <span className="text-4xl">{typeLabels[resource.type].charAt(0)}</span>
+                  <div className="flex h-44 items-center justify-center bg-gradient-to-br from-secondary to-secondary/50 transition-colors group-hover:from-secondary/80">
+                    <div className="flex flex-col items-center gap-2">
+                      <span className="text-4xl">{typeIcons[resource.type]}</span>
+                      <span className="text-xs font-medium text-muted-foreground">{typeLabels[resource.type]}</span>
+                    </div>
                   </div>
                 )}
                 <CardContent className="p-4">
-                  <div className="mb-1 flex items-center gap-1">
-                    <Badge variant="secondary" className="text-xs px-1.5">
-                      {typeLabels[resource.type]}
-                    </Badge>
-                  </div>
-                  <h3 className="font-medium line-clamp-1">{resource.title}</h3>
-                  <div className="mt-2 flex items-center gap-2 text-xs text-muted-foreground">
-                    <Avatar className="h-4 w-4">
-                      <AvatarImage src={resource.uploader.avatar ?? undefined} />
-                      <AvatarFallback className="text-[10px]">
-                        {resource.uploader.username.slice(0, 1).toUpperCase()}
-                      </AvatarFallback>
-                    </Avatar>
-                    <span>{resource.uploader.username}</span>
-                    <span>·</span>
+                  <h3 className="font-semibold line-clamp-1 group-hover:text-primary transition-colors">{resource.title}</h3>
+                  <div className="mt-2.5 flex items-center gap-2 text-xs text-muted-foreground">
+                    <Link href={`/profile/${resource.uploader.username}`} className="relative z-20 flex items-center gap-2 hover:text-foreground">
+                      <Avatar className="h-5 w-5">
+                        <AvatarImage src={resource.uploader.avatar ?? undefined} />
+                        <AvatarFallback className="text-[10px]">
+                          {resource.uploader.username.slice(0, 1).toUpperCase()}
+                        </AvatarFallback>
+                      </Avatar>
+                      <span>{resource.uploader.username}</span>
+                    </Link>
+                    <span className="opacity-40">·</span>
                     <span>{resource._count.recommendations} 推荐</span>
-                    <span>·</span>
+                    <span className="opacity-40">·</span>
                     <span>{resource._count.comments} 评论</span>
                   </div>
                   {resource.tags.length > 0 && (
-                    <div className="mt-2 flex flex-wrap gap-1">
+                    <div className="mt-2.5 flex flex-wrap gap-1">
                       {resource.tags.slice(0, 3).map((rt) => (
-                        <Badge key={rt.tag.id} variant="outline" className="text-xs px-1.5">
-                          {rt.tag.name}
-                        </Badge>
+                        <Link
+                          key={rt.tag.id}
+                          href={buildUrl({ tag: rt.tag.name, type: type ?? "", q: q ?? "" })}
+                          className="relative z-20"
+                        >
+                          <Badge
+                            variant={tag === rt.tag.name ? "default" : "outline"}
+                            className="text-xs font-normal hover:bg-primary/10"
+                          >
+                            {rt.tag.name}
+                          </Badge>
+                        </Link>
                       ))}
                     </div>
                   )}
                 </CardContent>
               </Card>
-            </Link>
+            </div>
           ))}
+        </div>
+      )}
+
+      {totalPages > 1 && (
+        <div className="mt-8 flex items-center justify-center gap-4">
+          {currentPage > 1 && (
+            <Link href={buildUrl({ type: type ?? "", q: q ?? "", tag, page: currentPage - 1 })}>
+              <Button variant="outline" size="sm">上一页</Button>
+            </Link>
+          )}
+          <span className="text-sm text-muted-foreground">
+            {currentPage} / {totalPages}
+          </span>
+          {currentPage < totalPages && (
+            <Link href={buildUrl({ type: type ?? "", q: q ?? "", tag, page: currentPage + 1 })}>
+              <Button variant="outline" size="sm">下一页</Button>
+            </Link>
+          )}
         </div>
       )}
     </div>
