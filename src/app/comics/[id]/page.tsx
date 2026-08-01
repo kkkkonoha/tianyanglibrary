@@ -128,26 +128,6 @@ export default async function ComicDetailPage({
         </div>
       </div>
 
-      <div className="mt-8">
-        <h2 className="mb-3 text-lg font-semibold">章节列表</h2>
-        {chapters.length === 0 ? (
-          <p className="text-sm text-muted-foreground">暂无章节</p>
-        ) : (
-          <div className="grid gap-2 sm:grid-cols-2">
-            {chapters.map((ch) => (
-              <Link
-                key={ch.id}
-                href={`/comics/${id}/read?chapter=${ch.id}`}
-                className="flex items-center justify-between rounded-lg border bg-background px-4 py-2.5 text-sm transition-colors hover:bg-secondary/50"
-              >
-                <span className="flex-1 truncate">{ch.name}</span>
-                {ch.scanlator && <span className="ml-2 shrink-0 text-xs text-muted-foreground">{ch.scanlator}</span>}
-              </Link>
-            ))}
-          </div>
-        )}
-      </div>
-
       {readingHistory && (
         <div className="mt-8">
           <Card className="border-primary/30 bg-primary/5">
@@ -169,6 +149,26 @@ export default async function ComicDetailPage({
           </Card>
         </div>
       )}
+
+      <div className="mt-8">
+        <h2 className="mb-3 text-lg font-semibold">章节列表</h2>
+        {chapters.length === 0 ? (
+          <p className="text-sm text-muted-foreground">暂无章节</p>
+        ) : (
+          <div className="grid gap-2 sm:grid-cols-2">
+            {chapters.map((ch) => (
+              <Link
+                key={ch.id}
+                href={`/comics/${id}/read?chapter=${ch.id}`}
+                className="flex items-center justify-between rounded-lg border bg-background px-4 py-2.5 text-sm transition-colors hover:bg-secondary/50"
+              >
+                <span className="flex-1 truncate">{ch.name}</span>
+                {ch.scanlator && <span className="ml-2 shrink-0 text-xs text-muted-foreground">{ch.scanlator}</span>}
+              </Link>
+            ))}
+          </div>
+        )}
+      </div>
 
       {resource && (
         <>
