@@ -135,7 +135,7 @@ export default async function HomePage({
                     </div>
                   </div>
                   {session?.user && (isAdmin(session) || activity.userId === (session.user as { id: string }).id) && (
-                    <div className="opacity-0 transition-opacity group-hover:opacity-100">
+                    <div className="opacity-60 transition-opacity sm:opacity-0 sm:group-hover:opacity-100">
                       <DeleteActivityButton activityId={activity.id} />
                     </div>
                   )}
