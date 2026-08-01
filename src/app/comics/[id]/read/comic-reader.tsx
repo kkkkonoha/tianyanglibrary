@@ -188,7 +188,7 @@ export function ComicReader({
             variant="outline"
             size="sm"
             className="border-white/20 bg-transparent text-white hover:bg-white/10"
-            onClick={() => router.push("/comics")}
+            onClick={() => router.push(`/comics/${mangaId}`)}
             title="退出阅读"
           >
             ✕ 退出
