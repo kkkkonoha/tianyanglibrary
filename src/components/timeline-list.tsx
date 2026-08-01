@@ -149,9 +149,9 @@ export function TimelineList({
               if (i > 0 && collapsed) return null
               return (
                 <div key={activity.id}>
-                  <div className="relative group">
+                  <div className="relative">
                     {canManage(activity) && (
-                      <div className="absolute right-1 top-3 z-10 opacity-60 transition-opacity sm:opacity-0 sm:group-hover:opacity-100">
+                      <div className="absolute right-1 top-3 z-10 opacity-50 transition-opacity hover:opacity-100">
                         <DeleteActivityButton activityId={activity.id} />
                       </div>
                     )}
