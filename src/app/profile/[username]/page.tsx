@@ -54,6 +54,7 @@ export default async function ProfilePage({
     collections, totalCollections,
     recommendations, totalRecommendations,
     favorites, totalFavorites,
+    favoriteResources, totalFavoriteResources,
   ] = await Promise.all([
     prisma.resource.findMany({
       where: { uploaderId: user.id },
@@ -83,6 +84,13 @@ export default async function ProfilePage({
       include: { collection: { include: { creator: { select: { username: true } }, _count: { select: { resources: true, favorites: true } } } } },
     }),
     prisma.favoriteCollection.count({ where: { userId: user.id } }),
+    prisma.favoriteResource.findMany({
+      where: { userId: user.id },
+      orderBy: { createdAt: "desc" },
+      take: SECTION_LIMIT,
+      include: { resource: { select: { id: true, title: true, type: true, coverImage: true, comicMangaId: true } } },
+    }),
+    prisma.favoriteResource.count({ where: { userId: user.id } }),
   ])
 
   return (
@@ -99,6 +107,7 @@ export default async function ProfilePage({
             <span>{totalResources} 资源</span>
             <span>{totalCollections} 目录</span>
             <span>{totalRecommendations} 推荐</span>
+            <span>{totalFavoriteResources} 书架</span>
             <span>{totalFavorites} 收藏</span>
           </div>
         </div>
@@ -207,6 +216,46 @@ export default async function ProfilePage({
               <div className="mt-3 text-center">
                 <Link href={`/profile/${user.username}/recommendations`}>
                   <Button variant="outline" size="sm">查看更多推荐 ({totalRecommendations})</Button>
+                </Link>
+              </div>
+            )}
+          </>
+        )}
+      </Section>
+
+      {/* Shelf (FavoriteResources) */}
+      <Section title="书架" count={totalFavoriteResources}>
+        {favoriteResources.length === 0 ? (
+          <Empty>书架还是空的</Empty>
+        ) : (
+          <>
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              {favoriteResources.map((fav) => {
+                const r = fav.resource
+                const href = r.type === "COMIC" && r.comicMangaId ? `/comics/${r.comicMangaId}` : `/resource/${r.id}`
+                return (
+                  <Link key={fav.id} href={href}>
+                    <Card className="h-full overflow-hidden transition-shadow hover:shadow-md">
+                      {r.coverImage ? (
+                        <img src={r.coverImage} alt={r.title} loading="lazy" decoding="async" className="h-32 w-full object-contain bg-muted/30" />
+                      ) : (
+                        <div className="flex h-32 items-center justify-center bg-muted">
+                          <span className="text-3xl font-bold text-muted-foreground/30">{typeIcons[r.type]}</span>
+                        </div>
+                      )}
+                      <CardContent className="p-3">
+                        <Badge variant="secondary" className="text-xs mb-1">{typeLabels[r.type]}</Badge>
+                        <h3 className="font-medium text-sm line-clamp-1">{r.title}</h3>
+                      </CardContent>
+                    </Card>
+                  </Link>
+                )
+              })}
+            </div>
+            {totalFavoriteResources > SECTION_LIMIT && (
+              <div className="mt-3 text-center">
+                <Link href="/favorites">
+                  <Button variant="outline" size="sm">查看完整书架 ({totalFavoriteResources})</Button>
                 </Link>
               </div>
             )}
