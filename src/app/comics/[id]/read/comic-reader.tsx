@@ -44,6 +44,13 @@ export function ComicReader({
   const nextChapter = activeIndex < chapters.length - 1 ? chapters[activeIndex + 1] : null
   const totalPages = pages.length
 
+  // 章节切换时重置阅读位置（新章节从开头开始）
+  useEffect(() => {
+    setPageIndex(0)
+    setLoaded(new Set())
+    if (containerRef.current) containerRef.current.scrollTop = 0
+  }, [chapter.id])
+
   // Load reading mode preference
   useEffect(() => {
     try {
