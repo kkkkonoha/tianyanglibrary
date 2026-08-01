@@ -2,7 +2,7 @@ import { auth } from "@/lib/auth"
 import { redirect, notFound } from "next/navigation"
 import { prisma } from "@/lib/db"
 import { getManga, fetchMangaChapters } from "@/lib/suwayomi"
-import { ensureComicResource } from "@/lib/actions/comic"
+import { ensureComicResource } from "@/lib/comic-import"
 import Link from "next/link"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -35,8 +35,8 @@ export default async function ComicDetailPage({
     notFound()
   }
 
-  // 自动入库：查找或创建本地 Resource
-  const imported = await ensureComicResource(id, manga.sourceId ?? "524579092615598717")
+  // 自动入库：查找或创建本地 Resource（普通函数，渲染中直接调用）
+  const imported = await ensureComicResource(id, manga.sourceId ?? "524579092615598717", session.user.id as string)
 
   // 阅读历史
   let readingHistory: any = null
