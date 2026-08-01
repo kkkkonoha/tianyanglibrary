@@ -215,7 +215,7 @@ export default async function ProfilePage({
       </Section>
 
       {/* Favorites */}
-      <Section title="收藏" count={totalFavorites}>
+      <Section title="收藏的目录" count={totalFavorites}>
         {favorites.length === 0 ? (
           <Empty>还没有收藏目录</Empty>
         ) : (
@@ -241,7 +241,7 @@ export default async function ProfilePage({
             {totalFavorites > SECTION_LIMIT && (
               <div className="mt-3 text-center">
                 <Link href={`/profile/${user.username}/favorites`}>
-                  <Button variant="outline" size="sm">查看更多收藏 ({totalFavorites})</Button>
+                  <Button variant="outline" size="sm">查看更多收藏的目录 ({totalFavorites})</Button>
                 </Link>
               </div>
             )}

@@ -32,7 +32,7 @@ export default async function UserFavoritesPage({
   return (
     <div className="container mx-auto max-w-4xl px-4 py-12">
       <Link href={`/profile/${user.username}`} className="text-sm text-muted-foreground hover:underline">← 回到 {user.username} 的主页</Link>
-      <div className="mt-4 mb-8"><h1 className="text-3xl font-bold tracking-tight">{user.username} 的收藏 ({total})</h1></div>
+      <div className="mt-4 mb-8"><h1 className="text-3xl font-bold tracking-tight">{user.username} 收藏的目录 ({total})</h1></div>
       {favs.length === 0 ? (
         <Card className="border-dashed"><CardContent className="py-12 text-center text-muted-foreground">还没有收藏</CardContent></Card>
       ) : (
