@@ -25,12 +25,14 @@ export function ComicReader({
   chapters,
   activeIndex,
   pages,
+  startFromEnd = false,
 }: {
   mangaId: string
   mangaTitle: string
   chapters: ChapterOption[]
   activeIndex: number
   pages: ReaderPage[]
+  startFromEnd?: boolean
 }) {
   const router = useRouter()
   const [loaded, setLoaded] = useState<Set<number>>(new Set())
@@ -44,12 +46,21 @@ export function ComicReader({
   const nextChapter = activeIndex < chapters.length - 1 ? chapters[activeIndex + 1] : null
   const totalPages = pages.length
 
-  // 章节切换时重置阅读位置（新章节从开头开始）
+  // 章节切换时重置阅读位置（新章节从开头开始；startFromEnd 时从末尾开始）
   useEffect(() => {
-    setPageIndex(0)
     setLoaded(new Set())
-    if (containerRef.current) containerRef.current.scrollTop = 0
-  }, [chapter.id])
+    if (startFromEnd) {
+      if (totalPages > 0) {
+        setPageIndex(totalPages - 1)
+      }
+      if (containerRef.current) {
+        containerRef.current.scrollTop = containerRef.current.scrollHeight
+      }
+    } else {
+      setPageIndex(0)
+      if (containerRef.current) containerRef.current.scrollTop = 0
+    }
+  }, [chapter.id, startFromEnd, totalPages])
 
   // Load reading mode preference
   useEffect(() => {
@@ -86,6 +97,7 @@ export function ComicReader({
 
   // Restore progress from server on chapter change
   useEffect(() => {
+    if (startFromEnd) return
     let cancelled = false
     fetch(`/api/comic-progress?mangaId=${mangaId}`)
       .then((r) => r.json())
@@ -108,7 +120,7 @@ export function ComicReader({
       .catch(() => {})
     return () => { cancelled = true }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [mangaId, chapter.id, totalPages])
+  }, [mangaId, chapter.id, totalPages, startFromEnd])
 
   // Save page progress when flipping in page mode
   useEffect(() => {
@@ -132,6 +144,7 @@ export function ComicReader({
 
   // Restore progress
   useEffect(() => {
+    if (startFromEnd) return
     const key = `comic-progress-${mangaId}-${chapter.id}`
     try {
       const saved = localStorage.getItem(key)
@@ -144,7 +157,7 @@ export function ComicReader({
       }
     } catch {}
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [mangaId, chapter.id, mode])
+  }, [mangaId, chapter.id, mode, startFromEnd])
 
   // Save progress (debounced for scroll, immediate for page)
   const onScroll = useCallback(() => {
@@ -331,7 +344,7 @@ export function ComicReader({
                     variant="outline"
                     size="sm"
                     className="border-white/20 bg-transparent text-white hover:bg-white/10"
-                    onClick={() => router.push(`/comics/${mangaId}/read?chapter=${prevChapter.id}`)}
+                    onClick={() => router.push(`/comics/${mangaId}/read?chapter=${prevChapter.id}&end=1`)}
                   >
                     上一章
                   </Button>
@@ -424,7 +437,7 @@ export function ComicReader({
                   variant="outline"
                   size="sm"
                   className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 border-white/30 bg-black/70 text-white hover:bg-white/10"
-                  onClick={(e) => { e.stopPropagation(); router.push(`/comics/${mangaId}/read?chapter=${prevChapter.id}`) }}
+                  onClick={(e) => { e.stopPropagation(); router.push(`/comics/${mangaId}/read?chapter=${prevChapter.id}&end=1`) }}
                 >
                   上一章
                 </Button>

@@ -10,13 +10,13 @@ export default async function ComicReadPage({
   searchParams,
 }: {
   params: Promise<{ id: string }>
-  searchParams: Promise<{ chapter?: string }>
+  searchParams: Promise<{ chapter?: string; end?: string }>
 }) {
   const session = await auth()
   if (!session?.user) redirect("/login")
 
   const { id } = await params
-  const { chapter } = await searchParams
+  const { chapter, end } = await searchParams
   if (!/^\d+$/.test(id)) notFound()
 
   let manga: any
@@ -54,6 +54,7 @@ export default async function ComicReadPage({
         mangaTitle={manga.title}
         chapters={chapters.map((c) => ({ id: String(c.id), name: c.name }))}
         activeIndex={activeIndex}
+        startFromEnd={end === "1"}
         pages={pages.map((p) => ({ index: p.index, url: `/api/suwayomi${p.url.startsWith("/") ? p.url : "/" + p.url}` }))}
       />
     </div>
