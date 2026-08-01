@@ -52,6 +52,71 @@ export function ComicReader({
     } catch {}
   }, [])
 
+  // Save progress to server (debounced)
+  const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const saveProgress = useCallback((value: string) => {
+    const key = `comic-progress-${mangaId}-${chapter.id}`
+    try { localStorage.setItem(key, value) } catch {}
+  }, [mangaId, chapter.id])
+
+  const saveToServer = useCallback((pIndex: number) => {
+    if (saveTimer.current) clearTimeout(saveTimer.current)
+    saveTimer.current = setTimeout(() => {
+      fetch("/api/comic-progress", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          mangaId,
+          mangaTitle,
+          chapterId: chapter.id,
+          chapterName: chapter.name,
+          pageIndex: pIndex,
+          totalPages,
+        }),
+      }).catch(() => {})
+    }, 500)
+  }, [mangaId, mangaTitle, chapter.id, chapter.name, totalPages])
+
+  // Restore progress from server on chapter change
+  useEffect(() => {
+    let cancelled = false
+    fetch(`/api/comic-progress?mangaId=${mangaId}`)
+      .then((r) => r.json())
+      .then((d) => {
+        if (cancelled || !d.history) return
+        const h = d.history
+        // If the server has a more recent chapter than the current one and
+        // no chapter was explicitly requested, jump to the saved chapter.
+        if (h.chapterId && String(h.chapterId) !== String(chapter.id) && !window.location.search.includes("chapter=")) {
+          window.location.href = `/comics/${mangaId}/read?chapter=${h.chapterId}`
+          return
+        }
+        // Restore page position for the current chapter
+        if (String(h.chapterId) === String(chapter.id)) {
+          if (h.pageIndex > 0 && h.pageIndex < totalPages) {
+            setPageIndex(h.pageIndex)
+          }
+        }
+      })
+      .catch(() => {})
+    return () => { cancelled = true }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [mangaId, chapter.id, totalPages])
+
+  // Save page progress when flipping in page mode
+  useEffect(() => {
+    if (mode === "page") {
+      saveProgress(String(pageIndex))
+      saveToServer(pageIndex)
+    }
+  }, [pageIndex, mode, saveProgress, saveToServer])
+
+  // Save chapter entry progress on mount (scroll mode starts at chapter start)
+  useEffect(() => {
+    if (mode === "scroll") saveToServer(0)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [chapter.id])
+
   // Save reading mode preference
   function switchMode(m: ReaderMode) {
     setMode(m)
@@ -75,19 +140,21 @@ export function ComicReader({
   }, [mangaId, chapter.id, mode])
 
   // Save progress (debounced for scroll, immediate for page)
-  const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
-  const saveProgress = useCallback((value: string) => {
-    const key = `comic-progress-${mangaId}-${chapter.id}`
-    try { localStorage.setItem(key, value) } catch {}
-  }, [mangaId, chapter.id])
-
   const onScroll = useCallback(() => {
     if (!containerRef.current) return
     if (saveTimer.current) clearTimeout(saveTimer.current)
     saveTimer.current = setTimeout(() => {
-      saveProgress(String(containerRef.current?.scrollTop ?? 0))
-    }, 300)
-  }, [saveProgress])
+      const el = containerRef.current
+      if (!el) return
+      saveProgress(String(el.scrollTop))
+      // 粗略估算当前页数（scrollTop / 内容高度 * 总页数）用于服务器记录
+      if (el.scrollHeight > 0) {
+        const ratio = el.scrollTop / (el.scrollHeight - window.innerHeight)
+        const pIndex = Math.min(totalPages - 1, Math.max(0, Math.round(ratio * totalPages)))
+        saveToServer(pIndex)
+      }
+    }, 800)
+  }, [saveProgress, saveToServer, totalPages])
 
   // Keyboard navigation
   useEffect(() => {

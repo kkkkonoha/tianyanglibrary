@@ -38,6 +38,19 @@ export default async function ComicDetailPage({
   // 自动入库：查找或创建本地 Resource
   const imported = await ensureComicResource(id, manga.sourceId ?? "524579092615598717")
 
+  // 阅读历史
+  let readingHistory: any = null
+  if (session?.user) {
+    readingHistory = await prisma.readingHistory.findUnique({
+      where: {
+        userId_mangaId: {
+          userId: session.user.id as string,
+          mangaId: id,
+        },
+      },
+    })
+  }
+
   // 查本地 Resource 及其推荐/评论
   let resource: any = null
   let hasRecommended = false
@@ -134,6 +147,28 @@ export default async function ComicDetailPage({
           </div>
         )}
       </div>
+
+      {readingHistory && (
+        <div className="mt-8">
+          <Card className="border-primary/30 bg-primary/5">
+            <CardContent className="flex flex-wrap items-center justify-between gap-3 p-4">
+              <div>
+                <p className="text-sm font-medium">上次阅读：{readingHistory.chapterName}</p>
+                <p className="mt-0.5 text-xs text-muted-foreground">
+                  {readingHistory.totalPages > 0
+                    ? `读到第 ${Math.min(readingHistory.pageIndex + 1, readingHistory.totalPages)} / ${readingHistory.totalPages} 页`
+                    : `第 ${readingHistory.pageIndex + 1} 页`}
+                  {" · "}
+                  {new Date(readingHistory.updatedAt).toLocaleString("zh-CN", { timeZone: "Asia/Shanghai" })}
+                </p>
+              </div>
+              <Link href={`/comics/${id}/read?chapter=${readingHistory.chapterId}`}>
+                <Button size="sm">继续阅读</Button>
+              </Link>
+            </CardContent>
+          </Card>
+        </div>
+      )}
 
       {resource && (
         <>

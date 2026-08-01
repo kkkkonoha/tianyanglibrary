@@ -38,6 +38,7 @@ model User {
   favorites        FavoriteCollection[]
   activities       Activity[]
   notifications    Notification[]
+  readingHistory   ReadingHistory[]
 }
 
 model Resource {
@@ -171,4 +172,19 @@ model Activity {
   collection   Collection?  @relation(fields: [collectionId], references: [id])
   metadata     String?
   createdAt    DateTime     @default(now())
+}
+
+model ReadingHistory {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  mangaId     String
+  mangaTitle  String
+  chapterId   String
+  chapterName String
+  pageIndex   Int      @default(0)
+  totalPages  Int      @default(0)
+  updatedAt   DateTime @updatedAt
+
+  @@unique([userId, mangaId])
 }
