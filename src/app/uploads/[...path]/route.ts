@@ -29,10 +29,15 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ pat
   const data = await readFile(abs)
   const name = path[path.length - 1]
   const ext = name.split(".").pop()?.toLowerCase() ?? ""
+  // 封面/头像内容可变：短缓存；附件不可变：长缓存
+  const cacheControl =
+    path[0] === "covers" || path[0] === "avatars"
+      ? "public, max-age=3600"
+      : "public, max-age=31536000, immutable"
   return new NextResponse(data, {
     headers: {
       "Content-Type": MIME[ext] ?? "application/octet-stream",
-      "Cache-Control": "public, max-age=31536000, immutable",
+      "Cache-Control": cacheControl,
     },
   })
 }

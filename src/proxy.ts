@@ -14,7 +14,13 @@ export function proxy(request: NextRequest) {
 
   if (pathname.startsWith("/uploads/")) {
     const response = NextResponse.next()
-    response.headers.set("Cache-Control", "public, max-age=31536000, immutable")
+    // 封面/头像内容会随上传或恢复而变化：短缓存（1 小时），重传后新 URL 立即生效
+    if (pathname.startsWith("/uploads/covers/") || pathname.startsWith("/uploads/avatars/")) {
+      response.headers.set("Cache-Control", "public, max-age=3600")
+    } else {
+      // 附件文件不可变：长缓存
+      response.headers.set("Cache-Control", "public, max-age=31536000, immutable")
+    }
     return response
   }
 

@@ -22,8 +22,13 @@ export async function GET(req: NextRequest) {
     const headers = new Headers()
     const ct = res.headers.get("content-type")
     if (ct) headers.set("content-type", ct)
-    const cc = res.headers.get("cache-control")
-    if (cc) headers.set("cache-control", cc)
+    // 图片类（封面/章节页）URL 固定但内容会随源站更新：强制 1 天缓存，避免永久陈旧
+    if (ct?.startsWith("image/")) {
+      headers.set("cache-control", "public, max-age=86400")
+    } else {
+      const cc = res.headers.get("cache-control")
+      if (cc) headers.set("cache-control", cc)
+    }
 
     return new NextResponse(res.body, { status: res.status, headers })
   } catch {
