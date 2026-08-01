@@ -2,7 +2,7 @@ import { auth } from "@/lib/auth"
 import { redirect, notFound } from "next/navigation"
 import { prisma } from "@/lib/db"
 import { getManga, fetchMangaChapters } from "@/lib/suwayomi"
-import { ensureComicResource } from "@/lib/comic-import"
+import { findComicResource } from "@/lib/comic-import"
 import Link from "next/link"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -12,6 +12,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { CommentSection } from "@/components/comment-section"
 import { RecommendButton } from "@/components/recommend-button"
 import { AddToDirectoryButton } from "@/components/add-to-directory-button"
+import { ImportComicButton } from "@/components/import-comic-button"
 
 export const dynamic = "force-dynamic"
 
@@ -35,8 +36,9 @@ export default async function ComicDetailPage({
     notFound()
   }
 
-  // 自动入库：查找或创建本地 Resource（普通函数，渲染中直接调用）
-  const imported = await ensureComicResource(id, manga.sourceId ?? "524579092615598717", session.user.id as string)
+  // 查询是否已入库（不自动创建，由用户手动点击「入库」按钮触发）
+  const sourceId = manga.sourceId ?? "524579092615598717"
+  const existingResource = await findComicResource(id, sourceId, manga.title)
 
   // 阅读历史
   let readingHistory: any = null
@@ -55,9 +57,9 @@ export default async function ComicDetailPage({
   let resource: any = null
   let hasRecommended = false
   let userDirs: Array<{ id: string; title: string }> = []
-  if (imported.resourceId) {
+  if (existingResource) {
     resource = await prisma.resource.findUnique({
-      where: { id: imported.resourceId },
+      where: { id: existingResource.id },
       include: {
         uploader: { select: { id: true, username: true, avatar: true } },
         recommendations: {
@@ -118,11 +120,18 @@ export default async function ComicDetailPage({
           )}
           <div className="mt-4 flex flex-wrap items-center gap-2">
             <Badge variant="outline">{chapters.length} 章</Badge>
-            <Badge variant="secondary">已入库</Badge>
-            {resource?.id && (
-              <Link href={`/resource/${resource.id}`}>
-                <Button variant="outline" size="sm">查看条目</Button>
-              </Link>
+            {resource?.id ? (
+              <>
+                <Badge variant="secondary">已入库</Badge>
+                <Link href={`/resource/${resource.id}`}>
+                  <Button variant="outline" size="sm">查看条目</Button>
+                </Link>
+              </>
+            ) : (
+              <>
+                <Badge variant="outline">未入库</Badge>
+                <ImportComicButton mangaId={id} sourceId={sourceId} />
+              </>
             )}
           </div>
         </div>
