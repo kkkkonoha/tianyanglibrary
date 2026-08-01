@@ -4,12 +4,12 @@ import { useRouter } from "next/navigation"
 import { ConfirmButton } from "@/components/confirm-button"
 import { deleteResource } from "@/lib/actions/resource"
 
-export function DeleteResourceButton({ resourceId }: { resourceId: string }) {
+export function DeleteResourceButton({ resourceId }: { resourceId: string | number }) {
   const router = useRouter()
 
   async function handleDelete() {
     const formData = new FormData()
-    formData.set("id", resourceId)
+    formData.set("id", String(resourceId))
     await deleteResource(formData)
     router.refresh()
   }

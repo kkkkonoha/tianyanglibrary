@@ -14,7 +14,7 @@ export function AddToDirectoryButton({
   resourceId,
   directories,
 }: {
-  resourceId: string
+  resourceId: string | number
   directories: DirItem[]
 }) {
   const router = useRouter()
@@ -24,7 +24,7 @@ export function AddToDirectoryButton({
 
   async function handleAdd(dirId: string) {
     setLoading(dirId)
-    const result = await addToCollection(dirId, resourceId)
+    const result = await addToCollection(dirId, String(resourceId))
     if (result?.success) {
       setAdded([...added, dirId])
     }

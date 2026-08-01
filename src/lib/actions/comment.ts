@@ -18,7 +18,9 @@ export async function addComment(formData: FormData) {
   if (!session?.user) return { error: "请先登录" }
 
   const content = formData.get("content") as string
-  const resourceId = (formData.get("resourceId") as string) ?? null
+  const resourceIdRaw = formData.get("resourceId") as string | null
+  const resourceId = resourceIdRaw ? Number(resourceIdRaw) : null
+  if (resourceIdRaw && !Number.isInteger(resourceId)) return { error: "资源 ID 无效" }
   const collectionId = (formData.get("collectionId") as string) ?? null
   const parentId = (formData.get("parentId") as string) ?? null
 

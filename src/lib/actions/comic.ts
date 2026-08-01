@@ -40,12 +40,16 @@ export async function importComicResource(mangaId: string, sourceId: string) {
 
 // 手动合并：把 sourceResourceId 条目合并进 targetResourceId 条目。
 // 要求当前用户是两个条目的作者或管理员；转移源绑定/评论/推荐/目录收藏/动态后删除源条目。
-export async function mergeComicResources(targetResourceId: string, sourceResourceId: string) {
+export async function mergeComicResources(targetResourceId: string | number, sourceResourceId: string | number) {
   const session = await auth()
   if (!session?.user) return { error: "请先登录" }
 
-  const target = await prisma.resource.findUnique({ where: { id: targetResourceId } })
-  const source = await prisma.resource.findUnique({ where: { id: sourceResourceId } })
+  const targetId = Number(targetResourceId)
+  const sourceId = Number(sourceResourceId)
+  if (!Number.isInteger(targetId) || !Number.isInteger(sourceId)) return { error: "条目 ID 无效" }
+
+  const target = await prisma.resource.findUnique({ where: { id: targetId } })
+  const source = await prisma.resource.findUnique({ where: { id: sourceId } })
   if (!target || !source) return { error: "条目不存在" }
   if (target.type !== "COMIC" || source.type !== "COMIC") return { error: "只能合并漫画条目" }
   if (target.id === source.id) return { error: "不能合并到自身" }

@@ -10,7 +10,9 @@ export async function toggleRecommendation(formData: FormData) {
   const session = await auth()
   if (!session?.user) return { error: "请先登录" }
 
-  const resourceId = formData.get("resourceId") as string
+  const resourceIdRaw = formData.get("resourceId") as string
+  const resourceId = Number(resourceIdRaw)
+  if (!Number.isInteger(resourceId)) return { error: "资源 ID 无效" }
   const note = (formData.get("note") as string)?.trim() || undefined
   const userId = session.user.id as string
 

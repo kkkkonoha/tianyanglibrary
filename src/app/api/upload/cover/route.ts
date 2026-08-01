@@ -19,6 +19,10 @@ export async function POST(req: NextRequest) {
   if (!resourceId) {
     return NextResponse.json({ error: "缺少资源 ID" }, { status: 400 })
   }
+  const rid = Number(resourceId)
+  if (!Number.isInteger(rid)) {
+    return NextResponse.json({ error: "资源 ID 无效" }, { status: 400 })
+  }
   if (!file || file.size === 0) {
     return NextResponse.json({ error: "请选择文件" }, { status: 400 })
   }
@@ -28,7 +32,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "封面文件不能超过 10MB" }, { status: 400 })
   }
 
-  const resource = await prisma.resource.findUnique({ where: { id: resourceId } })
+  const resource = await prisma.resource.findUnique({ where: { id: rid } })
   if (!resource || resource.uploaderId !== (session.user as { id: string }).id) {
     return NextResponse.json({ error: "无权操作" }, { status: 403 })
   }
@@ -53,7 +57,7 @@ export async function POST(req: NextRequest) {
 
   const oldCover = resource.coverImage
   await prisma.resource.update({
-    where: { id: resourceId },
+    where: { id: rid },
     data: { coverImage: `/uploads/covers/${filename}` },
   })
 

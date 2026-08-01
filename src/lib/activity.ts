@@ -6,7 +6,7 @@ type ActivityType = $Enums.ActivityType
 interface CreateActivityParams {
   type: ActivityType
   userId: string
-  resourceId?: string
+  resourceId?: number
   collectionId?: string
   metadata?: string
 }

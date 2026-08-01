@@ -25,7 +25,8 @@ export default async function ResourcePage({
 }: {
   params: Promise<{ id: string }>
 }) {
-  const { id } = await params
+  const id = Number((await params).id)
+  if (!Number.isInteger(id)) notFound()
   const session = await auth()
 
   const resource = await prisma.resource.findUnique({

@@ -9,7 +9,8 @@ export default async function EditResourcePage({
 }: {
   params: Promise<{ id: string }>
 }) {
-  const { id } = await params
+  const id = Number((await params).id)
+  if (!Number.isInteger(id)) notFound()
   const session = await auth()
   if (!session?.user) redirect("/login")
 
@@ -28,7 +29,7 @@ export default async function EditResourcePage({
 
   return (
     <EditResourceForm
-      id={resource.id}
+      id={String(resource.id)}
       title={resource.title}
       author={resource.author}
       description={resource.description ?? ""}

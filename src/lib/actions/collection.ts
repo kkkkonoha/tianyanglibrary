@@ -44,9 +44,11 @@ export async function createCollection(formData: FormData) {
   return { success: true, id: collection.id }
 }
 
-export async function addToCollection(collectionId: string, resourceId: string) {
+export async function addToCollection(collectionId: string, resourceId: string | number) {
   const session = await auth()
   if (!session?.user) return { error: "请先登录" }
+  const rid = Number(resourceId)
+  if (!Number.isInteger(rid)) return { error: "资源 ID 无效" }
 
   const collection = await prisma.collection.findUnique({
     where: { id: collectionId },
@@ -58,19 +60,19 @@ export async function addToCollection(collectionId: string, resourceId: string) 
   }
 
   const existing = await prisma.collectionResource.findUnique({
-    where: { collectionId_resourceId: { collectionId, resourceId } },
+    where: { collectionId_resourceId: { collectionId, resourceId: rid } },
   })
 
   if (existing) return { error: "该资源已在目录中" }
 
   await prisma.collectionResource.create({
-    data: { collectionId, resourceId },
+    data: { collectionId, resourceId: rid },
   })
 
   await createActivity({
     type: "ADD_TO_COLLECTION",
     userId: session.user.id as string,
-    resourceId,
+    resourceId: rid,
     collectionId,
   })
 
@@ -151,16 +153,18 @@ export async function updateCollection(formData: FormData) {
   return { success: true }
 }
 
-export async function removeFromCollection(collectionId: string, resourceId: string) {
+export async function removeFromCollection(collectionId: string, resourceId: string | number) {
   const session = await auth()
   if (!session?.user) return { error: "请先登录" }
+  const rid = Number(resourceId)
+  if (!Number.isInteger(rid)) return { error: "资源 ID 无效" }
 
   const collection = await prisma.collection.findUnique({ where: { id: collectionId } })
   if (!collection) return { error: "目录不存在" }
   if (collection.creatorId !== (session.user.id as string)) return { error: "无权操作" }
 
   await prisma.collectionResource.delete({
-    where: { collectionId_resourceId: { collectionId, resourceId } },
+    where: { collectionId_resourceId: { collectionId, resourceId: rid } },
   })
 
   revalidatePath(`/collections/${collectionId}`)

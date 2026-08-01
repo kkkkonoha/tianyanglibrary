@@ -71,7 +71,7 @@ export async function ensureComicResource(mangaId: string, sourceId: string, use
 }
 
 // 查询条目下所有已绑定的源
-export async function getComicBindings(resourceId: string) {
+export async function getComicBindings(resourceId: number) {
   return prisma.comicBinding.findMany({
     where: { resourceId },
     orderBy: { createdAt: "asc" },

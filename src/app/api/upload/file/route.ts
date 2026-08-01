@@ -17,6 +17,10 @@ export async function POST(req: NextRequest) {
   if (!resourceId) {
     return NextResponse.json({ error: "缺少资源 ID" }, { status: 400 })
   }
+  const rid = Number(resourceId)
+  if (!Number.isInteger(rid)) {
+    return NextResponse.json({ error: "资源 ID 无效" }, { status: 400 })
+  }
   if (!file || file.size === 0) {
     return NextResponse.json({ error: "请选择文件" }, { status: 400 })
   }
@@ -26,13 +30,13 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "文件大小不能超过 500MB" }, { status: 400 })
   }
 
-  const resource = await prisma.resource.findUnique({ where: { id: resourceId } })
+  const resource = await prisma.resource.findUnique({ where: { id: rid } })
   if (!resource || resource.uploaderId !== (session.user as { id: string }).id) {
     return NextResponse.json({ error: "无权操作" }, { status: 403 })
   }
 
   const ext = file.name.split(".").pop() ?? "dat"
-  const storedName = `${resourceId}-${Date.now()}.${ext}`
+  const storedName = `${rid}-${Date.now()}.${ext}`
   const arrayBuffer = await file.arrayBuffer()
   const buffer = Buffer.from(arrayBuffer)
 
@@ -40,14 +44,14 @@ export async function POST(req: NextRequest) {
   await writeFile(filePath, buffer)
 
   const lastFile = await prisma.resourceFile.findFirst({
-    where: { resourceId },
+    where: { resourceId: rid },
     orderBy: { order: "desc" },
     select: { order: true },
   })
 
   const record = await prisma.resourceFile.create({
     data: {
-      resourceId,
+      resourceId: rid,
       fileName: file.name,
       fileUrl: `/uploads/files/${storedName}`,
       fileSize: file.size,

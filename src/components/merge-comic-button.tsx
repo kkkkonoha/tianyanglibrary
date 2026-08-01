@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 
 // 手动合并漫画条目：把另一个条目合并进当前条目（源绑定/评论/推荐等全部转移）
-export function MergeComicButton({ resourceId }: { resourceId: string }) {
+export function MergeComicButton({ resourceId }: { resourceId: string | number }) {
   const router = useRouter()
   const [open, setOpen] = useState(false)
   const [sourceId, setSourceId] = useState("")

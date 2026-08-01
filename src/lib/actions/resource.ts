@@ -76,7 +76,8 @@ export async function updateResource(formData: FormData) {
   const session = await auth()
   if (!session?.user) return { error: "请先登录" }
 
-  const id = formData.get("id") as string
+  const id = Number(formData.get("id"))
+  if (!Number.isInteger(id)) return { error: "资源 ID 无效" }
   const resource = await prisma.resource.findUnique({ where: { id } })
   if (!resource) return { error: "资源不存在" }
   if (!isAdmin(session) && resource.uploaderId !== (session.user.id as string)) {
@@ -129,7 +130,8 @@ export async function deleteResource(formData: FormData) {
   const session = await auth()
   if (!session?.user) return { error: "请先登录" }
 
-  const id = formData.get("id") as string
+  const id = Number(formData.get("id"))
+  if (!Number.isInteger(id)) return { error: "资源 ID 无效" }
   const resource = await prisma.resource.findUnique({
     where: { id },
     include: { files: { select: { fileUrl: true } } },

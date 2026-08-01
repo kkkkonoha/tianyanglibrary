@@ -28,7 +28,7 @@ function ReplyForm({
   parentId,
   onSuccess,
 }: {
-  resourceId?: string
+  resourceId?: string | number
   collectionId?: string
   parentId: string
   onSuccess: () => void
@@ -38,7 +38,7 @@ function ReplyForm({
       action={async (formData: FormData) => {
         const { addComment } = await import("@/lib/actions/comment")
         formData.set("parentId", parentId)
-        if (resourceId) formData.set("resourceId", resourceId)
+        if (resourceId) formData.set("resourceId", String(resourceId))
         if (collectionId) formData.set("collectionId", collectionId)
         const result = await addComment(formData)
         if (result?.success) onSuccess()
@@ -60,7 +60,7 @@ function CommentItem({
 }: {
   comment: CommentData
   depth: number
-  resourceId?: string
+  resourceId?: string | number
   collectionId?: string
   currentUserId?: string
 }) {
@@ -189,7 +189,7 @@ export function CommentSection({
   comments: rawComments,
   currentUserId,
 }: {
-  resourceId?: string
+  resourceId?: string | number
   collectionId?: string
   comments: CommentData[]
   currentUserId?: string
@@ -203,7 +203,7 @@ export function CommentSection({
       <form
         action={async (formData: FormData) => {
           const { addComment } = await import("@/lib/actions/comment")
-          if (resourceId) formData.set("resourceId", resourceId)
+          if (resourceId) formData.set("resourceId", String(resourceId))
           if (collectionId) formData.set("collectionId", collectionId)
           const result = await addComment(formData)
           if (result?.success) setRefreshKey(k => k + 1)

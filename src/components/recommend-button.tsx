@@ -7,7 +7,7 @@ export function RecommendButton({
   resourceId,
   hasRecommended,
 }: {
-  resourceId: string
+  resourceId: string | number
   hasRecommended: boolean
 }) {
   const router = useRouter()
@@ -16,7 +16,7 @@ export function RecommendButton({
     <form
       action={async (formData: FormData) => {
         const { toggleRecommendation } = await import("@/lib/actions/recommendation")
-        formData.set("resourceId", resourceId)
+        formData.set("resourceId", String(resourceId))
         await toggleRecommendation(formData)
         router.refresh()
       }}
