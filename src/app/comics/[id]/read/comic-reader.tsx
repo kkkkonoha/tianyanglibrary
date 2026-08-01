@@ -39,12 +39,18 @@ export function ComicReader({
   const [showChapters, setShowChapters] = useState(false)
   const [mode, setMode] = useState<ReaderMode>("scroll")
   const [pageIndex, setPageIndex] = useState(0)
+  const [immersive, setImmersive] = useState(false)
   const containerRef = useRef<HTMLDivElement>(null)
 
   const chapter = chapters[activeIndex]
   const prevChapter = activeIndex > 0 ? chapters[activeIndex - 1] : null
   const nextChapter = activeIndex < chapters.length - 1 ? chapters[activeIndex + 1] : null
   const totalPages = pages.length
+
+  function toggleImmersive() {
+    setImmersive((v) => !v)
+    setShowChapters(false)
+  }
 
   // 章节切换时重置阅读位置（新章节从开头开始；startFromEnd 时从末尾开始）
   useEffect(() => {
@@ -179,6 +185,14 @@ export function ComicReader({
   // Keyboard navigation
   useEffect(() => {
     function handleKey(e: KeyboardEvent) {
+      if (e.key === "Escape") {
+        setImmersive(false)
+        return
+      }
+      if (e.key === "i" || e.key === "I" || e.key === "f" || e.key === "F") {
+        setImmersive((v) => !v)
+        return
+      }
       if (mode === "scroll") {
         if (e.key === "ArrowLeft" || e.key === "ArrowUp") {
           if (containerRef.current) containerRef.current.scrollTop -= window.innerHeight * 0.8
@@ -221,7 +235,7 @@ export function ComicReader({
     return () => el.removeEventListener("scroll", close)
   }, [])
 
-  // Click zones for page mode: left 30% = prev, right 30% = next
+  // Click zones for page mode: left 30% = prev, right 30% = next, middle = immersive toggle
   function handleClickZone(e: React.MouseEvent<HTMLDivElement>) {
     if (mode !== "page") return
     const rect = e.currentTarget.getBoundingClientRect()
@@ -230,6 +244,18 @@ export function ComicReader({
       setPageIndex((i) => Math.max(0, i - 1))
     } else if (x > rect.width * 0.7) {
       setPageIndex((i) => Math.min(totalPages - 1, i + 1))
+    } else {
+      toggleImmersive()
+    }
+  }
+
+  // Click middle area in scroll mode to toggle immersive
+  function handleScrollClick(e: React.MouseEvent<HTMLDivElement>) {
+    if (mode !== "scroll" || immersive === false) return
+    const rect = e.currentTarget.getBoundingClientRect()
+    const x = e.clientX - rect.left
+    if (x > rect.width * 0.3 && x < rect.width * 0.7) {
+      toggleImmersive()
     }
   }
 
@@ -241,6 +267,7 @@ export function ComicReader({
   return (
     <div className="flex h-screen flex-col">
       {/* Top bar */}
+      {!immersive && (
       <header className="sticky top-0 z-40 flex h-12 items-center justify-between border-b border-white/10 bg-black/90 px-3 backdrop-blur">
         <div className="flex min-w-0 items-center gap-2">
           <Link href={`/comics/${mangaId}`} className="shrink-0 text-white/70 transition-colors hover:text-white">
@@ -254,6 +281,15 @@ export function ComicReader({
           )}
         </div>
         <div className="flex shrink-0 items-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            className="border-white/20 bg-transparent text-white hover:bg-white/10"
+            onClick={toggleImmersive}
+            title="沉浸阅读（快捷键 i / f，Esc 退出）"
+          >
+            ⛶ 沉浸
+          </Button>
           <Button
             variant="outline"
             size="sm"
@@ -282,9 +318,10 @@ export function ComicReader({
           </Button>
         </div>
       </header>
+      )}
 
       {/* Chapter selector */}
-      {showChapters && (
+      {showChapters && !immersive && (
         <div className="absolute left-0 right-0 top-12 z-50 max-h-[60vh] overflow-y-auto border-b border-white/10 bg-zinc-900/95 backdrop-blur">
           <div className="grid gap-1 p-2 sm:grid-cols-2">
             {chapters.map((c, i) => (
@@ -306,7 +343,7 @@ export function ComicReader({
 
       {/* Pages */}
       {mode === "scroll" ? (
-        <div ref={containerRef} onScroll={onScroll} className="flex-1 overflow-y-auto overscroll-contain bg-black">
+        <div ref={containerRef} onScroll={onScroll} onClick={handleScrollClick} className="flex-1 overflow-y-auto overscroll-contain bg-black">
           {pages.length === 0 ? (
             <div className="flex h-full flex-col items-center justify-center gap-3 px-6 text-center">
               <p className="text-white/80">章节图片加载失败</p>
@@ -321,7 +358,9 @@ export function ComicReader({
             </div>
           ) : (
             <div className="mx-auto max-w-3xl">
-              <div className="py-4 text-center text-sm text-white/60">{chapter.name}</div>
+              {!immersive && (
+                <div className="py-4 text-center text-sm text-white/60">{chapter.name}</div>
+              )}
               {pages.map((p) => (
                 <div key={p.index} className="relative w-full">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -397,19 +436,26 @@ export function ComicReader({
               ))}
 
               {/* Chapter name + page label */}
-              <div className="pointer-events-none absolute left-1/2 top-3 -translate-x-1/2 rounded-full bg-black/60 px-3 py-1 text-xs text-white/70">
-                {chapter.name} · {pageIndex + 1}/{totalPages}
-              </div>
+              {!immersive && (
+                <div className="pointer-events-none absolute left-1/2 top-3 -translate-x-1/2 rounded-full bg-black/60 px-3 py-1 text-xs text-white/70">
+                  {chapter.name} · {pageIndex + 1}/{totalPages}
+                </div>
+              )}
 
               {/* Click zone hints */}
-              <div className="pointer-events-none absolute left-2 top-1/2 -translate-y-1/2 rounded-full bg-white/5 p-2 text-white/30">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
-              </div>
-              <div className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 rounded-full bg-white/5 p-2 text-white/30">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 18l6-6-6-6"/></svg>
-              </div>
+              {!immersive && (
+                <>
+                <div className="pointer-events-none absolute left-2 top-1/2 -translate-y-1/2 rounded-full bg-white/5 p-2 text-white/30">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+                </div>
+                <div className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 rounded-full bg-white/5 p-2 text-white/30">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 18l6-6-6-6"/></svg>
+                </div>
+                </>
+              )}
 
               {/* Bottom navigation */}
+              {!immersive && (
               <div className="absolute bottom-3 left-1/2 flex -translate-x-1/2 items-center gap-2">
                 <Button
                   variant="outline"
@@ -430,6 +476,7 @@ export function ComicReader({
                   下一页
                 </Button>
               </div>
+              )}
 
               {/* Chapter transition buttons when at boundaries */}
               {pageIndex === 0 && prevChapter && (
