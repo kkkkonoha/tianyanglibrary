@@ -53,6 +53,8 @@ const TABLES = [
       CONSTRAINT "ComicBinding_resourceId_fkey" FOREIGN KEY ("resourceId") REFERENCES "Resource" ("id") ON DELETE CASCADE ON UPDATE CASCADE
     )`,
     after: async () => {
+      await exec(`DROP INDEX IF EXISTS "ComicBinding_sourceId_mangaId_key"`);
+      await exec(`DROP INDEX IF EXISTS "ComicBinding_resourceId_idx"`);
       await exec(`CREATE UNIQUE INDEX "ComicBinding_sourceId_mangaId_key" ON "ComicBinding"("sourceId", "mangaId")`);
       await exec(`CREATE INDEX "ComicBinding_resourceId_idx" ON "ComicBinding"("resourceId")`);
     },
@@ -87,6 +89,7 @@ const TABLES = [
       CONSTRAINT "Recommendation_resourceId_fkey" FOREIGN KEY ("resourceId") REFERENCES "Resource" ("id") ON DELETE CASCADE ON UPDATE CASCADE
     )`,
     after: async () => {
+      await exec(`DROP INDEX IF EXISTS "Recommendation_userId_resourceId_key"`);
       await exec(`CREATE UNIQUE INDEX "Recommendation_userId_resourceId_key" ON "Recommendation"("userId", "resourceId")`);
     },
   },
@@ -103,6 +106,7 @@ const TABLES = [
       CONSTRAINT "CollectionResource_resourceId_fkey" FOREIGN KEY ("resourceId") REFERENCES "Resource" ("id") ON DELETE CASCADE ON UPDATE CASCADE
     )`,
     after: async () => {
+      await exec(`DROP INDEX IF EXISTS "CollectionResource_collectionId_resourceId_key"`);
       await exec(`CREATE UNIQUE INDEX "CollectionResource_collectionId_resourceId_key" ON "CollectionResource"("collectionId", "resourceId")`);
     },
   },
