@@ -2,6 +2,7 @@
 
 import { auth } from "@/lib/auth"
 import { prisma } from "@/lib/db"
+import { createActivity } from "@/lib/activity"
 import { revalidatePath } from "next/cache"
 
 // 收藏/取消收藏资源（书架）
@@ -20,6 +21,11 @@ export async function toggleFavoriteResource(resourceId: string | number) {
 
   if (existing) {
     await prisma.favoriteResource.delete({ where: { id: existing.id } })
+    // 取消收藏时移除对应动态
+    await prisma.activity.deleteMany({
+      where: { userId, type: "FAVORITE", resourceId: rid },
+    })
+    revalidatePath("/")
     revalidatePath(`/resource/${rid}`)
     revalidatePath(`/favorites`)
     return { success: true, favorited: false }
@@ -29,6 +35,13 @@ export async function toggleFavoriteResource(resourceId: string | number) {
     data: { userId, resourceId: rid },
   })
 
+  await createActivity({
+    type: "FAVORITE",
+    userId,
+    resourceId: rid,
+  })
+
+  revalidatePath("/")
   revalidatePath(`/resource/${rid}`)
   revalidatePath(`/favorites`)
   return { success: true, favorited: true }

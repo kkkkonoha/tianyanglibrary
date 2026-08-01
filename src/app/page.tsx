@@ -16,6 +16,7 @@ const activityLabels = {
   CREATE_COLLECTION: "创建了目录",
   ADD_TO_COLLECTION: "向目录添加了",
   COMMENT: "评论了",
+  FAVORITE: "收藏了",
 }
 
 const resourceTypeLabels: Record<string, string> = {
