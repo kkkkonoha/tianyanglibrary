@@ -1,5 +1,12 @@
 const SUWAYOMI_BASE = process.env.SUWAYOMI_URL ?? "http://127.0.0.1:4567"
-export const SOURCE_ID = process.env.SUWAYOMI_SOURCE_ID ?? "524579092615598717"
+
+// 已安装漫画源（Suwayomi 内的 sourceId）
+export const COMIC_SOURCES = [
+  { id: process.env.SUWAYOMI_SOURCE_ID ?? "524579092615598717", name: "再漫画", lang: "zh" },
+  { id: "7057750772596492765", name: "漫画柜", lang: "zh" },
+] as const
+
+export const DEFAULT_SOURCE_ID = COMIC_SOURCES[0].id
 
 export async function suwayomiGql<T>(query: string): Promise<T> {
   const res = await fetch(`${SUWAYOMI_BASE}/api/graphql`, {
@@ -49,10 +56,10 @@ export interface SuwayomiPage {
   imageUrl?: string
 }
 
-export async function searchManga(query: string, page = 1): Promise<{ mangas: SuwayomiManga[]; hasNextPage: boolean }> {
+export async function searchManga(query: string, page = 1, sourceId = DEFAULT_SOURCE_ID): Promise<{ mangas: SuwayomiManga[]; hasNextPage: boolean }> {
   return suwayomiGql<any>(`
     mutation {
-      fetchSourceManga(input: { source: "${SOURCE_ID}", query: "${query.replace(/"/g, '\\"')}", page: ${page}, type: SEARCH }) {
+      fetchSourceManga(input: { source: "${sourceId}", query: "${query.replace(/"/g, '\\"')}", page: ${page}, type: SEARCH }) {
         hasNextPage
         mangas { id title author artist description genre thumbnailUrl url inLibrary sourceId }
       }

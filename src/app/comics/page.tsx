@@ -1,29 +1,31 @@
 import { auth } from "@/lib/auth"
 import { redirect } from "next/navigation"
-import { searchManga } from "@/lib/suwayomi"
+import { searchManga, COMIC_SOURCES, DEFAULT_SOURCE_ID } from "@/lib/suwayomi"
 import Link from "next/link"
 import { Card, CardContent } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
+import { Badge } from "@/components/ui/badge"
 
 export const dynamic = "force-dynamic"
 
 export default async function ComicsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ q?: string; page?: string }>
+  searchParams: Promise<{ q?: string; page?: string; source?: string }>
 }) {
   const session = await auth()
   if (!session?.user) redirect("/login")
 
-  const { q, page } = await searchParams
+  const { q, page, source } = await searchParams
   const currentPage = Math.max(1, parseInt(page ?? "1") || 1)
+  const selectedSource = COMIC_SOURCES.find((s) => s.id === source)?.id ?? DEFAULT_SOURCE_ID
   let result: { mangas: Array<any>; hasNextPage: boolean } | null = null
   let error = ""
 
   if (q) {
     try {
-      result = await searchManga(q, currentPage)
+      result = await searchManga(q, currentPage, selectedSource)
     } catch (e: any) {
       error = e.message ?? "搜索失败"
     }
@@ -33,13 +35,25 @@ export default async function ComicsPage({
     <div className="container mx-auto max-w-6xl px-4 py-10">
       <div className="mb-8">
         <h1 className="text-3xl font-bold tracking-tight">漫画</h1>
-        <p className="mt-1.5 text-muted-foreground">在线搜索并阅读漫画（来源：再漫画）</p>
+        <p className="mt-1.5 text-muted-foreground">在线搜索并阅读漫画</p>
       </div>
 
-      <form className="mb-6 flex gap-2" action="/comics">
+      <form className="mb-4 flex gap-2" action="/comics">
         <Input name="q" placeholder="搜索漫画标题或作者..." defaultValue={q ?? ""} className="max-w-sm bg-background" />
+        <input type="hidden" name="source" value={selectedSource} />
         <Button type="submit">搜索</Button>
       </form>
+
+      <div className="mb-6 flex flex-wrap items-center gap-1.5">
+        <span className="text-xs text-muted-foreground">来源：</span>
+        {COMIC_SOURCES.map((s) => (
+          <Link key={s.id} href={`/comics?source=${s.id}${q ? `&q=${encodeURIComponent(q)}` : ""}`}>
+            <Badge variant={selectedSource === s.id ? "default" : "secondary"} className="cursor-pointer">
+              {s.name}
+            </Badge>
+          </Link>
+        ))}
+      </div>
 
       {error && (
         <div className="rounded-md bg-destructive/10 p-3 text-sm text-destructive">{error}</div>
@@ -51,7 +65,7 @@ export default async function ComicsPage({
             <Card className="border-dashed">
               <CardContent className="flex flex-col items-center justify-center py-16 text-center">
                 <p className="text-lg font-medium">没有找到漫画</p>
-                <p className="mt-1 text-sm text-muted-foreground">尝试其他关键词</p>
+                <p className="mt-1 text-sm text-muted-foreground">尝试其他关键词或切换来源</p>
               </CardContent>
             </Card>
           ) : (
@@ -85,13 +99,13 @@ export default async function ComicsPage({
           {result.mangas.length > 0 && (
             <div className="mt-6 flex items-center justify-center gap-3">
               {currentPage > 1 && (
-                <Link href={`/comics?q=${encodeURIComponent(q)}&page=${currentPage - 1}`}>
+                <Link href={`/comics?q=${encodeURIComponent(q)}&page=${currentPage - 1}&source=${selectedSource}`}>
                   <Button variant="outline" size="sm">上一页</Button>
                 </Link>
               )}
               <span className="text-sm text-muted-foreground">第 {currentPage} 页</span>
               {result.hasNextPage && (
-                <Link href={`/comics?q=${encodeURIComponent(q)}&page=${currentPage + 1}`}>
+                <Link href={`/comics?q=${encodeURIComponent(q)}&page=${currentPage + 1}&source=${selectedSource}`}>
                   <Button variant="outline" size="sm">下一页</Button>
                 </Link>
               )}
