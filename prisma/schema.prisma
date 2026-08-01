@@ -47,6 +47,8 @@ model Resource {
   description     String?
   coverImage      String?
   type            ResourceType       @default(BOOK)
+  comicSourceId   String?
+  comicMangaId    String?
   uploaderId      String
   uploader        User               @relation(fields: [uploaderId], references: [id], onDelete: Cascade)
   tags            ResourceTag[]

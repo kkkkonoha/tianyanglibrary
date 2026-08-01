@@ -11,6 +11,7 @@ import { isAdmin } from "@/lib/permissions"
 import { CommentSection } from "@/components/comment-section"
 import { DeleteResourceButton } from "@/components/delete-resource-button"
 import { AddToDirectoryButton } from "@/components/add-to-directory-button"
+import { RecommendButton } from "@/components/recommend-button"
 import { ImagePreview } from "@/components/image-preview"
 
 const typeLabels: Record<string, string> = {
@@ -151,6 +152,13 @@ export default async function ResourcePage({
                     <span className="text-xs text-muted-foreground">（所有者）</span>
                   )}
                 </div>
+                {resource.comicMangaId && (
+                  <div className="mt-3">
+                    <Link href={`/comics/${resource.comicMangaId}`}>
+                      <Button size="sm">📖 在线阅读</Button>
+                    </Link>
+                  </div>
+                )}
                 {canManage && (
                   <div className="mt-3 flex gap-2">
                     <Link href={`/resource/${resource.id}/edit`}>
@@ -232,7 +240,6 @@ export default async function ResourcePage({
               <RecommendButton
                 resourceId={resource.id}
                 hasRecommended={hasRecommended}
-                session={session}
               />
               {resource.recommendations.length > 0 && (
                 <div className="mt-4 space-y-3">
@@ -296,38 +303,5 @@ export default async function ResourcePage({
         </div>
       </div>
     </div>
-  )
-}
-
-function RecommendButton({
-  resourceId,
-  hasRecommended,
-  session,
-}: {
-  resourceId: string
-  hasRecommended: boolean
-  session: any
-}) {
-  return (
-    <form
-      action={async (formData: FormData) => {
-        "use server"
-        const { toggleRecommendation } = await import("@/lib/actions/recommendation")
-        formData.set("resourceId", resourceId)
-        await toggleRecommendation(formData)
-      }}
-      className="flex items-center gap-2"
-    >
-      <input type="hidden" name="resourceId" value={resourceId} />
-      <input
-        type="text"
-        name="note"
-        placeholder="推荐理由（可选）"
-        className="flex-1 rounded-md border px-3 py-1 text-sm"
-      />
-      <Button type="submit" variant={hasRecommended ? "destructive" : "default"} size="sm">
-        {hasRecommended ? "取消推荐" : "推荐"}
-      </Button>
-    </form>
   )
 }

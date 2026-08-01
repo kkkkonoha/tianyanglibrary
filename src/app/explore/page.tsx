@@ -66,8 +66,7 @@ export default async function ExplorePage({
         uploader: { select: { id: true, username: true, avatar: true } },
         tags: { include: { tag: true } },
         _count: { select: { recommendations: true, comments: true } },
-      },
-    }),
+      },    }),
     prisma.resource.count({ where }),
   ])
 
@@ -179,6 +178,9 @@ export default async function ExplorePage({
                   <h3 className="font-semibold line-clamp-1 group-hover:text-primary transition-colors">{resource.title}</h3>
                   {resource.author && (
                     <p className="mt-0.5 text-xs text-muted-foreground line-clamp-1">{resource.author}</p>
+                  )}
+                  {resource.comicMangaId && (
+                    <Badge variant="outline" className="mt-1 text-[10px] text-muted-foreground">在线漫画</Badge>
                   )}
                   <div className="mt-2.5 flex items-center gap-2 text-xs text-muted-foreground">
                     <Link href={`/profile/${resource.uploader.username}`} className="relative z-20 flex items-center gap-2 hover:text-foreground">
