@@ -1,8 +1,9 @@
 import { auth } from "@/lib/auth"
 import { redirect, notFound } from "next/navigation"
 import { prisma } from "@/lib/db"
-import { getManga, fetchMangaChapters } from "@/lib/suwayomi"
-import { findComicResource } from "@/lib/comic-import"
+import { getManga, fetchMangaChapters, getSourceName } from "@/lib/suwayomi"
+import { findComicResource, getComicBindings } from "@/lib/comic-import"
+import { isAdmin } from "@/lib/permissions"
 import Link from "next/link"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -13,6 +14,7 @@ import { CommentSection } from "@/components/comment-section"
 import { RecommendButton } from "@/components/recommend-button"
 import { AddToDirectoryButton } from "@/components/add-to-directory-button"
 import { ImportComicButton } from "@/components/import-comic-button"
+import { MergeComicButton } from "@/components/merge-comic-button"
 
 export const dynamic = "force-dynamic"
 
@@ -90,6 +92,17 @@ export default async function ComicDetailPage({
     }
   }
 
+  // 该条目绑定的所有漫画源（跨源同名合并后用于源切换）
+  let bindings: Array<{ sourceId: string; mangaId: string }> = []
+  let canManage = false
+  if (resource) {
+    bindings = (await getComicBindings(resource.id)).map((b) => ({
+      sourceId: b.sourceId,
+      mangaId: b.mangaId,
+    }))
+    canManage = isAdmin(session) || resource.uploaderId === (session.user as { id: string }).id
+  }
+
   return (
     <div className="container mx-auto max-w-4xl px-4 py-8">
       <Link href="/comics" className="text-sm text-muted-foreground hover:underline">
@@ -132,6 +145,21 @@ export default async function ComicDetailPage({
                 <Badge variant="outline">未入库</Badge>
                 <ImportComicButton mangaId={id} sourceId={sourceId} />
               </>
+            )}
+            {bindings.length > 1 && (
+              <div className="flex flex-wrap items-center gap-1.5">
+                <span className="text-xs text-muted-foreground">漫画源：</span>
+                {bindings.map((b) => (
+                  <Link key={b.mangaId} href={`/comics/${b.mangaId}`}>
+                    <Badge
+                      variant={b.mangaId === id ? "default" : "outline"}
+                      className={b.mangaId === id ? "" : "cursor-pointer hover:bg-secondary"}
+                    >
+                      {getSourceName(b.sourceId)}
+                    </Badge>
+                  </Link>
+                ))}
+              </div>
             )}
           </div>
         </div>
@@ -182,6 +210,12 @@ export default async function ComicDetailPage({
       {resource && (
         <>
           <Separator className="my-8" />
+
+          {canManage && (
+            <div className="mb-6">
+              <MergeComicButton resourceId={resource.id} />
+            </div>
+          )}
 
           <div className="grid gap-6 lg:grid-cols-3">
             <div className="lg:col-span-2 space-y-6">

@@ -1,6 +1,7 @@
 import { auth } from "@/lib/auth"
 import { redirect, notFound } from "next/navigation"
-import { getManga, fetchMangaChapters, getChapterPages } from "@/lib/suwayomi"
+import { getManga, fetchMangaChapters, getChapterPages, getSourceName } from "@/lib/suwayomi"
+import { findComicResource, getComicBindings } from "@/lib/comic-import"
 import { ComicReader } from "./comic-reader"
 
 export const dynamic = "force-dynamic"
@@ -30,6 +31,19 @@ export default async function ComicReadPage({
 
   if (chapters.length === 0) notFound()
 
+  // 条目绑定的所有源（跨源同名合并），用于阅读器内切换
+  let sources: Array<{ mangaId: string; name: string }> = []
+  try {
+    const sourceId = manga.sourceId ?? ""
+    const resource = await findComicResource(id, sourceId, manga.title)
+    if (resource) {
+      const bindings = await getComicBindings(resource.id)
+      sources = bindings.map((b) => ({ mangaId: b.mangaId, name: getSourceName(b.sourceId) }))
+    }
+  } catch {
+    // 源列表获取失败不影响阅读
+  }
+
   // Determine current chapter
   let currentChapterId = chapter
   if (!currentChapterId) {
@@ -52,6 +66,7 @@ export default async function ComicReadPage({
       <ComicReader
         mangaId={id}
         mangaTitle={manga.title}
+        sources={sources}
         chapters={chapters.map((c) => ({ id: String(c.id), name: c.name }))}
         activeIndex={activeIndex}
         startFromEnd={end === "1"}

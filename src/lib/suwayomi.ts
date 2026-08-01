@@ -8,6 +8,10 @@ export const COMIC_SOURCES = [
 
 export const DEFAULT_SOURCE_ID = COMIC_SOURCES[0].id
 
+export function getSourceName(sourceId: string): string {
+  return COMIC_SOURCES.find((s) => s.id === sourceId)?.name ?? `源 ${sourceId}`
+}
+
 export async function suwayomiGql<T>(query: string): Promise<T> {
   const res = await fetch(`${SUWAYOMI_BASE}/api/graphql`, {
     method: "POST",

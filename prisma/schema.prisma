@@ -58,8 +58,22 @@ model Resource {
   collections     CollectionResource[]
   activities      Activity[]
   files           ResourceFile[]
+  bindings        ComicBinding[]
   createdAt       DateTime           @default(now())
   updatedAt       DateTime           @updatedAt
+}
+
+// 漫画条目与 (sourceId, mangaId) 的绑定：跨源同名合并后一条目挂多个源，阅读时可在各源间切换
+model ComicBinding {
+  id         String   @id @default(cuid())
+  resourceId String
+  resource   Resource @relation(fields: [resourceId], references: [id], onDelete: Cascade)
+  sourceId   String
+  mangaId    String
+  createdAt  DateTime @default(now())
+
+  @@unique([sourceId, mangaId])
+  @@index([resourceId])
 }
 
 model ResourceFile {

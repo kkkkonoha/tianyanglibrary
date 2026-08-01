@@ -15,6 +15,11 @@ interface ReaderPage {
   url: string
 }
 
+interface SourceOption {
+  mangaId: string
+  name: string
+}
+
 type ReaderMode = "scroll" | "page"
 
 const MODE_KEY = "comic-reader-mode"
@@ -22,6 +27,7 @@ const MODE_KEY = "comic-reader-mode"
 export function ComicReader({
   mangaId,
   mangaTitle,
+  sources = [],
   chapters,
   activeIndex,
   pages,
@@ -29,6 +35,7 @@ export function ComicReader({
 }: {
   mangaId: string
   mangaTitle: string
+  sources?: SourceOption[]
   chapters: ChapterOption[]
   activeIndex: number
   pages: ReaderPage[]
@@ -37,6 +44,7 @@ export function ComicReader({
   const router = useRouter()
   const [loaded, setLoaded] = useState<Set<number>>(new Set())
   const [showChapters, setShowChapters] = useState(false)
+  const [showSources, setShowSources] = useState(false)
   const [mode, setMode] = useState<ReaderMode>("scroll")
   const [pageIndex, setPageIndex] = useState(0)
   const [immersive, setImmersive] = useState(false)
@@ -50,6 +58,12 @@ export function ComicReader({
   function toggleImmersive() {
     setImmersive((v) => !v)
     setShowChapters(false)
+    setShowSources(false)
+  }
+
+  function switchSource(s: SourceOption) {
+    if (s.mangaId === mangaId) return
+    router.push(`/comics/${s.mangaId}/read`)
   }
 
   // 章节切换时重置阅读位置（新章节从开头开始；startFromEnd 时从末尾开始）
@@ -226,11 +240,11 @@ export function ComicReader({
     if (mode === "page") saveProgress(String(pageIndex))
   }, [pageIndex, mode, saveProgress])
 
-  // Close chapter list on scroll
+  // Close chapter/source list on scroll
   useEffect(() => {
     const el = containerRef.current
     if (!el) return
-    const close = () => setShowChapters(false)
+    const close = () => { setShowChapters(false); setShowSources(false) }
     el.addEventListener("scroll", close)
     return () => el.removeEventListener("scroll", close)
   }, [])
@@ -303,10 +317,21 @@ export function ComicReader({
             variant="outline"
             size="sm"
             className="border-white/20 bg-transparent text-white hover:bg-white/10"
-            onClick={() => setShowChapters((v) => !v)}
+            onClick={() => setShowChapters((v) => { if (!v) setShowSources(false); return !v })}
           >
             章节
           </Button>
+          {sources.length > 1 && (
+            <Button
+              variant="outline"
+              size="sm"
+              className="border-white/20 bg-transparent text-white hover:bg-white/10"
+              onClick={() => setShowSources((v) => { if (!v) setShowChapters(false); return !v })}
+              title="切换漫画源"
+            >
+              源
+            </Button>
+          )}
           <Button
             variant="outline"
             size="sm"
@@ -335,6 +360,27 @@ export function ComicReader({
                 }`}
               >
                 {c.name}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Source selector */}
+      {showSources && !immersive && (
+        <div className="absolute left-0 right-0 top-12 z-50 border-b border-white/10 bg-zinc-900/95 backdrop-blur">
+          <div className="flex flex-wrap gap-1 p-2">
+            {sources.map((s) => (
+              <button
+                key={s.mangaId}
+                onClick={() => switchSource(s)}
+                className={`rounded-md px-3 py-2 text-sm transition-colors ${
+                  s.mangaId === mangaId
+                    ? "bg-primary text-primary-foreground"
+                    : "text-white/80 hover:bg-white/10"
+                }`}
+              >
+                {s.name}
               </button>
             ))}
           </div>

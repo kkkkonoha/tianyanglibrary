@@ -13,6 +13,7 @@ import { DeleteResourceButton } from "@/components/delete-resource-button"
 import { AddToDirectoryButton } from "@/components/add-to-directory-button"
 import { RecommendButton } from "@/components/recommend-button"
 import { ImagePreview } from "@/components/image-preview"
+import { MergeComicButton } from "@/components/merge-comic-button"
 
 const typeLabels: Record<string, string> = {
   BOOK: "📖 电子书",
@@ -165,6 +166,7 @@ export default async function ResourcePage({
                       <Button variant="outline" size="sm">编辑</Button>
                     </Link>
                     <DeleteResourceButton resourceId={resource.id} />
+                    {resource.type === "COMIC" && <MergeComicButton resourceId={resource.id} />}
                   </div>
                 )}
               </div>
