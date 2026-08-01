@@ -14,6 +14,7 @@ import { AddToDirectoryButton } from "@/components/add-to-directory-button"
 import { RecommendButton } from "@/components/recommend-button"
 import { ImagePreview } from "@/components/image-preview"
 import { MergeComicButton } from "@/components/merge-comic-button"
+import { FavoriteButton } from "@/components/favorite-button"
 
 const typeLabels: Record<string, string> = {
   BOOK: "📖 电子书",
@@ -48,7 +49,7 @@ export default async function ResourcePage({
         orderBy: { createdAt: "asc" },
       },
       files: { orderBy: { order: "asc" } },
-      _count: { select: { recommendations: true, comments: true } },
+      _count: { select: { recommendations: true, comments: true, favorites: true } },
     },
   })
 
@@ -93,6 +94,16 @@ export default async function ResourcePage({
   const hasRecommended = session?.user
     ? resource.recommendations.some((r) => r.userId === (session.user as { id: string }).id)
     : false
+
+  // 当前用户是否已收藏
+  let isFavorited = false
+  if (session?.user) {
+    const fav = await prisma.favoriteResource.findUnique({
+      where: { userId_resourceId: { userId: session.user.id as string, resourceId: resource.id } },
+      select: { id: true },
+    })
+    isFavorited = !!fav
+  }
 
   const isOwner = session?.user
     ? resource.uploaderId === (session.user as { id: string }).id
@@ -240,10 +251,18 @@ export default async function ResourcePage({
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <RecommendButton
-                resourceId={resource.id}
-                hasRecommended={hasRecommended}
-              />
+              <div className="flex flex-col gap-2">
+                <FavoriteButton
+                  resourceId={resource.id}
+                  favorited={isFavorited}
+                  count={resource._count.favorites}
+                  size="default"
+                />
+                <RecommendButton
+                  resourceId={resource.id}
+                  hasRecommended={hasRecommended}
+                />
+              </div>
               {resource.recommendations.length > 0 && (
                 <div className="mt-4 space-y-3">
                   {resource.recommendations.slice(0, 10).map((rec) => (

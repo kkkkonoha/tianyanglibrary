@@ -15,6 +15,7 @@ import { RecommendButton } from "@/components/recommend-button"
 import { AddToDirectoryButton } from "@/components/add-to-directory-button"
 import { ImportComicButton } from "@/components/import-comic-button"
 import { MergeComicButton } from "@/components/merge-comic-button"
+import { FavoriteButton } from "@/components/favorite-button"
 
 export const dynamic = "force-dynamic"
 
@@ -75,7 +76,7 @@ export default async function ComicDetailPage({
           },
           orderBy: { createdAt: "asc" },
         },
-        _count: { select: { recommendations: true, comments: true } },
+        _count: { select: { recommendations: true, comments: true, favorites: true } },
       },
     })
     if (resource) {
@@ -90,6 +91,16 @@ export default async function ComicDetailPage({
         })
       }
     }
+  }
+
+  // 当前用户是否已收藏
+  let isFavorited = false
+  if (session?.user && resource) {
+    const fav = await prisma.favoriteResource.findUnique({
+      where: { userId_resourceId: { userId: session.user.id as string, resourceId: resource.id } },
+      select: { id: true },
+    })
+    isFavorited = !!fav
   }
 
   // 该条目绑定的所有漫画源（跨源同名合并后用于源切换）
@@ -139,6 +150,11 @@ export default async function ComicDetailPage({
                 <Link href={`/resource/${resource.id}`}>
                   <Button variant="outline" size="sm">查看条目</Button>
                 </Link>
+                <FavoriteButton
+                  resourceId={resource.id}
+                  favorited={isFavorited}
+                  count={resource._count?.favorites ?? 0}
+                />
               </>
             ) : (
               <>

@@ -36,6 +36,7 @@ model User {
   comments         Comment[]
   recommendations  Recommendation[]
   favorites        FavoriteCollection[]
+  favoriteResources FavoriteResource[]
   activities       Activity[]
   notifications    Notification[]
   readingHistory   ReadingHistory[]
@@ -59,8 +60,22 @@ model Resource {
   activities      Activity[]
   files           ResourceFile[]
   bindings        ComicBinding[]
+  favorites       FavoriteResource[]
   createdAt       DateTime           @default(now())
   updatedAt       DateTime           @updatedAt
+}
+
+// 用户收藏的资源（书架/追更）
+model FavoriteResource {
+  id         String   @id @default(cuid())
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  resourceId Int
+  resource   Resource @relation(fields: [resourceId], references: [id], onDelete: Cascade)
+  createdAt  DateTime @default(now())
+
+  @@unique([userId, resourceId])
+  @@index([resourceId])
 }
 
 // 漫画条目与 (sourceId, mangaId) 的绑定：跨源同名合并后一条目挂多个源，阅读时可在各源间切换

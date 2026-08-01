@@ -61,6 +61,11 @@ export async function Navbar() {
                 漫画
               </Link>
             )}
+            {session?.user && (
+              <Link href="/favorites" className="rounded-md px-3 py-1.5 font-medium text-muted-foreground transition-all hover:bg-secondary hover:text-secondary-foreground">
+                书架
+              </Link>
+            )}
             {isSuperAdmin(session) && (
               <Link href="/admin" className="rounded-md px-3 py-1.5 text-sm font-medium text-orange-600 transition-all hover:bg-orange-50 dark:text-orange-400 dark:hover:bg-orange-950">
                 管理
