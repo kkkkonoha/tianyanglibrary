@@ -184,6 +184,15 @@ export function ComicReader({
           >
             章节
           </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            className="border-white/20 bg-transparent text-white hover:bg-white/10"
+            onClick={() => router.push("/comics")}
+            title="退出阅读"
+          >
+            ✕ 退出
+          </Button>
         </div>
       </header>
 
