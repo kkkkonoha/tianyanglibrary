@@ -5,6 +5,15 @@ export function proxy(request: NextRequest) {
   const pathname = request.nextUrl.pathname
   const isReader = /^\/comics\/.+\/read$/.test(pathname)
 
+  // 全站登录保护：未登录访问受保护页面 → 跳转登录
+  // （/api、/login、/register、静态资源已在 matcher 中排除）
+  const sessionCookie =
+    request.cookies.get("authjs.session-token") ??
+    request.cookies.get("__Secure-authjs.session-token")
+  if (!sessionCookie) {
+    return NextResponse.redirect(new URL("/login", request.url))
+  }
+
   if (isReader) {
     // 阅读器页面：告知布局隐藏网站导航，实现完全沉浸
     const requestHeaders = new Headers(request.headers)
@@ -28,5 +37,8 @@ export function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/uploads/:path*", "/comics/:path*/read"],
+  matcher: [
+    // 排除：api（含 auth，内部自带鉴权）、登录/注册页、Next 静态资源
+    "/((?!api|_next/static|_next/image|favicon.ico|login|register).*)",
+  ],
 }
