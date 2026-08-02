@@ -1,6 +1,7 @@
 import { PrismaClient } from "../src/generated/prisma/client"
 import { PrismaLibSql } from "@prisma/adapter-libsql"
 import bcrypt from "bcryptjs"
+import { randomUUID } from "crypto"
 
 const adapter = new PrismaLibSql({ url: "file:./dev.db" })
 const prisma = new PrismaClient({ adapter })
@@ -8,7 +9,9 @@ const prisma = new PrismaClient({ adapter })
 async function main() {
   console.log("Seeding database...")
 
-  const passwordHash = await bcrypt.hash("tydms", 12)
+  // 管理员初始密码从环境变量读取；未设置则生成随机密码（不硬编码明文）
+  const adminPassword = process.env.SEED_ADMIN_PASSWORD ?? randomUUID()
+  const passwordHash = await bcrypt.hash(adminPassword, 12)
 
   // Clear existing users except super admin
   await prisma.user.deleteMany({
