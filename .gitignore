@@ -57,3 +57,9 @@ skills-lock.json
 # build artifacts
 *.tsbuildinfo
 backups/
+
+# 内部运维文件（含服务器连接信息，不进仓库）
+/AGENTS.md
+/deploy.ps1
+/deploy.sh
+/backup-local.ps1
