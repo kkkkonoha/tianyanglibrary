@@ -149,6 +149,9 @@ export async function deleteResource(formData: FormData) {
     ? join(process.cwd(), "public", resource.coverImage.startsWith("/") ? resource.coverImage.slice(1) : resource.coverImage)
     : null
 
+  // Activity 外键无级联删除：先移除该资源的动态（上传/收藏/评论等时间线记录）
+  await prisma.activity.deleteMany({ where: { resourceId: id } })
+
   await prisma.resource.delete({ where: { id } })
 
   for (const p of filePaths) {

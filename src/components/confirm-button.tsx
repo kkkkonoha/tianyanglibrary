@@ -35,12 +35,19 @@ export function ConfirmButton({
 }: ConfirmButtonProps) {
   const [open, setOpen] = useState(false)
   const [loading, setLoading] = useState(false)
+  const [error, setError] = useState("")
 
   async function handleConfirm() {
     setLoading(true)
-    await onConfirm()
-    setLoading(false)
-    setOpen(false)
+    setError("")
+    try {
+      await onConfirm()
+      setOpen(false)
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "操作失败，请重试")
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (
@@ -56,6 +63,7 @@ export function ConfirmButton({
           <DialogDescription>{description}</DialogDescription>
         </DialogHeader>
         <DialogFooter>
+          {error && <p className="text-sm text-destructive">{error}</p>}
           <Button variant="outline" onClick={() => setOpen(false)} disabled={loading}>
             取消
           </Button>
