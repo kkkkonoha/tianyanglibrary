@@ -57,6 +57,17 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       if (session.user) {
         ;(session.user as any).id = token.id as string
         ;(session.user as any).role = token.role as string
+        // 实时同步用户名/头像（支持修改用户名后立即生效，无需重新登录）
+        if (token.id) {
+          const user = await prisma.user.findUnique({
+            where: { id: token.id as string },
+            select: { username: true, avatar: true },
+          })
+          if (user) {
+            session.user.name = user.username
+            session.user.image = user.avatar
+          }
+        }
       }
       return session
     },

@@ -30,6 +30,7 @@ model User {
   bio              String?
   role             String               @default("user")
   status           String               @default("pending")
+  lastUsernameChangeAt DateTime?
   createdAt        DateTime             @default(now())
   updatedAt        DateTime             @updatedAt
   resources        Resource[]

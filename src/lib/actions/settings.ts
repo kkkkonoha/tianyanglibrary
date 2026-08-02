@@ -4,6 +4,55 @@ import { auth } from "@/lib/auth"
 import { prisma } from "@/lib/db"
 import bcrypt from "bcryptjs"
 import { revalidatePath } from "next/cache"
+import { z } from "zod"
+
+const usernameSchema = z
+  .string()
+  .min(2, "用户名至少2个字符")
+  .max(20, "用户名最多20个字符")
+  .regex(/^[a-zA-Z0-9_\u4e00-\u9fa5]+$/, "用户名只能包含字母、数字、下划线和中文")
+
+// 用户名每月只能修改一次
+const USERNAME_CHANGE_INTERVAL_MS = 30 * 24 * 60 * 60 * 1000
+
+export async function changeUsername(formData: FormData) {
+  const session = await auth()
+  if (!session?.user) return { error: "请先登录" }
+
+  const newUsername = (formData.get("username") as string)?.trim() ?? ""
+  const validated = usernameSchema.safeParse(newUsername)
+  if (!validated.success) return { error: validated.error.issues[0].message }
+
+  const userId = session.user.id as string
+  const user = await prisma.user.findUnique({ where: { id: userId } })
+  if (!user) return { error: "用户不存在" }
+
+  if (user.username === newUsername) return { error: "新用户名与当前用户名相同" }
+
+  // 每月一次限制
+  if (user.lastUsernameChangeAt) {
+    const elapsed = Date.now() - new Date(user.lastUsernameChangeAt).getTime()
+    if (elapsed < USERNAME_CHANGE_INTERVAL_MS) {
+      const remainingDays = Math.ceil((USERNAME_CHANGE_INTERVAL_MS - elapsed) / (24 * 60 * 60 * 1000))
+      return { error: `用户名每月只能修改一次，还需等待 ${remainingDays} 天` }
+    }
+  }
+
+  // 唯一性
+  const existing = await prisma.user.findUnique({ where: { username: newUsername } })
+  if (existing) return { error: "该用户名已被使用" }
+
+  const oldUsername = user.username
+  await prisma.user.update({
+    where: { id: userId },
+    data: { username: newUsername, lastUsernameChangeAt: new Date() },
+  })
+
+  revalidatePath("/settings")
+  revalidatePath(`/profile/${oldUsername}`)
+  revalidatePath(`/profile/${newUsername}`)
+  return { success: true, message: "用户名修改成功" }
+}
 
 export async function updateProfile(formData: FormData) {
   const session = await auth()

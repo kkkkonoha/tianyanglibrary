@@ -7,17 +7,53 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { updateProfile, changePassword } from "@/lib/actions/settings"
+import { updateProfile, changePassword, changeUsername } from "@/lib/actions/settings"
 
-export function SettingsForm({ username, bio, avatar }: { username: string; bio: string; avatar: string | null }) {
+export function SettingsForm({
+  username,
+  bio,
+  avatar,
+  lastUsernameChangeAt,
+}: {
+  username: string
+  bio: string
+  avatar: string | null
+  lastUsernameChangeAt: Date | null
+}) {
   const router = useRouter()
   const [bioValue, setBioValue] = useState(bio)
   const [bioMsg, setBioMsg] = useState("")
   const [pwMsg, setPwMsg] = useState("")
+  const [unameMsg, setUnameMsg] = useState("")
   const [avatarMsg, setAvatarMsg] = useState("")
   const [previewAvatar, setPreviewAvatar] = useState(avatar)
   const [localPreview, setLocalPreview] = useState<string | null>(null)
   const fileRef = useRef<HTMLInputElement>(null)
+
+  // 用户名每月一次限制的提示
+  let usernameLocked = false
+  let usernameHint = ""
+  if (lastUsernameChangeAt) {
+    const elapsed = Date.now() - new Date(lastUsernameChangeAt).getTime()
+    const INTERVAL = 30 * 24 * 60 * 60 * 1000
+    if (elapsed < INTERVAL) {
+      usernameLocked = true
+      const remainingDays = Math.ceil((INTERVAL - elapsed) / (24 * 60 * 60 * 1000))
+      usernameHint = `上次修改于 ${new Date(lastUsernameChangeAt).toLocaleDateString("zh-CN")}，还需等待 ${remainingDays} 天`
+    }
+  }
+
+  async function handleUsernameChange(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault()
+    setUnameMsg("")
+    const formData = new FormData(e.currentTarget)
+    const result = await changeUsername(formData)
+    setUnameMsg(result?.error ? result.error : (result?.message ?? "修改成功"))
+    if (result?.success) {
+      e.currentTarget.reset()
+      router.refresh()
+    }
+  }
 
   async function handleBioSave() {
     setBioMsg("")
@@ -103,6 +139,30 @@ export function SettingsForm({ username, bio, avatar }: { username: string; bio:
             <Button onClick={handleBioSave} size="sm">保存</Button>
           </div>
           {bioMsg && <p className={`text-sm ${bioMsg === "保存成功" ? "text-green-600" : "text-destructive"}`}>{bioMsg}</p>}
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>修改用户名</CardTitle>
+          <CardDescription>用户名每月只能修改一次，修改后主页链接将更新</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <form onSubmit={handleUsernameChange} className="space-y-3">
+            <div>
+              <Label htmlFor="username">新用户名</Label>
+              <Input
+                id="username"
+                name="username"
+                defaultValue={username}
+                disabled={usernameLocked}
+                placeholder="2-20 个字符，可含字母、数字、下划线、中文"
+              />
+              {usernameHint && <p className="mt-1 text-xs text-muted-foreground">{usernameHint}</p>}
+            </div>
+            <Button type="submit" size="sm" disabled={usernameLocked}>保存用户名</Button>
+            {unameMsg && <p className={`text-sm ${unameMsg.includes("成功") ? "text-green-600" : "text-destructive"}`}>{unameMsg}</p>}
+          </form>
         </CardContent>
       </Card>
 
