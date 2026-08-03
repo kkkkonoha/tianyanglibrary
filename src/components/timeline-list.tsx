@@ -105,7 +105,7 @@ function ActivityCard({ activity }: { activity: TimelineActivity }) {
           </div>
         </div>
       </CardHeader>
-      {activity.type === "RECOMMEND" && activity.metadata && (
+      {(activity.type === "RECOMMEND" || activity.type === "COMMENT") && activity.metadata && (
         <CardContent className="pt-0">
           <div className="rounded-lg border border-primary/10 bg-primary/[0.03] p-3 text-sm italic leading-relaxed text-foreground/80">
             &ldquo;{activity.metadata}&rdquo;

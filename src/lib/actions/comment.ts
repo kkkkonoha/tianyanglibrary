@@ -77,6 +77,7 @@ export async function addComment(formData: FormData) {
       userId,
       resourceId: resourceId ?? undefined,
       collectionId: collectionId ?? undefined,
+      metadata: content,
     })
   }
 
