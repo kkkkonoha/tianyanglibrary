@@ -86,7 +86,9 @@ export function LoginForm() {
               <Link href="/forgot-password" className="hover:underline">
                 忘记密码？
               </Link>
-              <span>忘记密码也可联系管理员重置</span>
+              <Link href="/contact-admin" className="hover:underline">
+                联系管理员
+              </Link>
             </div>
           </CardFooter>
         </form>

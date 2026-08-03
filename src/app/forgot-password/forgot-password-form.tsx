@@ -63,7 +63,7 @@ export function ForgotPasswordForm() {
           <Button type="submit" className="w-full">重置密码</Button>
           <p className="text-sm text-muted-foreground">
             没设置过安全问题？{" "}
-            <Link href="/login" className="text-primary underline underline-offset-4">
+            <Link href="/contact-admin" className="text-primary underline underline-offset-4">
               联系管理员重置
             </Link>
           </p>
