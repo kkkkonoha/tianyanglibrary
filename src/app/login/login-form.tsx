@@ -82,6 +82,12 @@ export function LoginForm() {
                 注册
               </Link>
             </p>
+            <div className="flex items-center justify-between text-xs text-muted-foreground">
+              <Link href="/forgot-password" className="hover:underline">
+                忘记密码？
+              </Link>
+              <span>忘记密码也可联系管理员重置</span>
+            </div>
           </CardFooter>
         </form>
       </Card>

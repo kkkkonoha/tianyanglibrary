@@ -41,7 +41,7 @@ export const config = {
   matcher: [
     // 上传资源：单独匹配以保留缓存头处理
     "/uploads/:path*",
-    // 登录保护范围：排除 api（内部鉴权）、uploads、登录/注册页、Next 静态资源
-    "/((?!api|uploads|_next/static|_next/image|favicon.ico|login|register).*)",
+    // 登录保护范围：排除 api（内部鉴权）、uploads、登录/注册/找回密码页、Next 静态资源
+    "/((?!api|uploads|_next/static|_next/image|favicon.ico|login|register|forgot-password).*)",
   ],
 }

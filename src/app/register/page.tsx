@@ -56,6 +56,33 @@ export default function RegisterPage() {
               <Label htmlFor="password">密码</Label>
               <Input id="password" name="password" type="password" placeholder="至少6个字符" required />
             </div>
+            <div className="space-y-2">
+              <Label htmlFor="confirmPassword">确认密码</Label>
+              <Input id="confirmPassword" name="confirmPassword" type="password" placeholder="再次输入密码" required />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="securityQuestion">安全问题</Label>
+              <select
+                id="securityQuestion"
+                name="securityQuestion"
+                required
+                className="w-full rounded-md border bg-background px-3 py-2 text-sm"
+                defaultValue=""
+              >
+                <option value="" disabled>请选择安全问题（或自行填写）</option>
+                <option value="你的小学名称是什么？">你的小学名称是什么？</option>
+                <option value="你最喜欢的书叫什么？">你最喜欢的书叫什么？</option>
+                <option value="你的母亲的名字是什么？">你的母亲的名字是什么？</option>
+                <option value="你的第一只宠物叫什么？">你的第一只宠物叫什么？</option>
+                <option value="你的出生城市是哪里？">你的出生城市是哪里？</option>
+                <option value="你最难忘的旅行目的地是哪里？">你最难忘的旅行目的地是哪里？</option>
+              </select>
+              <Input id="securityQuestionCustom" name="securityQuestionCustom" type="text" placeholder="或自定义安全问题" />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="securityAnswer">安全答案</Label>
+              <Input id="securityAnswer" name="securityAnswer" type="text" placeholder="至少2个字符（用于找回密码）" required />
+            </div>
           </CardContent>
           <CardFooter className="flex-col gap-3">
             <Button type="submit" className="w-full">

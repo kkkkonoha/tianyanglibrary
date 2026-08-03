@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { SetRoleButton } from "./set-role-button"
 import { ApproveRejectButton } from "./approve-reject-button"
+import { ResetPasswordButton } from "./reset-password-button"
 
 export default async function AdminPage() {
   const session = await auth()
@@ -105,6 +106,7 @@ export default async function AdminPage() {
                   <Link href={`/profile/${user.username}`}>
                     <Button variant="outline" size="sm">查看主页</Button>
                   </Link>
+                  <ResetPasswordButton userId={user.id} username={user.username} />
                   <SetRoleButton userId={user.id} role={user.role} />
                 </div>
               )}

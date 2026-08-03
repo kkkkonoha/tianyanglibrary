@@ -31,6 +31,8 @@ model User {
   role             String               @default("user")
   status           String               @default("pending")
   lastUsernameChangeAt DateTime?
+  securityQuestion String?
+  securityAnswer   String?
   createdAt        DateTime             @default(now())
   updatedAt        DateTime             @updatedAt
   resources        Resource[]
