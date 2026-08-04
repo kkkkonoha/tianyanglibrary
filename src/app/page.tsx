@@ -6,6 +6,7 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { TimelineList } from "@/components/timeline-list"
 import { isAdmin } from "@/lib/permissions"
+import { ChangelogButton } from "@/components/changelog-button"
 
 const PAGE_SIZE = 20
 
@@ -146,6 +147,8 @@ export default async function HomePage({
           )}
         </div>
       )}
+
+      <ChangelogButton />
     </div>
   )
 }
