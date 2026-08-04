@@ -22,7 +22,7 @@ const STATUS_LABEL = { pending: "待处理", processing: "处理中", done: "已
   let lastTime = 0;
   try { lastTime = parseInt(fs.readFileSync(MARK_FILE, "utf8"), 10) || 0; } catch {}
 
-  const cutoff = new Date(lastTime || Date.now() - INTERVAL_MS).toISOString();
+  const cutoff = new Date(lastTime || Date.now() - INTERVAL_MS).toISOString().replace("T", " ").slice(0, 19);
   const rows = await q(
     `SELECT f.id, f.type, f.title, f.content, f.status, f.reply, f.createdAt, u.username
      FROM Feedback f JOIN User u ON u.id = f.userId
