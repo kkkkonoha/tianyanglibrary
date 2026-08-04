@@ -1,6 +1,6 @@
 "use client"
 
-import { useActionState } from "react"
+import { useState, useTransition } from "react"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -8,7 +8,6 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { submitFeedback } from "@/lib/actions/feedback"
 
 const statusLabels: Record<string, string> = {
   pending: "待处理",
@@ -23,22 +22,52 @@ const statusVariants: Record<string, "secondary" | "default" | "outline"> = {
 
 export function FeedbackForm() {
   const router = useRouter()
-  // 与注册表单一致：useActionState 绑定 form action（绕开手动调用 server action 的异常路径）
-  const [result, formAction, pending] = useActionState(submitFeedback, null)
+  const [pending, startTransition] = useTransition()
+  const [msg, setMsg] = useState<{ text: string; ok: boolean } | null>(null)
 
-  function handleSuccessRefresh() {
-    if (result?.success) {
-      router.refresh()
+  // 提交后轮询「最新反馈」接口确认服务器是否收到（响应异常不影响判定）
+  async function confirmReceived(title: string, content: string): Promise<boolean> {
+    for (let i = 0; i < 10; i++) {
+      await new Promise((r) => setTimeout(r, 400))
+      try {
+        const res = await fetch("/api/my-feedback/latest", { cache: "no-store" })
+        if (!res.ok) continue
+        const data = await res.json()
+        const latest = data?.latest
+        if (latest && latest.title === title && latest.content === content) {
+          return true
+        }
+      } catch {
+        // 继续轮询
+      }
     }
+    return false
   }
 
-  return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="text-lg">提交反馈</CardTitle>
-      </CardHeader>
-      <CardContent>
-        <form action={formAction} onSubmit={handleSuccessRefresh} className="space-y-3">
+  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault()
+    setMsg(null)
+    const formData = new FormData(e.currentTarget)
+    const title = (formData.get("title") as string)?.trim() ?? ""
+    const content = (formData.get("content") as string)?.trim() ?? ""
+
+    startTransition(async () => {
+      try {
+        const { submitFeedback } = await import("@/lib/actions/feedback")
+        await submitFeedback(formData)
+      } catch {
+        // 响应可能中断，忽略，用轮询确认结果
+      }
+
+      const received = await confirmReceived(title, content)
+      if (received) {
+        setMsg({ text: "反馈已提交，可以在下方查看处理进度", ok: true })
+      } else {
+        setMsg({ text: "提交未能确认，请刷新页面查看是否已提交", ok: false })
+      }
+      router.refresh()
+    })
+  }
           <div>
             <Label htmlFor="type">类型</Label>
             <div className="mt-1 flex gap-2">
@@ -63,8 +92,9 @@ export function FeedbackForm() {
           <Button type="submit" size="sm" disabled={pending}>
             {pending ? "提交中..." : "提交反馈"}
           </Button>
-          {result?.error && <p className="text-sm text-destructive">{result.error}</p>}
-          {result?.success && <p className="text-sm text-green-600">反馈已提交，可以在下方查看处理进度</p>}
+          {msg && (
+            <p className={`text-sm ${msg.ok ? "text-green-600" : "text-destructive"}`}>{msg.text}</p>
+          )}
         </form>
       </CardContent>
     </Card>
