@@ -26,41 +26,46 @@ export async function submitFeedback(formData: FormData) {
   const session = await auth()
   if (!session?.user) return { error: "请先登录" }
 
-  const validated = feedbackSchema.safeParse({
-    type: formData.get("type"),
-    title: formData.get("title"),
-    content: formData.get("content"),
-  })
-  if (!validated.success) return { error: validated.error.issues[0].message }
+  try {
+    const validated = feedbackSchema.safeParse({
+      type: formData.get("type"),
+      title: formData.get("title"),
+      content: formData.get("content"),
+    })
+    if (!validated.success) return { error: validated.error.issues[0].message }
 
-  const feedback = await prisma.feedback.create({
-    data: {
-      userId: session.user.id as string,
-      type: validated.data.type,
-      title: validated.data.title.trim(),
-      content: validated.data.content.trim(),
-    },
-  })
-
-  // 通知实际负责人（隐藏超管），不广播
-  const manager = await prisma.user.findFirst({
-    where: { role: "super_admin", roleHidden: true },
-    select: { id: true },
-  })
-  if (manager) {
-    const typeLabel = validated.data.type === "BUG" ? "Bug" : "功能需求"
-    await prisma.notification.create({
+    const feedback = await prisma.feedback.create({
       data: {
-        userId: manager.id,
-        type: "FEEDBACK",
-        content: `新的${typeLabel}反馈：「${validated.data.title}」（来自 ${session.user.name}）`,
-        link: "/admin/feedback",
+        userId: session.user.id as string,
+        type: validated.data.type,
+        title: validated.data.title.trim(),
+        content: validated.data.content.trim(),
       },
     })
-  }
 
-  revalidatePath("/feedback")
-  return { success: true, id: feedback.id }
+    // 通知实际负责人（隐藏超管），不广播
+    const manager = await prisma.user.findFirst({
+      where: { role: "super_admin", roleHidden: true },
+      select: { id: true },
+    })
+    if (manager) {
+      const typeLabel = validated.data.type === "BUG" ? "Bug" : "功能需求"
+      await prisma.notification.create({
+        data: {
+          userId: manager.id,
+          type: "FEEDBACK",
+          content: `新的${typeLabel}反馈：「${validated.data.title}」（来自 ${session.user.name}）`,
+          link: "/admin/feedback",
+        },
+      })
+    }
+
+    revalidatePath("/feedback")
+    return { success: true, id: feedback.id }
+  } catch (e) {
+    console.error("submitFeedback 失败:", e)
+    return { error: "提交失败，请稍后重试" }
+  }
 }
 
 export async function updateFeedbackStatus(feedbackId: string, status: string) {
@@ -69,14 +74,18 @@ export async function updateFeedbackStatus(feedbackId: string, status: string) {
   if (!(await isFeedbackManager())) return { error: "无权操作" }
   if (!["pending", "processing", "done"].includes(status)) return { error: "无效状态" }
 
-  await prisma.feedback.update({
-    where: { id: feedbackId },
-    data: { status },
-  })
-
-  revalidatePath("/admin/feedback")
-  revalidatePath("/feedback")
-  return { success: true }
+  try {
+    await prisma.feedback.update({
+      where: { id: feedbackId },
+      data: { status },
+    })
+    revalidatePath("/admin/feedback")
+    revalidatePath("/feedback")
+    return { success: true }
+  } catch (e) {
+    console.error("updateFeedbackStatus 失败:", e)
+    return { error: "操作失败，请重试" }
+  }
 }
 
 export async function replyFeedback(formData: FormData) {
@@ -88,28 +97,33 @@ export async function replyFeedback(formData: FormData) {
   const reply = (formData.get("reply") as string)?.trim() ?? ""
   if (!reply) return { error: "回复内容不能为空" }
 
-  const feedback = await prisma.feedback.findUnique({
-    where: { id: feedbackId },
-    include: { user: { select: { id: true } } },
-  })
-  if (!feedback) return { error: "反馈不存在" }
+  try {
+    const feedback = await prisma.feedback.findUnique({
+      where: { id: feedbackId },
+      include: { user: { select: { id: true } } },
+    })
+    if (!feedback) return { error: "反馈不存在" }
 
-  await prisma.feedback.update({
-    where: { id: feedbackId },
-    data: { reply, repliedAt: new Date(), status: feedback.status === "pending" ? "processing" : feedback.status },
-  })
+    await prisma.feedback.update({
+      where: { id: feedbackId },
+      data: { reply, repliedAt: new Date(), status: feedback.status === "pending" ? "processing" : feedback.status },
+    })
 
-  // 通知提交用户
-  await prisma.notification.create({
-    data: {
-      userId: feedback.user.id,
-      type: "FEEDBACK_REPLY",
-      content: `管理员回复了你的反馈「${feedback.title}」`,
-      link: "/feedback",
-    },
-  })
+    // 通知提交用户
+    await prisma.notification.create({
+      data: {
+        userId: feedback.user.id,
+        type: "FEEDBACK_REPLY",
+        content: `管理员回复了你的反馈「${feedback.title}」`,
+        link: "/feedback",
+      },
+    })
 
-  revalidatePath("/admin/feedback")
-  revalidatePath("/feedback")
-  return { success: true }
+    revalidatePath("/admin/feedback")
+    revalidatePath("/feedback")
+    return { success: true }
+  } catch (e) {
+    console.error("replyFeedback 失败:", e)
+    return { error: "回复失败，请重试" }
+  }
 }

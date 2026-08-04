@@ -30,14 +30,18 @@ export function FeedbackForm() {
     setMsg("")
     const formData = new FormData(e.currentTarget)
     startTransition(async () => {
-      const { submitFeedback } = await import("@/lib/actions/feedback")
-      const result = await submitFeedback(formData)
-      if (result?.error) {
-        setMsg(result.error)
-      } else {
-        setMsg("反馈已提交，可以在下方查看处理进度")
-        e.currentTarget.reset()
-        router.refresh()
+      try {
+        const { submitFeedback } = await import("@/lib/actions/feedback")
+        const result = await submitFeedback(formData)
+        if (result?.error) {
+          setMsg(result.error)
+        } else {
+          setMsg("反馈已提交，可以在下方查看处理进度")
+          e.currentTarget.reset()
+          router.refresh()
+        }
+      } catch {
+        setMsg("网络错误，提交失败，请重试")
       }
     })
   }
