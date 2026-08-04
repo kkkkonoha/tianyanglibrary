@@ -24,8 +24,7 @@ const statusVariants: Record<string, "secondary" | "default" | "outline"> = {
 export function FeedbackForm() {
   const router = useRouter()
   // 与注册表单一致：useActionState 绑定 form action（绕开手动调用 server action 的异常路径）
-  const [result, formAction] = useActionState(submitFeedback, null)
-  const pending = result?.pending === true
+  const [result, formAction, pending] = useActionState(submitFeedback, null)
 
   function handleSuccessRefresh() {
     if (result?.success) {
