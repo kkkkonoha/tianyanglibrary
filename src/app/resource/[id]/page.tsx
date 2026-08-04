@@ -96,6 +96,18 @@ export default async function ResourcePage({
     ? resource.recommendations.some((r) => r.userId === (session.user as { id: string }).id)
     : false
 
+  // 漫画条目的阅读源（手动创建条目可能无 comicMangaId，但绑定后有 ComicBinding）
+  const readMangaId = resource.comicMangaId
+  let readBindings: Array<{ mangaId: string; sourceId: string }> = []
+  if (resource.type === "COMIC") {
+    readBindings = await prisma.comicBinding.findMany({
+      where: { resourceId: resource.id },
+      select: { mangaId: true, sourceId: true },
+      orderBy: { createdAt: "asc" },
+    })
+  }
+  const effectiveReadMangaId = readMangaId ?? readBindings[0]?.mangaId ?? null
+
   // 当前用户是否已收藏
   let isFavorited = false
   if (session?.user) {
@@ -166,9 +178,9 @@ export default async function ResourcePage({
                     <span className="text-xs text-muted-foreground">（所有者）</span>
                   )}
                 </div>
-                {resource.comicMangaId && (
+                {effectiveReadMangaId && (
                   <div className="mt-3">
-                    <Link href={`/comics/${resource.comicMangaId}`}>
+                    <Link href={`/comics/${effectiveReadMangaId}`}>
                       <Button size="sm">📖 在线阅读</Button>
                     </Link>
                   </div>

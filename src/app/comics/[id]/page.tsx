@@ -145,17 +145,27 @@ export default async function ComicDetailPage({
           <div className="mt-4 flex flex-wrap items-center gap-2">
             <Badge variant="outline">{chapters.length} 章</Badge>
             {resource?.id ? (
-              <>
-                <Badge variant="secondary">已入库</Badge>
-                <Link href={`/resource/${resource.id}`}>
-                  <Button variant="outline" size="sm">查看条目</Button>
-                </Link>
-                <FavoriteButton
-                  resourceId={resource.id}
-                  favorited={isFavorited}
-                  count={resource._count?.favorites ?? 0}
-                />
-              </>
+              bindings.length === 0 ? (
+                <>
+                  <Badge variant="outline">条目已存在（手动创建）</Badge>
+                  <ImportComicButton mangaId={id} sourceId={sourceId} />
+                  <Link href={`/resource/${resource.id}`}>
+                    <Button variant="outline" size="sm">查看条目</Button>
+                  </Link>
+                </>
+              ) : (
+                <>
+                  <Badge variant="secondary">已入库</Badge>
+                  <Link href={`/resource/${resource.id}`}>
+                    <Button variant="outline" size="sm">查看条目</Button>
+                  </Link>
+                  <FavoriteButton
+                    resourceId={resource.id}
+                    favorited={isFavorited}
+                    count={resource._count?.favorites ?? 0}
+                  />
+                </>
+              )
             ) : (
               <>
                 <Badge variant="outline">未入库</Badge>
