@@ -89,9 +89,22 @@ export default async function LeaderboardPage({
     }))
     .filter((r) => r.comments > 0 || r.recommends > 0)
     .sort((a, b) => {
-      const scoreA = rankKey === "comment" ? a.comments : rankKey === "recommend" ? a.recommends : a.comments + a.recommends
-      const scoreB = rankKey === "comment" ? b.comments : rankKey === "recommend" ? b.recommends : b.comments + b.recommends
-      if (scoreB !== scoreA) return scoreB - scoreA
+      // 综合榜：总分 → 评论数 → 推荐数 → 用户名
+      if (rankKey === "total") {
+        const ta = a.comments + a.recommends
+        const tb = b.comments + b.recommends
+        if (tb !== ta) return tb - ta
+        if (b.comments !== a.comments) return b.comments - a.comments
+        if (b.recommends !== a.recommends) return b.recommends - a.recommends
+        return a.user.username.localeCompare(b.user.username, "zh-CN")
+      }
+      // 评论榜 / 推荐榜：主维度 → 另一维度 → 用户名
+      const primaryA = rankKey === "comment" ? a.comments : a.recommends
+      const primaryB = rankKey === "comment" ? b.comments : b.recommends
+      if (primaryB !== primaryA) return primaryB - primaryA
+      const secondaryA = rankKey === "comment" ? a.recommends : a.comments
+      const secondaryB = rankKey === "comment" ? b.recommends : b.comments
+      if (secondaryB !== secondaryA) return secondaryB - secondaryA
       return a.user.username.localeCompare(b.user.username, "zh-CN")
     })
 
