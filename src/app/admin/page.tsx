@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button"
 import { SetRoleButton } from "./set-role-button"
 import { ApproveRejectButton } from "./approve-reject-button"
 import { ResetPasswordButton } from "./reset-password-button"
+import { isFeedbackManager } from "@/lib/actions/feedback"
 
 export default async function AdminPage() {
   const session = await auth()
@@ -45,12 +46,18 @@ export default async function AdminPage() {
 
   const pendingUsers = users.filter(u => u.status === "pending")
   const approvedUsers = users.filter(u => u.status !== "pending")
+  const feedbackManager = await isFeedbackManager()
 
   return (
     <div className="container mx-auto max-w-4xl px-4 py-12">
       <div className="mb-10">
         <h1 className="text-3xl font-bold tracking-tight">管理面板</h1>
         <p className="mt-1.5 text-muted-foreground">用户管理与审核</p>
+        {feedbackManager && (
+          <Link href="/admin/feedback" className="mt-3 inline-block">
+            <Button variant="outline" size="sm">💬 反馈管理</Button>
+          </Link>
+        )}
       </div>
 
       {pendingUsers.length > 0 && (

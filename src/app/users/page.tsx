@@ -37,6 +37,7 @@ export default async function UsersPage({
       avatar: true,
       bio: true,
       role: true,
+      roleHidden: true,
       createdAt: true,
       _count: { select: { resources: true, collections: true } },
     },
@@ -73,7 +74,7 @@ export default async function UsersPage({
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2">
                       <span className="font-semibold">{user.username}</span>
-                      {user.role !== "user" && (
+                      {user.role !== "user" && !user.roleHidden && (
                         <Badge variant="secondary" className="text-xs">{roleLabels[user.role] ?? user.role}</Badge>
                       )}
                     </div>
