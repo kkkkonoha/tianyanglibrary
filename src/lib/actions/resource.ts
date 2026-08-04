@@ -25,6 +25,7 @@ export async function createResource(formData: FormData) {
 
   const validated = resourceSchema.safeParse({
     title: formData.get("title"),
+    author: formData.get("author"),
     description: formData.get("description"),
     type: formData.get("type"),
     tags: formData.get("tags"),

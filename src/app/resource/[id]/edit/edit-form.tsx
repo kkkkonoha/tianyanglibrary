@@ -64,10 +64,15 @@ export function EditResourceForm({ id, title, author, description, type, coverIm
     setLoading(true)
     setError("")
 
+    // 输入框中未按回车添加的标签自动加入（防止标签丢失）
+    const pendingTag = tagInput.trim()
+    const finalTags =
+      pendingTag && !currentTags.includes(pendingTag) ? [...currentTags, pendingTag] : currentTags
+
     const formData = new FormData(e.currentTarget)
     formData.set("id", id)
     formData.set("type", currentType)
-    formData.set("tags", currentTags.join(","))
+    formData.set("tags", finalTags.join(","))
 
     const result = await updateResource(formData)
 

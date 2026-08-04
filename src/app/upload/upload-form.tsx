@@ -28,8 +28,13 @@ export function UploadForm() {
     setLoading(true)
     setError("")
 
+    // 输入框中未按回车添加的标签自动加入（防止标签丢失）
+    const pendingTag = tags.trim()
+    const finalTags =
+      pendingTag && !tagList.includes(pendingTag) ? [...tagList, pendingTag] : tagList
+
     const formData = new FormData(e.currentTarget)
-    formData.set("tags", tagList.join(","))
+    formData.set("tags", finalTags.join(","))
 
     const result = await createResource(formData)
 
