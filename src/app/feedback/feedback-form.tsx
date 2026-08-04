@@ -68,6 +68,14 @@ export function FeedbackForm() {
       router.refresh()
     })
   }
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="text-lg">提交反馈</CardTitle>
+      </CardHeader>
+      <CardContent>
+        <form onSubmit={handleSubmit} className="space-y-3">
           <div>
             <Label htmlFor="type">类型</Label>
             <div className="mt-1 flex gap-2">

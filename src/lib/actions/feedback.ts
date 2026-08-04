@@ -22,7 +22,7 @@ const feedbackSchema = z.object({
   content: z.string().min(5, "描述至少5个字").max(2000, "描述最多2000字"),
 })
 
-export async function submitFeedback(prevState: unknown, formData: FormData) {
+export async function submitFeedback(formData: FormData) {
   const session = await auth()
   if (!session?.user) return { error: "请先登录" }
 
