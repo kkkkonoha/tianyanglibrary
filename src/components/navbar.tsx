@@ -125,6 +125,13 @@ export async function Navbar() {
                       设置
                     </Link>
                   </DropdownMenuItem>
+                  {isSuperAdmin(session) && (
+                    <DropdownMenuItem>
+                      <Link href="/admin" className="w-full">
+                        管理面板
+                      </Link>
+                    </DropdownMenuItem>
+                  )}
                   <DropdownMenuSeparator />
                   <form
                     action={async () => {

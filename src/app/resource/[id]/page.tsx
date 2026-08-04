@@ -15,6 +15,7 @@ import { RecommendButton } from "@/components/recommend-button"
 import { ImagePreview } from "@/components/image-preview"
 import { MergeComicButton } from "@/components/merge-comic-button"
 import { FavoriteButton } from "@/components/favorite-button"
+import { ExpandableText } from "@/components/expandable-text"
 
 const typeLabels: Record<string, string> = {
   BOOK: "📖 电子书",
@@ -283,7 +284,9 @@ export default async function ResourcePage({
                           {rec.user.username}
                         </Link>
                         {rec.note && (
-                          <p className="text-xs text-muted-foreground mt-0.5">{rec.note}</p>
+                          <p className="text-xs text-muted-foreground mt-0.5">
+                            <ExpandableText text={rec.note} />
+                          </p>
                         )}
                         <p className="text-xs text-muted-foreground/50 mt-0.5">
                           {new Date(rec.createdAt).toLocaleString("zh-CN", { timeZone: "Asia/Shanghai" })}

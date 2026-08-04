@@ -5,6 +5,7 @@ import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { ConfirmButton } from "@/components/confirm-button"
+import { ExpandableText } from "@/components/expandable-text"
 
 interface CommentUser {
   id: string
@@ -93,7 +94,7 @@ function CommentItem({
               {new Date(comment.createdAt).toLocaleString("zh-CN", { timeZone: "Asia/Shanghai" })}
             </span>
           </div>
-          <p className="mt-0.5 text-sm leading-relaxed">{comment.content}</p>
+          <p className="mt-0.5 text-sm leading-relaxed"><ExpandableText text={comment.content} /></p>
           <div className="mt-1 flex items-center gap-2">
             {currentUserId && (
               <button

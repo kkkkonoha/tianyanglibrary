@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { DeleteActivityButton } from "@/components/delete-activity-button"
+import { ExpandableText } from "@/components/expandable-text"
 
 interface TimelineActivity {
   id: string
@@ -108,7 +109,7 @@ function ActivityCard({ activity }: { activity: TimelineActivity }) {
       {(activity.type === "RECOMMEND" || activity.type === "COMMENT") && activity.metadata && (
         <CardContent className="pt-0">
           <div className="rounded-lg border border-primary/10 bg-primary/[0.03] p-3 text-sm italic leading-relaxed text-foreground/80">
-            &ldquo;{activity.metadata}&rdquo;
+            <ExpandableText text={`“${activity.metadata}”`} />
           </div>
         </CardContent>
       )}

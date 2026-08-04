@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { notFound } from "next/navigation"
 import { EditAvatar } from "@/components/edit-avatar"
+import { ExpandableText } from "@/components/expandable-text"
 
 import { Button } from "@/components/ui/button"
 
@@ -53,6 +54,7 @@ export default async function ProfilePage({
     resources, totalResources,
     collections, totalCollections,
     recommendations, totalRecommendations,
+    comments, totalComments,
     favorites, totalFavorites,
     favoriteResources, totalFavoriteResources,
   ] = await Promise.all([
@@ -77,6 +79,14 @@ export default async function ProfilePage({
       include: { resource: { select: { id: true, title: true, type: true, coverImage: true } } },
     }),
     prisma.recommendation.count({ where: { userId: user.id } }),
+    // 顶级评论（非楼中楼）+ 仅对条目的评论
+    prisma.comment.findMany({
+      where: { userId: user.id, parentId: null, resourceId: { not: null } },
+      orderBy: { createdAt: "desc" },
+      take: SECTION_LIMIT,
+      include: { resource: { select: { id: true, title: true, type: true, coverImage: true } } },
+    }),
+    prisma.comment.count({ where: { userId: user.id, parentId: null, resourceId: { not: null } } }),
     prisma.favoriteCollection.findMany({
       where: { userId: user.id },
       orderBy: { createdAt: "desc" },
@@ -107,6 +117,7 @@ export default async function ProfilePage({
             <span>{totalResources} 资源</span>
             <span>{totalCollections} 目录</span>
             <span>{totalRecommendations} 推荐</span>
+            <span>{totalComments} 评论</span>
             <span>{totalFavoriteResources} 书架</span>
             <span>{totalFavorites} 收藏</span>
           </div>
@@ -205,7 +216,7 @@ export default async function ProfilePage({
                       <div className="min-w-0 flex-1">
                         <h4 className="font-medium text-sm">{rec.resource.title}</h4>
                         <Badge variant="secondary" className="text-xs mt-1">{typeLabels[rec.resource.type]}</Badge>
-                        {rec.note && <p className="text-xs text-muted-foreground mt-1 line-clamp-1">&ldquo;{rec.note}&rdquo;</p>}
+                        {rec.note && <p className="text-xs text-muted-foreground mt-1 line-clamp-1"><ExpandableText text={rec.note} /></p>}
                       </div>
                     </CardContent>
                   </Card>
@@ -216,6 +227,42 @@ export default async function ProfilePage({
               <div className="mt-3 text-center">
                 <Link href={`/profile/${user.username}/recommendations`}>
                   <Button variant="outline" size="sm">查看更多推荐 ({totalRecommendations})</Button>
+                </Link>
+              </div>
+            )}
+          </>
+        )}
+      </Section>
+
+      {/* Comments (top-level, on resources) */}
+      <Section title="评论" count={totalComments}>
+        {comments.length === 0 ? (
+          <Empty>还没有评论过资源</Empty>
+        ) : (
+          <>
+            <div className="space-y-3">
+              {comments.map((c) => (
+                <Link key={c.id} href={`/resource/${c.resource!.id}`}>
+                  <Card className="transition-shadow hover:shadow-md">
+                    <CardContent className="p-4">
+                      <p className="text-sm whitespace-pre-wrap"><ExpandableText text={c.content} /></p>
+                      <div className="mt-2 flex items-center gap-2 text-xs text-muted-foreground">
+                        {c.resource!.coverImage ? (
+                          <img src={c.resource!.coverImage} alt={c.resource!.title} loading="lazy" decoding="async" className="h-6 w-4 rounded object-contain bg-muted/30" />
+                        ) : null}
+                        <span className="font-medium text-primary">{c.resource!.title}</span>
+                        <Badge variant="secondary" className="text-xs">{typeLabels[c.resource!.type]}</Badge>
+                        <span className="ml-auto">{new Date(c.createdAt).toLocaleString("zh-CN", { timeZone: "Asia/Shanghai" })}</span>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </Link>
+              ))}
+            </div>
+            {totalComments > SECTION_LIMIT && (
+              <div className="mt-3 text-center">
+                <Link href={`/profile/${user.username}/comments`}>
+                  <Button variant="outline" size="sm">查看更多评论 ({totalComments})</Button>
                 </Link>
               </div>
             )}
