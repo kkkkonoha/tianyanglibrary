@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useTransition } from "react"
+import { useActionState } from "react"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { submitFeedback } from "@/lib/actions/feedback"
 
 const statusLabels: Record<string, string> = {
   pending: "待处理",
@@ -22,30 +23,14 @@ const statusVariants: Record<string, "secondary" | "default" | "outline"> = {
 
 export function FeedbackForm() {
   const router = useRouter()
-  const [pending, startTransition] = useTransition()
-  const [msg, setMsg] = useState("")
+  // 与注册表单一致：useActionState 绑定 form action（绕开手动调用 server action 的异常路径）
+  const [result, formAction] = useActionState(submitFeedback, null)
+  const pending = result?.pending === true
 
-  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
-    e.preventDefault()
-    setMsg("")
-    const formData = new FormData(e.currentTarget)
-    startTransition(async () => {
-      try {
-        const { submitFeedback } = await import("@/lib/actions/feedback")
-        const result = await submitFeedback(formData)
-        if (result?.error) {
-          setMsg(result.error)
-        } else {
-          setMsg("反馈已提交，可以在下方查看处理进度")
-          e.currentTarget.reset()
-          router.refresh()
-        }
-      } catch {
-        // 响应中断时数据可能已提交成功：提示刷新确认，并自动刷新
-        setMsg("网络异常，正在刷新确认提交结果...")
-        router.refresh()
-      }
-    })
+  function handleSuccessRefresh() {
+    if (result?.success) {
+      router.refresh()
+    }
   }
 
   return (
@@ -54,7 +39,7 @@ export function FeedbackForm() {
         <CardTitle className="text-lg">提交反馈</CardTitle>
       </CardHeader>
       <CardContent>
-        <form onSubmit={handleSubmit} className="space-y-3">
+        <form action={formAction} onSubmit={handleSuccessRefresh} className="space-y-3">
           <div>
             <Label htmlFor="type">类型</Label>
             <div className="mt-1 flex gap-2">
@@ -79,7 +64,8 @@ export function FeedbackForm() {
           <Button type="submit" size="sm" disabled={pending}>
             {pending ? "提交中..." : "提交反馈"}
           </Button>
-          {msg && <p className="text-sm text-muted-foreground">{msg}</p>}
+          {result?.error && <p className="text-sm text-destructive">{result.error}</p>}
+          {result?.success && <p className="text-sm text-green-600">反馈已提交，可以在下方查看处理进度</p>}
         </form>
       </CardContent>
     </Card>

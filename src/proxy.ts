@@ -42,6 +42,7 @@ export const config = {
     // 上传资源：单独匹配以保留缓存头处理
     "/uploads/:path*",
     // 登录保护范围：排除 api（内部鉴权）、uploads、登录/注册/找回密码/联系管理员页、Next 静态资源
-    "/((?!api|uploads|_next/static|_next/image|favicon.ico|login|register|forgot-password|contact-admin).*)",
+    // feedback 路径排除：Next 16 proxy(Node runtime) 对 multipart POST body 透传有 bug，导致 FormData 解析失败
+    "/((?!api|uploads|_next/static|_next/image|favicon.ico|login|register|forgot-password|contact-admin|feedback).*)",
   ],
 }
