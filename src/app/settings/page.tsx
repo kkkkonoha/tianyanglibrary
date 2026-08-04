@@ -9,7 +9,7 @@ export default async function SettingsPage() {
 
   const user = await prisma.user.findUnique({
     where: { id: session.user.id as string },
-    select: { bio: true, avatar: true, username: true, lastUsernameChangeAt: true },
+    select: { bio: true, avatar: true, username: true, lastUsernameChangeAt: true, securityQuestion: true },
   })
 
   return (
@@ -18,6 +18,7 @@ export default async function SettingsPage() {
       bio={user?.bio ?? ""}
       avatar={user?.avatar ?? null}
       lastUsernameChangeAt={user?.lastUsernameChangeAt ?? null}
+      securityQuestion={user?.securityQuestion ?? null}
     />
   )
 }

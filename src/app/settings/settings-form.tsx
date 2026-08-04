@@ -7,27 +7,42 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { updateProfile, changePassword, changeUsername } from "@/lib/actions/settings"
+import { updateProfile, changePassword, changeUsername, setSecurityQuestion } from "@/lib/actions/settings"
 
 export function SettingsForm({
   username,
   bio,
   avatar,
   lastUsernameChangeAt,
+  securityQuestion,
 }: {
   username: string
   bio: string
   avatar: string | null
   lastUsernameChangeAt: Date | null
+  securityQuestion: string | null
 }) {
   const router = useRouter()
   const [bioValue, setBioValue] = useState(bio)
   const [bioMsg, setBioMsg] = useState("")
   const [pwMsg, setPwMsg] = useState("")
   const [unameMsg, setUnameMsg] = useState("")
+  const [sqMsg, setSqMsg] = useState("")
   const [avatarMsg, setAvatarMsg] = useState("")
   const [previewAvatar, setPreviewAvatar] = useState(avatar)
   const [localPreview, setLocalPreview] = useState<string | null>(null)
+
+  async function handleSecurityQuestion(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault()
+    setSqMsg("")
+    const formData = new FormData(e.currentTarget)
+    const result = await setSecurityQuestion(formData)
+    setSqMsg(result?.error ? result.error : (result?.message ?? "保存成功"))
+    if (result?.success) {
+      e.currentTarget.reset()
+      router.refresh()
+    }
+  }
   const fileRef = useRef<HTMLInputElement>(null)
 
   // 用户名每月一次限制的提示
@@ -139,6 +154,49 @@ export function SettingsForm({
             <Button onClick={handleBioSave} size="sm">保存</Button>
           </div>
           {bioMsg && <p className={`text-sm ${bioMsg === "保存成功" ? "text-green-600" : "text-destructive"}`}>{bioMsg}</p>}
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>安全问题</CardTitle>
+          <CardDescription>
+            {securityQuestion
+              ? `当前问题：${securityQuestion}（修改需验证当前密码）`
+              : "设置安全问题后，忘记密码可在登录页自助找回"}
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <form onSubmit={handleSecurityQuestion} className="space-y-3">
+            <div>
+              <Label htmlFor="sqCurrentPassword">当前密码</Label>
+              <Input id="sqCurrentPassword" name="currentPassword" type="password" placeholder="用于验证身份" required />
+            </div>
+            <div>
+              <Label htmlFor="securityQuestion">安全问题</Label>
+              <select
+                id="securityQuestion"
+                name="securityQuestion"
+                defaultValue={securityQuestion ?? ""}
+                className="w-full rounded-md border bg-background px-3 py-2 text-sm"
+              >
+                <option value="" disabled>{securityQuestion ? "请选择或保持原问题" : "请选择安全问题（或自行填写）"}</option>
+                <option value="你的小学名称是什么？">你的小学名称是什么？</option>
+                <option value="你最喜欢的书叫什么？">你最喜欢的书叫什么？</option>
+                <option value="你的母亲的名字是什么？">你的母亲的名字是什么？</option>
+                <option value="你的第一只宠物叫什么？">你的第一只宠物叫什么？</option>
+                <option value="你的出生城市是哪里？">你的出生城市是哪里？</option>
+                <option value="你最难忘的旅行目的地是哪里？">你最难忘的旅行目的地是哪里？</option>
+              </select>
+              <Input id="securityQuestionCustom" name="securityQuestionCustom" type="text" placeholder="或自定义安全问题" className="mt-2" />
+            </div>
+            <div>
+              <Label htmlFor="securityAnswer">安全答案</Label>
+              <Input id="securityAnswer" name="securityAnswer" type="text" placeholder="至少2个字符" required />
+            </div>
+            <Button type="submit" size="sm">{securityQuestion ? "更新安全问题" : "保存安全问题"}</Button>
+            {sqMsg && <p className={`text-sm ${sqMsg.includes("保存") ? "text-green-600" : "text-destructive"}`}>{sqMsg}</p>}
+          </form>
         </CardContent>
       </Card>
 

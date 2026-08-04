@@ -96,3 +96,34 @@ export async function changePassword(formData: FormData) {
 
   return { success: true, message: "密码修改成功" }
 }
+
+// 设置/修改安全问题（老用户补设；修改需验证当前密码）
+export async function setSecurityQuestion(formData: FormData) {
+  const session = await auth()
+  if (!session?.user) return { error: "请先登录" }
+
+  const currentPassword = formData.get("currentPassword") as string
+  const customQuestion = (formData.get("securityQuestionCustom") as string)?.trim() ?? ""
+  const presetQuestion = (formData.get("securityQuestion") as string) ?? ""
+  const question = customQuestion || presetQuestion
+  const answer = (formData.get("securityAnswer") as string)?.trim() ?? ""
+
+  if (!currentPassword) return { error: "请输入当前密码" }
+  if (!question) return { error: "请选择或填写安全问题" }
+  if (answer.length < 2) return { error: "安全答案至少2个字符" }
+  if (answer.length > 100) return { error: "安全答案最多100字" }
+
+  const user = await prisma.user.findUnique({ where: { id: session.user.id as string } })
+  if (!user) return { error: "用户不存在" }
+
+  const isValid = await bcrypt.compare(currentPassword, user.passwordHash)
+  if (!isValid) return { error: "当前密码错误" }
+
+  const securityAnswer = await bcrypt.hash(answer, 10)
+  await prisma.user.update({
+    where: { id: user.id },
+    data: { securityQuestion: question, securityAnswer },
+  })
+
+  return { success: true, message: "安全问题已保存" }
+}
