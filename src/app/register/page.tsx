@@ -65,7 +65,6 @@ export default function RegisterPage() {
               <select
                 id="securityQuestion"
                 name="securityQuestion"
-                required
                 className="w-full rounded-md border bg-background px-3 py-2 text-sm"
                 defaultValue=""
               >

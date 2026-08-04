@@ -56,7 +56,12 @@ export default async function ComicsPage({
       </div>
 
       {error && (
-        <div className="rounded-md bg-destructive/10 p-3 text-sm text-destructive">{error}</div>
+        <Card className="border-amber-200 bg-amber-50/30 dark:border-amber-900 dark:bg-amber-950/10">
+          <CardContent className="flex flex-col items-center justify-center py-10 text-center">
+            <p className="text-base font-medium">搜索暂时不可用</p>
+            <p className="mt-1 text-sm text-muted-foreground">漫画源可能暂时无法访问，请稍后重试或切换来源</p>
+          </CardContent>
+        </Card>
       )}
 
       {q && result && (
