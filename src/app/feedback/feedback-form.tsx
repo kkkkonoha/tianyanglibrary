@@ -41,7 +41,9 @@ export function FeedbackForm() {
           router.refresh()
         }
       } catch {
-        setMsg("网络错误，提交失败，请重试")
+        // 响应中断时数据可能已提交成功：提示刷新确认，并自动刷新
+        setMsg("网络异常，正在刷新确认提交结果...")
+        router.refresh()
       }
     })
   }
