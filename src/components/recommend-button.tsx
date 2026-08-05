@@ -6,9 +6,11 @@ import { Button } from "@/components/ui/button"
 export function RecommendButton({
   resourceId,
   hasRecommended,
+  note,
 }: {
   resourceId: string | number
   hasRecommended: boolean
+  note?: string | null
 }) {
   const router = useRouter()
 
@@ -20,18 +22,41 @@ export function RecommendButton({
         await toggleRecommendation(formData)
         router.refresh()
       }}
-      className="flex items-center gap-2"
+      className={`flex ${hasRecommended ? "flex-col" : "items-center"} gap-2`}
     >
       <input type="hidden" name="resourceId" value={resourceId} />
       <input
         type="text"
         name="note"
-        placeholder="推荐理由（可选）"
-        className="flex-1 rounded-md border px-3 py-1 text-sm"
+        defaultValue={hasRecommended ? (note ?? "") : ""}
+        placeholder={hasRecommended ? "编辑推荐理由（留空则无推荐语）" : "推荐理由（可选）"}
+        className="min-w-0 flex-1 rounded-md border px-3 py-1 text-sm"
       />
-      <Button type="submit" variant={hasRecommended ? "destructive" : "default"} size="sm">
-        {hasRecommended ? "取消推荐" : "推荐"}
-      </Button>
+      {hasRecommended ? (
+        <div className="flex flex-wrap items-center gap-2">
+          <Button
+            type="submit"
+            variant="outline"
+            size="sm"
+            className="flex-1 whitespace-nowrap sm:flex-none"
+            formAction={async (formData: FormData) => {
+              const { updateRecommendationNote } = await import("@/lib/actions/recommendation")
+              formData.set("resourceId", String(resourceId))
+              await updateRecommendationNote(formData)
+              router.refresh()
+            }}
+          >
+            保存推荐语
+          </Button>
+          <Button type="submit" variant="destructive" size="sm" className="flex-1 whitespace-nowrap sm:flex-none">
+            取消推荐
+          </Button>
+        </div>
+      ) : (
+        <Button type="submit" variant="default" size="sm" className="whitespace-nowrap">
+          推荐
+        </Button>
+      )}
     </form>
   )
 }

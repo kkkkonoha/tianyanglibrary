@@ -48,21 +48,21 @@ export default async function UserCommentsPage({
         <>
           <div className="space-y-3">
             {comments.map((c) => (
-              <Link key={c.id} href={`/resource/${c.resource!.id}`}>
-                <Card className="transition-shadow hover:shadow-md">
-                  <CardContent className="p-4">
-                    <p className="text-sm whitespace-pre-wrap"><ExpandableText text={c.content} /></p>
-                    <div className="mt-2 flex items-center gap-2 text-xs text-muted-foreground">
-                      {c.resource!.coverImage ? (
-                        <img src={c.resource!.coverImage} alt={c.resource!.title} loading="lazy" decoding="async" className="h-6 w-4 rounded object-contain bg-muted/30" />
-                      ) : null}
-                      <span className="font-medium text-primary">{c.resource!.title}</span>
-                      <Badge variant="secondary" className="text-xs">{typeLabels[c.resource!.type]}</Badge>
-                      <span className="ml-auto">{new Date(c.createdAt).toLocaleString("zh-CN", { timeZone: "Asia/Shanghai" })}</span>
-                    </div>
-                  </CardContent>
-                </Card>
-              </Link>
+              <Card key={c.id} className="transition-shadow hover:shadow-md">
+                <CardContent className="p-4">
+                  <p className="text-sm whitespace-pre-wrap"><ExpandableText text={c.content} /></p>
+                  <div className="mt-2 flex items-center gap-2 text-xs text-muted-foreground">
+                    {c.resource!.coverImage ? (
+                      <img src={c.resource!.coverImage} alt={c.resource!.title} loading="lazy" decoding="async" className="h-6 w-4 rounded object-contain bg-muted/30" />
+                    ) : null}
+                    <Link href={`/resource/${c.resource!.id}`} className="font-medium text-primary hover:underline">
+                      {c.resource!.title}
+                    </Link>
+                    <Badge variant="secondary" className="text-xs">{typeLabels[c.resource!.type]}</Badge>
+                    <span className="ml-auto">{new Date(c.createdAt).toLocaleString("zh-CN", { timeZone: "Asia/Shanghai" })}</span>
+                  </div>
+                </CardContent>
+              </Card>
             ))}
           </div>
           {totalPages > 1 && <Pagination path={`/profile/${user.username}/comments`} page={currentPage} total={totalPages} />}

@@ -95,6 +95,9 @@ export default async function ResourcePage({
   const hasRecommended = session?.user
     ? resource.recommendations.some((r) => r.userId === (session.user as { id: string }).id)
     : false
+  const myRecommendation = session?.user
+    ? resource.recommendations.find((r) => r.userId === (session.user as { id: string }).id)
+    : null
 
   // 漫画条目的阅读源（手动创建条目可能无 comicMangaId，但绑定后有 ComicBinding）
   const readMangaId = resource.comicMangaId
@@ -274,6 +277,7 @@ export default async function ResourcePage({
                 <RecommendButton
                   resourceId={resource.id}
                   hasRecommended={hasRecommended}
+                  note={myRecommendation?.note}
                 />
               </div>
               {resource.recommendations.length > 0 && (

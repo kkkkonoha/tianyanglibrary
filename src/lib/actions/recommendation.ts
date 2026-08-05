@@ -6,6 +6,35 @@ import { createActivity } from "@/lib/activity"
 import { revalidatePath } from "next/cache"
 import { randomUUID } from "crypto"
 
+export async function updateRecommendationNote(formData: FormData) {
+  const session = await auth()
+  if (!session?.user) return { error: "请先登录" }
+
+  const resourceId = Number(formData.get("resourceId"))
+  if (!Number.isInteger(resourceId)) return { error: "资源 ID 无效" }
+  const note = (formData.get("note") as string)?.trim() || null
+  const userId = session.user.id as string
+
+  const existing = await prisma.recommendation.findUnique({
+    where: { userId_resourceId: { userId, resourceId } },
+  })
+  if (!existing) return { error: "还没有推荐这本书" }
+
+  await prisma.recommendation.update({
+    where: { id: existing.id },
+    data: { note },
+  })
+
+  await prisma.activity.updateMany({
+    where: { type: "RECOMMEND", userId, resourceId },
+    data: { metadata: note },
+  })
+
+  revalidatePath("/")
+  revalidatePath(`/resource/${resourceId}`)
+  return { success: true }
+}
+
 export async function toggleRecommendation(formData: FormData) {
   const session = await auth()
   if (!session?.user) return { error: "请先登录" }
