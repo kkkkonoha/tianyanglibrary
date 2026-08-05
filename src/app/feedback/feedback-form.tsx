@@ -28,6 +28,10 @@ export function FeedbackForm() {
 
   // 提交后轮询「最新反馈」接口确认服务器是否收到（响应异常不影响判定）
   async function confirmReceived(title: string, content: string): Promise<boolean> {
+    // 服务器存储的换行可能是 CRLF（multipart 编码差异），比较前归一化
+    const norm = (s: string) => s.replace(/\r\n/g, "\n").trim()
+    const wantTitle = norm(title)
+    const wantContent = norm(content)
     for (let i = 0; i < 10; i++) {
       await new Promise((r) => setTimeout(r, 400))
       try {
@@ -35,7 +39,7 @@ export function FeedbackForm() {
         if (!res.ok) continue
         const data = await res.json()
         const latest = data?.latest
-        if (latest && latest.title === title && latest.content === content) {
+        if (latest && norm(latest.title) === wantTitle && norm(latest.content) === wantContent) {
           return true
         }
       } catch {
