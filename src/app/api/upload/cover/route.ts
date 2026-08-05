@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { auth } from "@/lib/auth"
 import { prisma } from "@/lib/db"
-import { createActivity } from "@/lib/activity"
 import { writeFile, unlink } from "fs/promises"
 import { join } from "path"
 import { existsSync } from "fs"
@@ -60,13 +59,6 @@ export async function POST(req: NextRequest) {
   await prisma.resource.update({
     where: { id: rid },
     data: { coverImage: `/uploads/covers/${filename}` },
-  })
-
-  await createActivity({
-    type: "UPDATE",
-    userId: session.user.id as string,
-    resourceId: rid,
-    metadata: "封面",
   })
 
   if (oldCover?.startsWith("/uploads/covers/")) {

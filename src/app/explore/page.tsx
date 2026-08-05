@@ -27,7 +27,7 @@ export default async function ExplorePage({
   const PAGE_SIZE = 24
   const orderBy = sort === "hot"
     ? { recommendations: { _count: "desc" as const } }
-    : { createdAt: "desc" as const }
+    : { updatedAt: "desc" as const }
 
   const where: any = {}
   const andConditions: any[] = []

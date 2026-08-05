@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { auth } from "@/lib/auth"
 import { prisma } from "@/lib/db"
-import { createActivity } from "@/lib/activity"
 import { writeFile } from "fs/promises"
 import { join } from "path"
 
@@ -60,11 +59,10 @@ export async function POST(req: NextRequest) {
     },
   })
 
-  await createActivity({
-    type: "UPDATE",
-    userId: session.user.id as string,
-    resourceId: rid,
-    metadata: "文件",
+  // 条目被更新，刷新更新时间（探索页「最新」排序）
+  await prisma.resource.update({
+    where: { id: rid },
+    data: { updatedAt: new Date() },
   })
 
   return NextResponse.json({ success: true, file: { id: record.id, fileName: file.name, fileUrl: record.fileUrl, fileSize: file.size, order: record.order } })

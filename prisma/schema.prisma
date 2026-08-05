@@ -14,7 +14,6 @@ enum ResourceType {
 
 enum ActivityType {
   UPLOAD
-  UPDATE
   RECOMMEND
   CREATE_COLLECTION
   ADD_TO_COLLECTION

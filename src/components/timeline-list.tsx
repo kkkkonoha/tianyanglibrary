@@ -29,7 +29,6 @@ const GROUP_WINDOW_MS = 10 * 60 * 1000
 
 const activityLabels: Record<string, string> = {
   UPLOAD: "上传了资源",
-  UPDATE: "更新了",
   RECOMMEND: "推荐了",
   CREATE_COLLECTION: "创建了目录",
   ADD_TO_COLLECTION: "向目录添加了",
@@ -111,13 +110,6 @@ function ActivityCard({ activity }: { activity: TimelineActivity }) {
         <CardContent className="pt-0">
           <div className="rounded-lg border border-primary/10 bg-primary/[0.03] p-3 text-sm italic leading-relaxed text-foreground/80">
             <ExpandableText text={`“${activity.metadata}”`} />
-          </div>
-        </CardContent>
-      )}
-      {activity.type === "UPDATE" && activity.metadata && (
-        <CardContent className="pt-0">
-          <div className="rounded-lg border border-primary/10 bg-primary/[0.03] px-3 py-1.5 text-xs text-muted-foreground">
-            更新了：{activity.metadata.split(",").join("、")}
           </div>
         </CardContent>
       )}

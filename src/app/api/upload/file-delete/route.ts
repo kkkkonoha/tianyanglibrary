@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { auth } from "@/lib/auth"
 import { prisma } from "@/lib/db"
-import { createActivity } from "@/lib/activity"
 import { unlink } from "fs/promises"
 import { join } from "path"
 
@@ -21,11 +20,10 @@ export async function DELETE(req: NextRequest) {
 
   await prisma.resourceFile.delete({ where: { id: fileId } })
 
-  await createActivity({
-    type: "UPDATE",
-    userId: session.user.id as string,
-    resourceId: file.resourceId,
-    metadata: "删除文件",
+  // 条目被更新，刷新更新时间（探索页「最新」排序）
+  await prisma.resource.update({
+    where: { id: file.resourceId },
+    data: { updatedAt: new Date() },
   })
 
   return NextResponse.json({ success: true })
