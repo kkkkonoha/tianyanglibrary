@@ -25,12 +25,12 @@ export function RecommendButton({
       className={`flex ${hasRecommended ? "flex-col" : "items-center"} gap-2`}
     >
       <input type="hidden" name="resourceId" value={resourceId} />
-      <input
-        type="text"
+      <textarea
         name="note"
         defaultValue={hasRecommended ? (note ?? "") : ""}
         placeholder={hasRecommended ? "编辑推荐理由（留空则无推荐语）" : "推荐理由（可选）"}
-        className="min-w-0 flex-1 rounded-md border px-3 py-1 text-sm"
+        rows={3}
+        className="min-w-0 flex-1 resize-y rounded-md border px-3 py-1.5 text-sm leading-relaxed"
       />
       {hasRecommended ? (
         <div className="flex flex-wrap items-center gap-2">

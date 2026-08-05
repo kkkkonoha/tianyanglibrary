@@ -300,8 +300,8 @@ export default async function ResourcePage({
                           {rec.user.username}
                         </Link>
                         {rec.note && (
-                          <p className="text-xs text-muted-foreground mt-0.5">
-                            <ExpandableText text={rec.note} />
+                          <p className="mt-0.5 text-xs text-muted-foreground">
+                            <ExpandableText text={rec.note} className="whitespace-pre-wrap" />
                           </p>
                         )}
                         <p className="text-xs text-muted-foreground/50 mt-0.5">

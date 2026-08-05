@@ -99,16 +99,32 @@ export async function updateResource(formData: FormData) {
 
   const { title, author, description, type, tags } = validated.data
 
+  // 变更检测：记录具体更新了哪些内容
+  const changes: string[] = []
+  if (resource.title !== title) changes.push("标题")
+  if (resource.author !== (author ?? null)) changes.push("作者")
+  if (resource.description !== (description ?? null)) changes.push("简介")
+  if (resource.type !== type) changes.push("类型")
+
   await prisma.resource.update({
     where: { id },
     data: { title, author: author ?? null, description: description ?? null, type },
   })
 
   if (tags !== undefined) {
+    const existingTags = await prisma.resourceTag.findMany({
+      where: { resourceId: id },
+      select: { tag: { select: { name: true } } },
+    })
+    const oldNames = existingTags.map((t) => t.tag.name)
+    const newNames = tags.trim()
+      ? tags.split(",").map((t) => t.trim()).filter(Boolean)
+      : []
+    const sameOrder = oldNames.length === newNames.length && oldNames.every((n, i) => n === newNames[i])
+    if (!sameOrder) changes.push("标签")
     await prisma.resourceTag.deleteMany({ where: { resourceId: id } })
-    if (tags.trim()) {
-      const tagNames = tags.split(",").map((t) => t.trim()).filter(Boolean)
-      for (const name of tagNames) {
+    if (newNames.length) {
+      for (const name of newNames) {
         const tag = await prisma.tag.upsert({
           where: { name },
           create: { name },
@@ -119,6 +135,15 @@ export async function updateResource(formData: FormData) {
         })
       }
     }
+  }
+
+  if (changes.length > 0) {
+    await createActivity({
+      type: "UPDATE",
+      userId: session.user.id as string,
+      resourceId: id,
+      metadata: changes.join(","),
+    })
   }
 
   revalidatePath(`/resource/${id}`)

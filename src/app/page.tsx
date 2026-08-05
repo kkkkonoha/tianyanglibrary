@@ -15,6 +15,7 @@ const MAX_PAGE_SIZE = 1000
 const TABS = [
   { key: "", label: "全部" },
   { key: "UPLOAD", label: "上传" },
+  { key: "UPDATE", label: "更新" },
   { key: "COMMENT", label: "评论" },
   { key: "RECOMMEND", label: "推荐" },
   { key: "FAVORITE", label: "收藏" },
@@ -22,10 +23,11 @@ const TABS = [
 ] as const
 
 const DIR_TYPES: $Enums.ActivityType[] = ["CREATE_COLLECTION", "ADD_TO_COLLECTION"]
-const VALID_TYPES: $Enums.ActivityType[] = ["UPLOAD", "COMMENT", "RECOMMEND", "FAVORITE", ...DIR_TYPES]
+const VALID_TYPES: $Enums.ActivityType[] = ["UPLOAD", "UPDATE", "COMMENT", "RECOMMEND", "FAVORITE", ...DIR_TYPES]
 
 const emptyLabels: Record<string, string> = {
   UPLOAD: "还没有人上传资源",
+  UPDATE: "还没有条目更新动态",
   COMMENT: "还没有评论动态",
   RECOMMEND: "还没有推荐动态",
   FAVORITE: "还没有收藏动态",

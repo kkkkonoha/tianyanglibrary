@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { auth } from "@/lib/auth"
 import { prisma } from "@/lib/db"
+import { createActivity } from "@/lib/activity"
 import { writeFile } from "fs/promises"
 import { join } from "path"
 
@@ -57,6 +58,13 @@ export async function POST(req: NextRequest) {
       fileSize: file.size,
       order: (lastFile?.order ?? -1) + 1,
     },
+  })
+
+  await createActivity({
+    type: "UPDATE",
+    userId: session.user.id as string,
+    resourceId: rid,
+    metadata: "文件",
   })
 
   return NextResponse.json({ success: true, file: { id: record.id, fileName: file.name, fileUrl: record.fileUrl, fileSize: file.size, order: record.order } })
