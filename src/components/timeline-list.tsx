@@ -41,7 +41,10 @@ const resourceTypeLabels: Record<string, string> = {
   COMIC: "📘 漫画",
 }
 
-// 服务端已按时间倒序排列；按 (userId, type) 相邻时间窗口分组。
+// 评论/推荐不折叠，始终完整显示
+const NO_GROUP_TYPES = new Set(["COMMENT", "RECOMMEND"])
+
+// 服务端已按时间倒序排列；按 (userId, type) 相邻时间窗口分组（评论/推荐除外）。
 // 组 key 取组内最老一条的时间桶，保证新动态并入时 key 稳定（展开状态不重置）。
 function buildGroups(activities: TimelineActivity[]): ActivityGroup[] {
   const groups: ActivityGroup[] = []
@@ -50,10 +53,12 @@ function buildGroups(activities: TimelineActivity[]): ActivityGroup[] {
     const aTime = Date.parse(a.createdAt)
     if (last) {
       const lastItem = last.items[last.items.length - 1]
+      const diff = Math.abs(aTime - Date.parse(lastItem.createdAt))
       if (
+        !NO_GROUP_TYPES.has(a.type) &&
         lastItem.userId === a.userId &&
         lastItem.type === a.type &&
-        aTime - Date.parse(lastItem.createdAt) <= GROUP_WINDOW_MS
+        diff <= GROUP_WINDOW_MS
       ) {
         last.items.push(a)
         continue
@@ -117,6 +122,61 @@ function ActivityCard({ activity }: { activity: TimelineActivity }) {
   )
 }
 
+// 折叠组缩略卡片：显示全部条目标题（时间正序、顿号连接），保留展开入口
+function CollapsedGroupCard({ group }: { group: ActivityGroup }) {
+  const first = group.items[0]
+  const items = [...group.items].reverse()
+  const withResource = items.filter((a) => a.resource || a.collection)
+  return (
+    <Card className="group relative overflow-hidden border-transparent shadow-sm transition-all hover:border-border hover:shadow-md">
+      <CardHeader className="pb-3">
+        <div className="flex items-start gap-3">
+          <Link href={`/profile/${first.user.username}`}>
+            <Avatar className="h-9 w-9 ring-2 ring-secondary">
+              <AvatarImage src={first.user.avatar ?? undefined} />
+              <AvatarFallback>{first.user.username.slice(0, 2).toUpperCase()}</AvatarFallback>
+            </Avatar>
+          </Link>
+          <div className="min-w-0 flex-1">
+            <div className="flex flex-wrap items-baseline gap-x-1.5">
+              <Link href={`/profile/${first.user.username}`} className="font-semibold hover:underline">
+                {first.user.username}
+              </Link>
+              <span className="text-sm text-muted-foreground">{activityLabels[first.type] ?? first.type}</span>
+              {withResource.length === 0 && (
+                <span className="font-medium text-muted-foreground">
+                  {group.items.length} 个条目
+                </span>
+              )}
+              {withResource.map((a, i) => (
+                <span key={a.id}>
+                  {i > 0 && <span className="text-muted-foreground">、</span>}
+                  {a.resource && (
+                    <Link href={`/resource/${a.resource.id}`} className="font-medium text-primary hover:underline">
+                      {a.resource.title}
+                    </Link>
+                  )}
+                  {!a.resource && a.collection && (
+                    <Link href={`/collections/${a.collection.id}`} className="font-medium text-primary hover:underline">
+                      《{a.collection.title}》
+                    </Link>
+                  )}
+                  {!a.resource && !a.collection && (
+                    <span className="text-muted-foreground">（条目已删除）</span>
+                  )}
+                </span>
+              ))}
+            </div>
+            <div className="mt-1.5 text-xs text-muted-foreground/70">
+              {group.items.length} 条动态
+            </div>
+          </div>
+        </div>
+      </CardHeader>
+    </Card>
+  )
+}
+
 export function TimelineList({
   activities,
   currentUserId,
@@ -156,14 +216,14 @@ export function TimelineList({
                         <DeleteActivityButton activityId={activity.id} />
                       </div>
                     )}
-                    <ActivityCard activity={activity} />
+                    {collapsed ? <CollapsedGroupCard group={group} /> : <ActivityCard activity={activity} />}
                   </div>
                   {i === 0 && group.items.length > 1 && (
                     <button
                       onClick={() => toggle(group.key)}
                       className="mt-1.5 ml-12 rounded-md px-2 py-1 text-xs text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
                     >
-                      {collapsed ? `+${group.items.length - 1} 条动态` : `收起 ${group.items.length - 1} 条`}
+                      {collapsed ? `展开全部 ${group.items.length} 条` : `收起 ${group.items.length - 1} 条`}
                     </button>
                   )}
                 </div>
