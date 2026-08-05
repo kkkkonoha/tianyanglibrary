@@ -101,12 +101,12 @@ export default async function LeaderboardPage({
     prisma.recommendation.findMany({
       where: { note: { not: null }, createdAt: { gte: start, lt: end } },
       orderBy: { createdAt: "desc" },
-      select: { userId: true, note: true, resource: { select: { title: true } } },
+      select: { userId: true, note: true, resource: { select: { id: true, title: true } } },
     }),
     prisma.comment.findMany({
       where: { parentId: null, resourceId: { not: null }, createdAt: { gte: start, lt: end } },
       orderBy: { createdAt: "desc" },
-      select: { userId: true, content: true, resource: { select: { title: true } } },
+      select: { userId: true, content: true, resource: { select: { id: true, title: true } } },
     }),
     prisma.feedback.findMany({
       where: { withdrawnAt: null, createdAt: { gte: start, lt: end } },
@@ -115,7 +115,7 @@ export default async function LeaderboardPage({
     prisma.resource.findMany({
       where: { createdAt: { gte: start, lt: end } },
       orderBy: { createdAt: "desc" },
-      select: { uploaderId: true, title: true },
+      select: { id: true, uploaderId: true, title: true },
     }),
     prisma.user.findMany({ select: { id: true, username: true, avatar: true } }),
   ])
@@ -143,13 +143,13 @@ export default async function LeaderboardPage({
     const c = ensure(r.userId)
     c.recommend++
     addScore(r.userId, POINTS.recommend)
-    addDetail(r.userId, { type: "recommend", title: r.resource?.title, text: r.note ?? undefined })
+    addDetail(r.userId, { type: "recommend", resourceId: r.resource?.id, title: r.resource?.title, text: r.note ?? undefined })
   }
   for (const c of comments) {
     const cnt = ensure(c.userId)
     cnt.comment++
     addScore(c.userId, POINTS.comment)
-    addDetail(c.userId, { type: "comment", title: c.resource?.title, text: c.content })
+    addDetail(c.userId, { type: "comment", resourceId: c.resource?.id, title: c.resource?.title, text: c.content })
   }
   for (const f of feedbacks) {
     const cnt = ensure(f.userId)
@@ -160,7 +160,7 @@ export default async function LeaderboardPage({
     const cnt = ensure(r.uploaderId)
     cnt.upload++
     addScore(r.uploaderId, POINTS.upload)
-    addDetail(r.uploaderId, { type: "upload", title: r.title })
+    addDetail(r.uploaderId, { type: "upload", resourceId: r.id, title: r.title })
   }
 
   const userMap = new Map(users.map((u) => [u.id, u]))

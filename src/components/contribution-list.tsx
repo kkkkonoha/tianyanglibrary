@@ -6,9 +6,9 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Card, CardContent } from "@/components/ui/card"
 
 export type ContributionDetail =
-  | { type: "recommend"; title: string | null | undefined; text?: string }
-  | { type: "comment"; title: string | null | undefined; text?: string }
-  | { type: "upload"; title: string | undefined }
+  | { type: "recommend"; resourceId?: number; title: string | null | undefined; text?: string }
+  | { type: "comment"; resourceId?: number; title: string | null | undefined; text?: string }
+  | { type: "upload"; resourceId?: number; title: string | undefined }
 
 export type ContributionRow = {
   user: { id: string; username: string; avatar: string | null }
@@ -70,21 +70,27 @@ export function ContributionList({ rows }: { rows: ContributionRow[] }) {
                 </div>
               </div>
               {expanded && row.details.length > 0 && (
-                <div className="space-y-2 border-t px-4 py-3">
+                <div className="space-y-3 border-t px-4 py-3">
                   <div className="text-xs font-medium text-muted-foreground">本月贡献明细</div>
                   {row.details.map((d, j) => (
-                    <div key={j} className="flex items-baseline gap-2 text-sm">
-                      <span className="w-10 shrink-0 text-xs text-muted-foreground">{DETAIL_LABEL[d.type]}</span>
-                      <span className="min-w-0 flex-1 truncate">
-                          {d.title ? (
-                            <>
-                              {d.title}
-                              {"text" in d && d.text && <span className="text-muted-foreground">：{d.text}</span>}
-                            </>
-                          ) : (
-                          <span className="text-muted-foreground">资源</span>
+                    <div key={j} className="text-sm">
+                      <div className="flex items-baseline gap-2">
+                        <span className="w-10 shrink-0 text-xs text-muted-foreground">{DETAIL_LABEL[d.type]}</span>
+                        {d.resourceId ? (
+                          <Link
+                            href={`/resource/${d.resourceId}`}
+                            onClick={(e) => e.stopPropagation()}
+                            className="min-w-0 flex-1 font-medium text-primary hover:underline"
+                          >
+                            {d.title ?? "资源"}
+                          </Link>
+                        ) : (
+                          <span className="min-w-0 flex-1">{d.title ?? "资源"}</span>
                         )}
-                      </span>
+                      </div>
+                      {"text" in d && d.text && (
+                        <p className="mt-1 break-words pl-12 text-muted-foreground">{d.text}</p>
+                      )}
                     </div>
                   ))}
                 </div>
