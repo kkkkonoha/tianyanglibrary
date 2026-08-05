@@ -3,6 +3,7 @@ import { prisma } from "@/lib/db"
 import Link from "next/link"
 import { Card, CardContent } from "@/components/ui/card"
 import { ContributionList, type ContributionRow } from "@/components/contribution-list"
+import { MonthSelector } from "@/components/month-selector"
 
 export const dynamic = "force-dynamic"
 
@@ -187,47 +188,14 @@ export default async function LeaderboardPage({
       </p>
 
       {/* 月份切换 */}
-      <div className="mt-6 flex items-center justify-center gap-3">
-        {hasPrev ? (
-          <Link
-            href={`?month=${monthKey(prevMonth.y, prevMonth.m)}`}
-            className="rounded-full p-1.5 text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
-            aria-label="上一月"
-          >
-            ←
-          </Link>
-        ) : (
-          <span className="p-1.5 text-muted-foreground/30" aria-hidden>
-            ←
-          </span>
-        )}
-        <select
-          value={monthSelected}
-          onChange={(e) => {
-            window.location.href = `?month=${e.target.value}`
-          }}
-          className="rounded-md border bg-background px-3 py-1.5 text-base font-semibold outline-none transition-colors focus:border-primary"
-        >
-          {months.map((m) => (
-            <option key={monthKey(m.y, m.m)} value={monthKey(m.y, m.m)}>
-              {monthLabel(m.y, m.m)}
-            </option>
-          ))}
-        </select>
-        {hasNext ? (
-          <Link
-            href={`?month=${monthKey(nextMonth.y, nextMonth.m)}`}
-            className="rounded-full p-1.5 text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
-            aria-label="下一月"
-          >
-            →
-          </Link>
-        ) : (
-          <span className="p-1.5 text-muted-foreground/30" aria-hidden>
-            →
-          </span>
-        )}
-      </div>
+      <MonthSelector
+        months={months.map((m) => ({ key: monthKey(m.y, m.m), label: monthLabel(m.y, m.m) }))}
+        value={monthSelected}
+        prevHref={hasPrev ? `?month=${monthKey(prevMonth.y, prevMonth.m)}` : null}
+        nextHref={hasNext ? `?month=${monthKey(nextMonth.y, nextMonth.m)}` : null}
+        hasPrev={hasPrev}
+        hasNext={hasNext}
+      />
 
       {/* 我的排名 */}
       {myRow && myIndex >= 0 && (
