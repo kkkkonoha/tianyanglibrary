@@ -1,155 +1,232 @@
 import { auth } from "@/lib/auth"
 import { prisma } from "@/lib/db"
 import Link from "next/link"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Card, CardContent } from "@/components/ui/card"
+import { ContributionList, type ContributionRow } from "@/components/contribution-list"
 
 export const dynamic = "force-dynamic"
 
-const RANKS = [
-  { key: "total", label: "综合" },
-  { key: "comment", label: "评论" },
-  { key: "recommend", label: "推荐" },
-] as const
+// 贡献分权重（统一管理，调整只改这里）
+const POINTS = {
+  recommend: 10,
+  comment: 10,
+  feedback: 2,
+  upload: 1,
+} as const
 
-const RANGES = [
-  { key: "week", label: "周" },
-  { key: "month", label: "月" },
-  { key: "year", label: "年" },
-  { key: "all", label: "总" },
-] as const
+const MAX_DETAIL_PER_TYPE = 20
 
-// 北京时间自然周期起点（返回 UTC 时刻，周一为一周起点）
-function periodCutoff(range: string): Date | null {
-  if (range === "all") return null
-  const now = new Date()
-  const bj = new Date(now.getTime() + 8 * 3600 * 1000)
-  const y = bj.getUTCFullYear()
-  const m = bj.getUTCMonth()
-  const d = bj.getUTCDate()
-  let startBJ: number
-  if (range === "week") {
-    const dow = bj.getUTCDay()
-    startBJ = Date.UTC(y, m, d - ((dow + 6) % 7))
-  } else if (range === "month") {
-    startBJ = Date.UTC(y, m, 1)
-  } else if (range === "year") {
-    startBJ = Date.UTC(y, 0, 1)
-  } else {
-    return null
-  }
-  return new Date(startBJ - 8 * 3600 * 1000)
+type Month = { y: number; m: number }
+
+function parseMonth(s: string | undefined): Month | null {
+  if (!s) return null
+  const m = /^(\d{4})-(\d{2})$/.exec(s)
+  if (!m) return null
+  const y = Number(m[1])
+  const mo = Number(m[2])
+  if (mo < 1 || mo > 12 || y < 2020 || y > 2100) return null
+  return { y, m: mo - 1 }
 }
 
-function rankMedal(i: number) {
-  if (i === 0) return "🥇"
-  if (i === 1) return "🥈"
-  if (i === 2) return "🥉"
-  return null
+// 北京时间自然月 [start, end)，start 为当月 1 日 00:00，end 为下月 1 日 00:00
+function monthRange(y: number, m: number) {
+  const start = new Date(Date.UTC(y, m, 1) - 8 * 3600 * 1000)
+  const end = new Date(Date.UTC(y, m + 1, 1) - 8 * 3600 * 1000)
+  return { start, end }
+}
+
+function monthKey(y: number, m: number) {
+  return `${y}-${String(m + 1).padStart(2, "0")}`
+}
+
+function monthLabel(y: number, m: number) {
+  return `${y}年${m + 1}月`
+}
+
+function currentMonth(): Month {
+  const bj = new Date(Date.now() + 8 * 3600 * 1000)
+  return { y: bj.getUTCFullYear(), m: bj.getUTCMonth() }
+}
+
+function shiftMonth(month: Month, delta: number): Month {
+  const t = month.y * 12 + month.m + delta
+  return { y: Math.floor(t / 12), m: ((t % 12) + 12) % 12 }
 }
 
 export default async function LeaderboardPage({
   searchParams,
 }: {
-  searchParams: Promise<{ rank?: string; range?: string }>
+  searchParams: Promise<{ month?: string }>
 }) {
   const session = await auth()
-  const { rank, range } = await searchParams
-  const rankKey = RANKS.some((r) => r.key === rank) ? (rank as string) : "total"
-  const rangeKey = RANGES.some((r) => r.key === range) ? (range as string) : "week"
-  const cutoff = periodCutoff(rangeKey)
+  const sp = await searchParams
+  const nowMonth = currentMonth()
+  const month = parseMonth(sp.month) ?? nowMonth
+  const monthSelected = monthKey(month.y, month.m)
 
-  const [comments, recommendations, users] = await Promise.all([
+  // 最早数据月份 → 当前月，生成可选月份列表（倒序）
+  const [minRec, minCmt, minFb, minRes] = await Promise.all([
+    prisma.recommendation.findFirst({ orderBy: { createdAt: "asc" }, select: { createdAt: true } }),
+    prisma.comment.findFirst({ orderBy: { createdAt: "asc" }, select: { createdAt: true } }),
+    prisma.feedback.findFirst({ orderBy: { createdAt: "asc" }, select: { createdAt: true } }),
+    prisma.resource.findFirst({ orderBy: { createdAt: "asc" }, select: { createdAt: true } }),
+  ])
+  const earliest = [minRec?.createdAt, minCmt?.createdAt, minFb?.createdAt, minRes?.createdAt]
+    .filter((d): d is Date => Boolean(d))
+    .reduce<Date | null>((acc, d) => (acc && acc < d ? acc : d), null)
+  const firstMonth = earliest
+    ? (() => {
+        const bj = new Date(earliest.getTime() + 8 * 3600 * 1000)
+        return { y: bj.getUTCFullYear(), m: bj.getUTCMonth() }
+      })()
+    : nowMonth
+
+  const months: Month[] = []
+  let cur = firstMonth
+  while (cur.y < nowMonth.y || (cur.y === nowMonth.y && cur.m <= nowMonth.m)) {
+    months.push(cur)
+    cur = shiftMonth(cur, 1)
+  }
+  months.reverse()
+
+  const prevMonth = shiftMonth(month, -1)
+  const nextMonth = shiftMonth(month, 1)
+  const hasPrev = monthKey(prevMonth.y, prevMonth.m) >= monthKey(firstMonth.y, firstMonth.m)
+  const hasNext = monthKey(nextMonth.y, nextMonth.m) <= monthKey(nowMonth.y, nowMonth.m)
+
+  const { start, end } = monthRange(month.y, month.m)
+
+  const [recommendations, comments, feedbacks, resources, users] = await Promise.all([
+    prisma.recommendation.findMany({
+      where: { note: { not: null }, createdAt: { gte: start, lt: end } },
+      orderBy: { createdAt: "desc" },
+      select: { userId: true, note: true, resource: { select: { title: true } } },
+    }),
     prisma.comment.findMany({
-      where: {
-        parentId: null,
-        resourceId: { not: null },
-        ...(cutoff ? { createdAt: { gte: cutoff } } : {}),
-      },
+      where: { parentId: null, resourceId: { not: null }, createdAt: { gte: start, lt: end } },
+      orderBy: { createdAt: "desc" },
+      select: { userId: true, content: true, resource: { select: { title: true } } },
+    }),
+    prisma.feedback.findMany({
+      where: { withdrawnAt: null, createdAt: { gte: start, lt: end } },
       select: { userId: true },
     }),
-    prisma.recommendation.findMany({
-      where: cutoff ? { createdAt: { gte: cutoff } } : {},
-      select: { userId: true },
+    prisma.resource.findMany({
+      where: { createdAt: { gte: start, lt: end } },
+      orderBy: { createdAt: "desc" },
+      select: { uploaderId: true, title: true },
     }),
     prisma.user.findMany({ select: { id: true, username: true, avatar: true } }),
   ])
 
-  const commentCount = new Map<string, number>()
-  for (const c of comments) commentCount.set(c.userId, (commentCount.get(c.userId) ?? 0) + 1)
-  const recommendCount = new Map<string, number>()
-  for (const r of recommendations) recommendCount.set(r.userId, (recommendCount.get(r.userId) ?? 0) + 1)
+  const scores = new Map<string, number>()
+  const counts = new Map<string, ContributionRow["counts"]>()
+  const details = new Map<string, ContributionRow["details"]>()
+
+  const ensure = (uid: string) => {
+    let c = counts.get(uid)
+    if (!c) {
+      c = { recommend: 0, comment: 0, feedback: 0, upload: 0 }
+      counts.set(uid, c)
+    }
+    return c
+  }
+  const addScore = (uid: string, points: number) => scores.set(uid, (scores.get(uid) ?? 0) + points)
+  const addDetail = (uid: string, d: ContributionRow["details"][number]) => {
+    const arr = details.get(uid) ?? []
+    if (arr.length < MAX_DETAIL_PER_TYPE * 3) arr.push(d)
+    details.set(uid, arr)
+  }
+
+  for (const r of recommendations) {
+    const c = ensure(r.userId)
+    c.recommend++
+    addScore(r.userId, POINTS.recommend)
+    addDetail(r.userId, { type: "recommend", title: r.resource?.title, text: r.note ?? undefined })
+  }
+  for (const c of comments) {
+    const cnt = ensure(c.userId)
+    cnt.comment++
+    addScore(c.userId, POINTS.comment)
+    addDetail(c.userId, { type: "comment", title: c.resource?.title, text: c.content })
+  }
+  for (const f of feedbacks) {
+    const cnt = ensure(f.userId)
+    cnt.feedback++
+    addScore(f.userId, POINTS.feedback)
+  }
+  for (const r of resources) {
+    const cnt = ensure(r.uploaderId)
+    cnt.upload++
+    addScore(r.uploaderId, POINTS.upload)
+    addDetail(r.uploaderId, { type: "upload", title: r.title })
+  }
 
   const userMap = new Map(users.map((u) => [u.id, u]))
-  const scored = [...userMap.keys()]
-    .map((id) => ({
-      user: userMap.get(id)!,
-      comments: commentCount.get(id) ?? 0,
-      recommends: recommendCount.get(id) ?? 0,
-    }))
-    .filter((r) => r.comments > 0 || r.recommends > 0)
-    .sort((a, b) => {
-      // 综合榜：总分 → 评论数 → 推荐数 → 用户名
-      if (rankKey === "total") {
-        const ta = a.comments + a.recommends
-        const tb = b.comments + b.recommends
-        if (tb !== ta) return tb - ta
-        if (b.comments !== a.comments) return b.comments - a.comments
-        if (b.recommends !== a.recommends) return b.recommends - a.recommends
-        return a.user.username.localeCompare(b.user.username, "zh-CN")
+  const rows: ContributionRow[] = [...counts.keys()]
+    .map((uid) => {
+      const c = counts.get(uid)!
+      return {
+        user: userMap.get(uid)!,
+        score: c.recommend * POINTS.recommend + c.comment * POINTS.comment + c.feedback * POINTS.feedback + c.upload * POINTS.upload,
+        counts: c,
+        details: details.get(uid) ?? [],
       }
-      // 评论榜 / 推荐榜：主维度 → 另一维度 → 用户名
-      const primaryA = rankKey === "comment" ? a.comments : a.recommends
-      const primaryB = rankKey === "comment" ? b.comments : b.recommends
-      if (primaryB !== primaryA) return primaryB - primaryA
-      const secondaryA = rankKey === "comment" ? a.recommends : a.comments
-      const secondaryB = rankKey === "comment" ? b.recommends : b.comments
-      if (secondaryB !== secondaryA) return secondaryB - secondaryA
-      return a.user.username.localeCompare(b.user.username, "zh-CN")
     })
+    .sort((a, b) => b.score - a.score || a.user.username.localeCompare(b.user.username, "zh-CN"))
 
-  const top20 = scored.slice(0, 20)
-  const myIndex = session?.user ? scored.findIndex((r) => r.user.id === (session.user as { id: string }).id) : -1
-  const myRow = myIndex >= 0 ? scored[myIndex] : null
+  const top20 = rows.slice(0, 20)
+  const myIndex = session?.user ? rows.findIndex((r) => r.user.id === (session.user as { id: string }).id) : -1
+  const myRow = myIndex >= 0 ? rows[myIndex] : null
 
   return (
     <div className="container mx-auto max-w-2xl px-4 py-12">
-      <h1 className="text-3xl font-bold tracking-tight">排行榜</h1>
-      <p className="mt-1.5 text-muted-foreground">按评论与推荐热度，看看谁最活跃</p>
+      <h1 className="text-3xl font-bold tracking-tight">贡献榜</h1>
+      <p className="mt-1.5 text-muted-foreground">
+        月度贡献榜：带文字推荐 +{POINTS.recommend}、主楼评论 +{POINTS.comment}、反馈 +{POINTS.feedback}、上传资源 +{POINTS.upload}
+      </p>
 
-      {/* 榜单切换 */}
-      <div className="mt-6 flex flex-wrap items-center gap-1.5">
-        {RANKS.map((r) => {
-          const active = r.key === rankKey
-          return (
-            <Link
-              key={r.key}
-              href={`/leaderboard?rank=${r.key}&range=${rangeKey}`}
-              className={`rounded-full px-3.5 py-1.5 text-sm font-medium transition-colors ${
-                active ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-secondary hover:text-foreground"
-              }`}
-            >
-              {r.label}
-            </Link>
-          )
-        })}
-      </div>
-      {/* 周期切换 */}
-      <div className="mt-2 flex flex-wrap items-center gap-1.5">
-        {RANGES.map((r) => {
-          const active = r.key === rangeKey
-          return (
-            <Link
-              key={r.key}
-              href={`/leaderboard?rank=${rankKey}&range=${r.key}`}
-              className={`rounded-full px-3.5 py-1.5 text-sm font-medium transition-colors ${
-                active ? "bg-secondary text-secondary-foreground" : "text-muted-foreground hover:bg-secondary hover:text-foreground"
-              }`}
-            >
-              {r.label}
-            </Link>
-          )
-        })}
+      {/* 月份切换 */}
+      <div className="mt-6 flex items-center justify-center gap-3">
+        {hasPrev ? (
+          <Link
+            href={`?month=${monthKey(prevMonth.y, prevMonth.m)}`}
+            className="rounded-full p-1.5 text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
+            aria-label="上一月"
+          >
+            ←
+          </Link>
+        ) : (
+          <span className="p-1.5 text-muted-foreground/30" aria-hidden>
+            ←
+          </span>
+        )}
+        <select
+          value={monthSelected}
+          onChange={(e) => {
+            window.location.href = `?month=${e.target.value}`
+          }}
+          className="rounded-md border bg-background px-3 py-1.5 text-base font-semibold outline-none transition-colors focus:border-primary"
+        >
+          {months.map((m) => (
+            <option key={monthKey(m.y, m.m)} value={monthKey(m.y, m.m)}>
+              {monthLabel(m.y, m.m)}
+            </option>
+          ))}
+        </select>
+        {hasNext ? (
+          <Link
+            href={`?month=${monthKey(nextMonth.y, nextMonth.m)}`}
+            className="rounded-full p-1.5 text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
+            aria-label="下一月"
+          >
+            →
+          </Link>
+        ) : (
+          <span className="p-1.5 text-muted-foreground/30" aria-hidden>
+            →
+          </span>
+        )}
       </div>
 
       {/* 我的排名 */}
@@ -161,8 +238,10 @@ export default async function LeaderboardPage({
               <span className="text-sm font-medium">我的排名</span>
             </div>
             <div className="flex items-center gap-3 text-sm text-muted-foreground">
-              <span>{myRow.comments} 评论</span>
-              <span>{myRow.recommends} 推荐</span>
+              <span>{myRow.counts.recommend} 推荐</span>
+              <span>{myRow.counts.comment} 评论</span>
+              <span>{myRow.counts.upload} 上传</span>
+              <span className="font-semibold text-foreground">{myRow.score} 分</span>
             </div>
           </CardContent>
         </Card>
@@ -172,35 +251,12 @@ export default async function LeaderboardPage({
       {top20.length === 0 ? (
         <Card className="mt-6 border-dashed">
           <CardContent className="py-12 text-center text-muted-foreground">
-            该周期暂无数据，快去评论或推荐吧
+            该月份暂无贡献数据，去推荐、评论、上传或反馈吧
           </CardContent>
         </Card>
       ) : (
         <div className="mt-6 space-y-2">
-          {top20.map((row, i) => {
-            const score = rankKey === "comment" ? row.comments : rankKey === "recommend" ? row.recommends : row.comments + row.recommends
-            return (
-              <Link key={row.user.id} href={`/profile/${row.user.username}`}>
-                <Card className="transition-colors hover:border-primary/40 hover:bg-muted/30">
-                  <CardContent className="flex items-center gap-3 p-3.5">
-                    <span className="w-8 shrink-0 text-center text-lg font-bold tabular-nums">
-                      {rankMedal(i) ?? i + 1}
-                    </span>
-                    <Avatar className="h-9 w-9 shrink-0">
-                      <AvatarImage src={row.user.avatar ?? undefined} />
-                      <AvatarFallback>{row.user.username.slice(0, 2).toUpperCase()}</AvatarFallback>
-                    </Avatar>
-                    <span className="min-w-0 flex-1 truncate font-medium">{row.user.username}</span>
-                    <div className="flex shrink-0 items-center gap-3 text-xs text-muted-foreground tabular-nums">
-                      <span>{row.comments} 评论</span>
-                      <span>{row.recommends} 推荐</span>
-                      <span className="font-semibold text-foreground">{score} 分</span>
-                    </div>
-                  </CardContent>
-                </Card>
-              </Link>
-            )
-          })}
+          <ContributionList rows={top20} />
         </div>
       )}
     </div>

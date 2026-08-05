@@ -57,7 +57,7 @@ export async function Navbar() {
               用户
             </Link>
             <Link href="/leaderboard" className="rounded-md px-3 py-1.5 font-medium text-muted-foreground transition-all hover:bg-secondary hover:text-secondary-foreground">
-              排行
+              贡献
             </Link>
             {session?.user && (
               <Link href="/comics" className="rounded-md px-3 py-1.5 font-medium text-muted-foreground transition-all hover:bg-secondary hover:text-secondary-foreground">
