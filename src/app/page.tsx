@@ -7,8 +7,10 @@ import { Button } from "@/components/ui/button"
 import { TimelineList } from "@/components/timeline-list"
 import { isAdmin } from "@/lib/permissions"
 import { ChangelogButton } from "@/components/changelog-button"
+import { TimelinePageSize } from "@/components/timeline-page-size"
 
-const PAGE_SIZE = 20
+const DEFAULT_PAGE_SIZE = 20
+const MAX_PAGE_SIZE = 1000
 
 const TABS = [
   { key: "", label: "全部" },
@@ -30,31 +32,56 @@ const emptyLabels: Record<string, string> = {
   DIR: "还没有目录动态",
 }
 
+// 构造带 types/size/page 的链接
+function buildHref(types: string[], size: number, page = 1) {
+  const params = new URLSearchParams()
+  if (types.length > 0) params.set("types", types.join(","))
+  if (size !== DEFAULT_PAGE_SIZE) params.set("size", String(size))
+  if (page > 1) params.set("page", String(page))
+  const qs = params.toString()
+  return qs ? `/?${qs}` : "/"
+}
+
 export default async function HomePage({
   searchParams,
 }: {
-  searchParams: Promise<{ page?: string; type?: string }>
+  searchParams: Promise<{ page?: string; type?: string; types?: string; size?: string }>
 }) {
   const session = await auth()
-  const { page, type } = await searchParams
+  const { page, type, types, size } = await searchParams
   const currentPage = Math.max(1, parseInt(page ?? "1") || 1)
 
-  const typeKey = typeof type === "string" ? type : ""
-  const isDirTab = typeKey === "DIR"
-  const typeFilter = isDirTab
-    ? { type: { in: DIR_TYPES } }
-    : (VALID_TYPES as readonly string[]).includes(typeKey)
-      ? { type: typeKey as $Enums.ActivityType }
-      : undefined
+  // 每页条数：正整数 1~1000，非法回退 20
+  const rawSize = parseInt(size ?? "", 10)
+  const pageSize = Number.isInteger(rawSize) && rawSize >= 1 && rawSize <= MAX_PAGE_SIZE ? rawSize : DEFAULT_PAGE_SIZE
+
+  // 多选类型（兼容旧 type= 单值）
+  const selectedKeys = new Set<string>()
+  if (typeof types === "string" && types) {
+    for (const k of types.split(",")) {
+      if (k && k !== "DIR" ? VALID_TYPES.includes(k as $Enums.ActivityType) || k === "DIR" : false) selectedKeys.add(k)
+    }
+  }
+  if (selectedKeys.size === 0 && typeof type === "string" && type) {
+    if (VALID_TYPES.includes(type as $Enums.ActivityType) || type === "DIR") selectedKeys.add(type)
+  }
+
+  // 展开为实际枚举（DIR = 创建目录 + 添加目录）
+  const selectedEnums: $Enums.ActivityType[] = []
+  for (const k of selectedKeys) {
+    if (k === "DIR") selectedEnums.push(...DIR_TYPES)
+    else selectedEnums.push(k as $Enums.ActivityType)
+  }
+  const typeFilter = selectedEnums.length > 0 ? { type: { in: selectedEnums } } : undefined
 
   const totalCount = await prisma.activity.count({ where: typeFilter })
-  const totalPages = Math.max(1, Math.ceil(totalCount / PAGE_SIZE))
+  const totalPages = Math.max(1, Math.ceil(totalCount / pageSize))
 
   const activities = await prisma.activity.findMany({
     where: typeFilter,
     orderBy: { createdAt: "desc" },
-    skip: (currentPage - 1) * PAGE_SIZE,
-    take: PAGE_SIZE,
+    skip: (currentPage - 1) * pageSize,
+    take: pageSize,
     include: {
       user: { select: { id: true, username: true, avatar: true } },
       resource: { select: { id: true, title: true, type: true } },
@@ -71,11 +98,20 @@ export default async function HomePage({
 
       <div className="mb-6 flex flex-wrap items-center gap-1.5">
         {TABS.map((tab) => {
-          const active = tab.key === typeKey
+          const active = tab.key === "" ? selectedKeys.size === 0 : selectedKeys.has(tab.key)
           return (
             <Link
               key={tab.key}
-              href={tab.key ? `/?type=${tab.key}` : "/"}
+              href={
+                tab.key === ""
+                  ? buildHref([], pageSize)
+                  : buildHref(
+                      active
+                        ? [...selectedKeys].filter((k) => k !== tab.key)
+                        : [...selectedKeys, tab.key],
+                      pageSize
+                    )
+              }
               className={`rounded-full px-3.5 py-1.5 text-sm font-medium transition-colors ${
                 active
                   ? "bg-primary text-primary-foreground"
@@ -86,6 +122,7 @@ export default async function HomePage({
             </Link>
           )
         })}
+        <TimelinePageSize currentSize={pageSize} />
       </div>
 
       {activities.length === 0 ? (
@@ -94,7 +131,7 @@ export default async function HomePage({
             <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-secondary">
               <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" className="text-muted-foreground"><path d="M12 5v14M5 12h14"/></svg>
             </div>
-            <p className="text-lg font-medium">{emptyLabels[typeKey] ?? "还没有任何动态"}</p>
+            <p className="text-lg font-medium">{selectedKeys.size === 1 ? emptyLabels[[...selectedKeys][0]] ?? "还没有任何动态" : "还没有任何动态"}</p>
             <p className="mt-1 text-sm text-muted-foreground">
               成为第一个分享的人吧！
             </p>
@@ -133,7 +170,7 @@ export default async function HomePage({
       {totalPages > 1 && (
         <div className="mt-8 flex items-center justify-center gap-4">
           {currentPage > 1 && (
-            <Link href={`/?type=${typeKey}&page=${currentPage - 1}`}>
+            <Link href={buildHref([...selectedKeys], pageSize, currentPage - 1)}>
               <Button variant="outline" size="sm">上一页</Button>
             </Link>
           )}
@@ -141,7 +178,7 @@ export default async function HomePage({
             {currentPage} / {totalPages}
           </span>
           {currentPage < totalPages && (
-            <Link href={`/?type=${typeKey}&page=${currentPage + 1}`}>
+            <Link href={buildHref([...selectedKeys], pageSize, currentPage + 1)}>
               <Button variant="outline" size="sm">下一页</Button>
             </Link>
           )}

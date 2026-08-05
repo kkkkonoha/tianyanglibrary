@@ -68,6 +68,40 @@ export async function submitFeedback(formData: FormData) {
   }
 }
 
+// 用户撤回自己的反馈（仅待处理状态，软删除 + 删除管理员通知 + 日志保留）
+export async function withdrawFeedback(feedbackId: string) {
+  const session = await auth()
+  if (!session?.user) return { error: "请先登录" }
+
+  try {
+    const feedback = await prisma.feedback.findUnique({ where: { id: feedbackId } })
+    if (!feedback) return { error: "反馈不存在" }
+    if (feedback.userId !== (session.user.id as string)) return { error: "只能撤回自己的反馈" }
+    if (feedback.status !== "pending") return { error: "仅待处理状态的反馈可以撤回" }
+    if (feedback.withdrawnAt) return { error: "该反馈已撤回" }
+
+    await prisma.feedback.update({
+      where: { id: feedbackId },
+      data: { withdrawnAt: new Date() },
+    })
+
+    // 删除管理员侧对应通知（按标题匹配），撤回不产生新通知
+    await prisma.notification.deleteMany({
+      where: { type: "FEEDBACK", content: { contains: `「${feedback.title}」` } },
+    })
+
+    // 服务器日志保留撤回记录
+    console.log(`[feedback] 用户 ${session.user.name} 撤回了反馈「${feedback.title}」(${feedback.id})`)
+
+    revalidatePath("/feedback")
+    revalidatePath("/admin/feedback")
+    return { success: true }
+  } catch (e) {
+    console.error("withdrawFeedback 失败:", e)
+    return { error: "撤回失败，请重试" }
+  }
+}
+
 export async function updateFeedbackStatus(feedbackId: string, status: string) {
   const session = await auth()
   if (!session?.user) return { error: "请先登录" }

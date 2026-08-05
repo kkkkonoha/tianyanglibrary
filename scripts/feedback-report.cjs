@@ -24,7 +24,7 @@ const STATUS_LABEL = { pending: "待处理", processing: "处理中", done: "已
 
   const cutoff = new Date(lastTime || Date.now() - INTERVAL_MS).toISOString().replace("T", " ").slice(0, 19);
   const rows = await q(
-    `SELECT f.id, f.type, f.title, f.content, f.status, f.reply, f.createdAt, u.username
+    `SELECT f.id, f.type, f.title, f.content, f.status, f.reply, f.withdrawnAt, f.createdAt, u.username
      FROM Feedback f JOIN User u ON u.id = f.userId
      WHERE f.createdAt > ? ORDER BY f.createdAt ASC`,
     [cutoff]
@@ -39,17 +39,19 @@ const STATUS_LABEL = { pending: "待处理", processing: "处理中", done: "已
   const filename = `反馈汇总-${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, "0")}${String(now.getDate()).padStart(2, "0")}-${String(now.getHours()).padStart(2, "0")}${String(now.getMinutes()).padStart(2, "0")}.md`;
   const filePath = path.join(REPORT_DIR, filename);
 
-  let md = `# 天央图书馆反馈汇总\n\n- 生成时间：${now.toLocaleString("zh-CN", { timeZone: "Asia/Shanghai" })}\n- 本次新增：${rows.length} 条\n\n`;
+  let md = `# 天央图书馆反馈汇总\n\n- 生成时间：${now.toLocaleString("zh-CN", { timeZone: "Asia/Shanghai" })}\n- 本次新增：${rows.length} 条（含已撤回）\n\n`;
   md += `| # | 时间 | 提交者 | 类型 | 标题 | 状态 |\n|---|------|--------|------|------|------|\n`;
   rows.forEach((r, i) => {
-    md += `| ${i + 1} | ${new Date(r.createdAt).toLocaleString("zh-CN", { timeZone: "Asia/Shanghai" })} | ${r.username} | ${TYPE_LABEL[r.type] ?? r.type} | ${r.title} | ${STATUS_LABEL[r.status] ?? r.status} |\n`;
+    const statusText = r.withdrawnAt ? "已撤回" : STATUS_LABEL[r.status] ?? r.status;
+    md += `| ${i + 1} | ${new Date(r.createdAt).toLocaleString("zh-CN", { timeZone: "Asia/Shanghai" })} | ${r.username} | ${TYPE_LABEL[r.type] ?? r.type} | ${r.title} | ${statusText} |\n`;
   });
   md += `\n---\n\n`;
   for (const r of rows) {
-    md += `## ${TYPE_LABEL[r.type] ?? r.type}：${r.title}\n\n`;
+    const withdrawnMark = r.withdrawnAt ? "（已撤回）" : "";
+    md += `## ${TYPE_LABEL[r.type] ?? r.type}：${r.title}${withdrawnMark}\n\n`;
     md += `- 提交者：${r.username}\n`;
     md += `- 时间：${new Date(r.createdAt).toLocaleString("zh-CN", { timeZone: "Asia/Shanghai" })}\n`;
-    md += `- 状态：${STATUS_LABEL[r.status] ?? r.status}\n\n`;
+    md += `- 状态：${r.withdrawnAt ? "已撤回" : STATUS_LABEL[r.status] ?? r.status}\n\n`;
     md += `**内容：**\n\n${r.content}\n\n`;
     if (r.reply) md += `**管理员回复：**\n\n${r.reply}\n\n`;
     md += `---\n\n`;

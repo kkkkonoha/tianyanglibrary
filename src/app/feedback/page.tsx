@@ -10,7 +10,7 @@ export default async function FeedbackPage() {
   if (!session?.user) redirect("/login")
 
   const feedbacks = await prisma.feedback.findMany({
-    where: { userId: session.user.id as string },
+    where: { userId: session.user.id as string, withdrawnAt: null },
     orderBy: { createdAt: "desc" },
   })
 

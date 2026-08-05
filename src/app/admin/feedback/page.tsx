@@ -15,6 +15,7 @@ export default async function AdminFeedbackPage() {
   if (!(await isFeedbackManager())) redirect("/")
 
   const feedbacks = await prisma.feedback.findMany({
+    where: { withdrawnAt: null },
     orderBy: { createdAt: "desc" },
     include: { user: { select: { username: true } } },
   })

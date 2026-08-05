@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { ConfirmButton } from "@/components/confirm-button"
 
 const statusLabels: Record<string, string> = {
   pending: "待处理",
@@ -122,6 +123,18 @@ export function FeedbackList({
     createdAt: Date
   }>
 }) {
+  const router = useRouter()
+
+  async function handleWithdraw(feedbackId: string) {
+    const { withdrawFeedback } = await import("@/lib/actions/feedback")
+    const result = await withdrawFeedback(feedbackId)
+    if (result?.error) {
+      alert(result.error)
+      return
+    }
+    router.refresh()
+  }
+
   if (feedbacks.length === 0) {
     return (
       <Card className="border-dashed">
@@ -142,7 +155,20 @@ export function FeedbackList({
                 {f.type === "BUG" ? "🐞 Bug" : "✨ 需求"}
               </Badge>
               <span className="font-medium">{f.title}</span>
-              <span className="ml-auto">
+              <span className="ml-auto flex items-center gap-2">
+                {f.status === "pending" && (
+                  <ConfirmButton
+                    title="撤回反馈"
+                    description="确定要撤回这条反馈吗？撤回后管理员将不再看到它。"
+                    confirmText="撤回"
+                    variant="ghost"
+                    size="sm"
+                    className="h-auto p-0 text-xs text-muted-foreground hover:text-destructive font-normal"
+                    onConfirm={() => handleWithdraw(f.id)}
+                  >
+                    撤回
+                  </ConfirmButton>
+                )}
                 <Badge variant={statusVariants[f.status] ?? "secondary"}>{statusLabels[f.status] ?? f.status}</Badge>
               </span>
             </div>
