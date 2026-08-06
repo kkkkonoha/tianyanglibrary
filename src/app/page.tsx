@@ -24,6 +24,44 @@ const TABS = [
 const DIR_TYPES: $Enums.ActivityType[] = ["CREATE_COLLECTION", "ADD_TO_COLLECTION"]
 const VALID_TYPES: $Enums.ActivityType[] = ["UPLOAD", "COMMENT", "RECOMMEND", "FAVORITE", ...DIR_TYPES]
 
+// 与 timeline-list 客户端分组规则一致：同一用户同类型相邻 10 分钟内合并为一组；评论/推荐不合并
+const GROUP_WINDOW_MS = 10 * 60 * 1000
+const NO_GROUP_TYPES = new Set(["COMMENT", "RECOMMEND"])
+
+type ServerActivity = {
+  id: string
+  type: string
+  metadata: string | null
+  createdAt: Date
+  userId: string
+  user: { id: string; username: string; avatar: string | null }
+  resource: { id: number; title: string; type: string } | null
+  collection: { id: string; title: string } | null
+}
+
+function buildGroups(activities: ServerActivity[]) {
+  const groups: Array<{ items: ServerActivity[] }> = []
+  for (const a of activities) {
+    const last = groups[groups.length - 1]
+    const aTime = a.createdAt.getTime()
+    if (last) {
+      const lastItem = last.items[last.items.length - 1]
+      const diff = Math.abs(aTime - lastItem.createdAt.getTime())
+      if (
+        !NO_GROUP_TYPES.has(a.type) &&
+        lastItem.userId === a.userId &&
+        lastItem.type === a.type &&
+        diff <= GROUP_WINDOW_MS
+      ) {
+        last.items.push(a)
+        continue
+      }
+    }
+    groups.push({ items: [a] })
+  }
+  return groups
+}
+
 const emptyLabels: Record<string, string> = {
   UPLOAD: "还没有人上传资源",
   COMMENT: "还没有评论动态",
@@ -74,20 +112,45 @@ export default async function HomePage({
   }
   const typeFilter = selectedEnums.length > 0 ? { type: { in: selectedEnums } } : undefined
 
-  const totalCount = await prisma.activity.count({ where: typeFilter })
-  const totalPages = Math.max(1, Math.ceil(totalCount / pageSize))
+  const activityInclude = {
+    user: { select: { id: true, username: true, avatar: true } },
+    resource: { select: { id: true, title: true, type: true } },
+    collection: { select: { id: true, title: true } },
+  } as const
 
-  const activities = await prisma.activity.findMany({
-    where: typeFilter,
-    orderBy: { createdAt: "desc" },
-    skip: (currentPage - 1) * pageSize,
-    take: pageSize,
-    include: {
-      user: { select: { id: true, username: true, avatar: true } },
-      resource: { select: { id: true, title: true, type: true } },
-      collection: { select: { id: true, title: true } },
-    },
-  })
+  // 读取全部符合条件的活动（分批取完），按折叠规则分组后按「卡片数」分页
+  const allActivities: ServerActivity[] = []
+  let offset = 0
+  while (true) {
+    const batch = await prisma.activity.findMany({
+      where: typeFilter,
+      orderBy: { createdAt: "desc" },
+      skip: offset,
+      take: 1000,
+      include: activityInclude,
+    })
+    allActivities.push(...batch)
+    offset += batch.length
+    if (batch.length < 1000) break
+  }
+
+  const groups = buildGroups(allActivities)
+  const totalCards = groups.length
+  const totalPages = Math.max(1, Math.ceil(totalCards / pageSize))
+  const startCard = (currentPage - 1) * pageSize
+  const activities = groups
+    .slice(startCard, startCard + pageSize)
+    .flatMap((g) => g.items)
+    .map((a) => ({
+      id: a.id,
+      type: a.type,
+      metadata: a.metadata,
+      createdAt: a.createdAt.toISOString(),
+      userId: a.userId,
+      user: a.user,
+      resource: a.resource,
+      collection: a.collection,
+    }))
 
   return (
     <div className="container mx-auto max-w-2xl px-4 py-12">
@@ -152,16 +215,7 @@ export default async function HomePage({
         </Card>
       ) : (
         <TimelineList
-          activities={activities.map((a) => ({
-            id: a.id,
-            type: a.type,
-            metadata: a.metadata,
-            createdAt: a.createdAt.toISOString(),
-            userId: a.userId,
-            user: a.user,
-            resource: a.resource,
-            collection: a.collection,
-          }))}
+          activities={activities}
           currentUserId={session?.user ? (session.user as { id: string }).id : undefined}
           isAdminUser={isAdmin(session)}
         />
