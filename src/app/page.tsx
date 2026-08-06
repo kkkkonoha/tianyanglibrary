@@ -97,7 +97,7 @@ export default async function HomePage({
   const selectedKeys = new Set<string>()
   if (typeof types === "string" && types) {
     for (const k of types.split(",")) {
-      if (k && k !== "DIR" ? VALID_TYPES.includes(k as $Enums.ActivityType) || k === "DIR" : false) selectedKeys.add(k)
+      if (k && (VALID_TYPES.includes(k as $Enums.ActivityType) || k === "DIR")) selectedKeys.add(k)
     }
   }
   if (selectedKeys.size === 0 && typeof type === "string" && type) {
