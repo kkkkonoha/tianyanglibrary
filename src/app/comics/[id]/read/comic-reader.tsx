@@ -49,6 +49,8 @@ export function ComicReader({
   const [pageIndex, setPageIndex] = useState(0)
   const [immersive, setImmersive] = useState(false)
   const containerRef = useRef<HTMLDivElement>(null)
+  // 章节切换首帧守卫：切章瞬间 pageIndex 还是旧章节的值，跳过保存防止污染目标章节进度
+  const chapterRef = useRef<string | undefined>(undefined)
 
   const chapter = chapters[activeIndex]
   const prevChapter = activeIndex > 0 ? chapters[activeIndex - 1] : null
@@ -144,11 +146,16 @@ export function ComicReader({
 
   // Save page progress when flipping in page mode
   useEffect(() => {
+    // 切章首帧：pageIndex 还是旧章节的值，跳过保存（防止污染目标章节进度）
+    if (chapterRef.current !== chapter.id) {
+      chapterRef.current = chapter.id
+      return
+    }
     if (mode === "page") {
       saveProgress(String(pageIndex))
       saveToServer(pageIndex)
     }
-  }, [pageIndex, mode, saveProgress, saveToServer])
+  }, [pageIndex, mode, saveProgress, saveToServer, chapter.id])
 
   // Save chapter entry progress on mount (scroll mode starts at chapter start)
   useEffect(() => {
@@ -234,11 +241,6 @@ export function ComicReader({
     window.addEventListener("keydown", handleKey)
     return () => window.removeEventListener("keydown", handleKey)
   }, [mode, totalPages])
-
-  // Save page progress when flipping in page mode
-  useEffect(() => {
-    if (mode === "page") saveProgress(String(pageIndex))
-  }, [pageIndex, mode, saveProgress])
 
   // Close chapter/source list on scroll
   useEffect(() => {
