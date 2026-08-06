@@ -183,7 +183,7 @@ export default async function ResourcePage({
                 </div>
                 {effectiveReadMangaId && (
                   <div className="mt-3">
-                    <Link href={`/comics/${effectiveReadMangaId}`}>
+                    <Link href={`/comics/${effectiveReadMangaId}/read`}>
                       <Button size="sm">📖 在线阅读</Button>
                     </Link>
                   </div>

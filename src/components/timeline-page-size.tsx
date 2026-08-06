@@ -58,7 +58,7 @@ export function TimelinePageSize({ currentSize }: { currentSize: number }) {
       {open && (
         <>
           <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
-          <div className="absolute right-0 z-50 mt-1 w-48 rounded-lg border bg-popover p-2.5 shadow-md">
+          <div className="fixed left-1/2 top-1/2 z-50 w-56 -translate-x-1/2 -translate-y-1/2 rounded-lg border bg-popover p-2.5 shadow-md">
             <p className="mb-1.5 text-xs text-muted-foreground">每页显示条数</p>
             <div className="flex gap-1">
               {PRESETS.map((n) => (
