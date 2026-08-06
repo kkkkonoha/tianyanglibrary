@@ -81,6 +81,62 @@ export async function addToCollection(collectionId: string, resourceId: string |
   return { success: true }
 }
 
+// 目录添加条目的资源搜索：q 为空返回最近更新条目（默认列表），非空按标题/作者模糊搜索
+export async function searchResources(q: string) {
+  const session = await auth()
+  if (!session?.user) return { error: "请先登录" }
+
+  const keyword = q?.trim() ?? ""
+  const where = keyword
+    ? { OR: [{ title: { contains: keyword } }, { author: { contains: keyword } }] }
+    : undefined
+
+  const resources = await prisma.resource.findMany({
+    where,
+    orderBy: keyword ? undefined : { updatedAt: "desc" },
+    take: keyword ? 20 : 30,
+    select: { id: true, title: true, author: true, coverImage: true, type: true },
+  })
+
+  return { resources }
+}
+
+// 批量添加条目到目录（过滤已在目录中的，每条独立产生 ADD_TO_COLLECTION 动态）
+export async function addResourcesToCollection(collectionId: string, resourceIds: (string | number)[]) {
+  const session = await auth()
+  if (!session?.user) return { error: "请先登录" }
+
+  const ids = resourceIds.map(Number).filter((n) => Number.isInteger(n))
+  if (ids.length === 0) return { error: "请选择要添加的条目" }
+
+  const collection = await prisma.collection.findUnique({ where: { id: collectionId } })
+  if (!collection) return { error: "目录不存在" }
+  if (collection.creatorId !== (session.user.id as string)) return { error: "无权操作" }
+
+  const existing = await prisma.collectionResource.findMany({
+    where: { collectionId, resourceId: { in: ids } },
+    select: { resourceId: true },
+  })
+  const existingSet = new Set(existing.map((e) => e.resourceId))
+  const toAdd = ids.filter((id) => !existingSet.has(id))
+
+  for (const rid of toAdd) {
+    await prisma.collectionResource.create({
+      data: { collectionId, resourceId: rid },
+    })
+    await createActivity({
+      type: "ADD_TO_COLLECTION",
+      userId: session.user.id as string,
+      resourceId: rid,
+      collectionId,
+    })
+  }
+
+  revalidatePath("/")
+  revalidatePath(`/collections/${collectionId}`)
+  return { success: true, added: toAdd.length, skipped: ids.length - toAdd.length }
+}
+
 export async function toggleFavoriteCollection(collectionId: string) {
   const session = await auth()
   if (!session?.user) return { error: "请先登录" }

@@ -13,6 +13,7 @@ import { CommentSection } from "@/components/comment-section"
 import { EditCollectionButton } from "@/components/edit-collection-button"
 import { CollectionResourceNote } from "./resource-note"
 import { RemoveResourceButton } from "./remove-resource-button"
+import { AddResourceToCollection } from "./add-resource"
 
 export default async function CollectionPage({
   params,
@@ -108,6 +109,15 @@ export default async function CollectionPage({
       </div>
 
       <Separator className="my-6" />
+
+      {isOwner && (
+        <div className="mb-4">
+          <AddResourceToCollection
+            collectionId={collection.id}
+            existingIds={collection.resources.map((cr) => cr.resource.id)}
+          />
+        </div>
+      )}
 
       <div className="space-y-4">
         {collection.resources.map((cr) => (
