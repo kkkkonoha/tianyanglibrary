@@ -95,7 +95,7 @@ export async function Navbar() {
               <Link href="/notifications" className="relative p-1.5 text-muted-foreground hover:text-foreground transition-colors">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>
                 {unreadCount > 0 && (
-                  <span className="absolute -top-0.5 -right-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-primary/20 px-1 text-[10px] font-medium text-primary">
+                  <span className="absolute -top-0.5 -right-0.5 flex h-4 min-w-4 animate-lib-pop-in items-center justify-center rounded-full bg-primary/20 px-1 text-[10px] font-medium text-primary">
                     {unreadCount > 99 ? "99+" : unreadCount}
                   </span>
                 )}

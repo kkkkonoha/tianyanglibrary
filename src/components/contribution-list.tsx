@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import Link from "next/link"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Card, CardContent } from "@/components/ui/card"
@@ -28,6 +28,32 @@ function rankMedal(i: number) {
   if (i === 1) return "🥈"
   if (i === 2) return "🥉"
   return null
+}
+
+// 数字滚动：值变化时 400ms 缓动滚动（配合贡献榜月份切换）
+function AnimatedNumber({ value }: { value: number }) {
+  const [display, setDisplay] = useState(value)
+  const prevRef = useRef(value)
+
+  useEffect(() => {
+    const from = prevRef.current
+    const to = value
+    prevRef.current = to
+    if (from === to) return
+    const start = performance.now()
+    const duration = 400
+    let raf: number
+    const tick = (t: number) => {
+      const p = Math.min(1, (t - start) / duration)
+      const eased = 1 - Math.pow(1 - p, 3)
+      setDisplay(Math.round(from + (to - from) * eased))
+      if (p < 1) raf = requestAnimationFrame(tick)
+    }
+    raf = requestAnimationFrame(tick)
+    return () => cancelAnimationFrame(raf)
+  }, [value])
+
+  return <>{display}</>
 }
 
 export function ContributionList({ rows }: { rows: ContributionRow[] }) {
@@ -66,10 +92,12 @@ export function ContributionList({ rows }: { rows: ContributionRow[] }) {
                   <span>评论 {row.counts.comment}</span>
                   <span>反馈 {row.counts.feedback}</span>
                   <span>上传 {row.counts.upload}</span>
-                  <span className="font-semibold text-foreground">{row.score} 分</span>
+                  <span className="font-semibold text-foreground">
+                    <AnimatedNumber value={row.score} /> 分
+                  </span>
                 </div>
               </div>
-              {expanded && row.details.length > 0 && (
+              <div className="lib-collapse" data-open={expanded && row.details.length > 0}>
                 <div className="space-y-3 border-t px-4 py-3">
                   <div className="text-xs font-medium text-muted-foreground">本月贡献明细</div>
                   {row.details.map((d, j) => (
@@ -94,7 +122,7 @@ export function ContributionList({ rows }: { rows: ContributionRow[] }) {
                     </div>
                   ))}
                 </div>
-              )}
+              </div>
             </CardContent>
           </Card>
         )

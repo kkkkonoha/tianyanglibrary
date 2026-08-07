@@ -202,33 +202,49 @@ export function TimelineList({
 
   return (
     <div className="space-y-3">
-      {groups.map((group) => {
+      {groups.map((group, gi) => {
         const collapsed = group.items.length > 1 && !expanded.has(group.key)
+        const first = group.items[0]
         return (
-          <div key={group.key} className="space-y-3">
-            {group.items.map((activity, i) => {
-              if (i > 0 && collapsed) return null
-              return (
-                <div key={activity.id}>
-                  <div className="relative">
-                    {canManage(activity) && (
-                      <div className="absolute right-1 top-3 z-10 opacity-50 transition-opacity hover:opacity-100">
-                        <DeleteActivityButton activityId={activity.id} />
-                      </div>
-                    )}
-                    {collapsed ? <CollapsedGroupCard group={group} /> : <ActivityCard activity={activity} />}
-                  </div>
-                  {i === 0 && group.items.length > 1 && (
-                    <button
-                      onClick={() => toggle(group.key)}
-                      className="mt-1.5 ml-12 rounded-md px-2 py-1 text-xs text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
-                    >
-                      {collapsed ? `展开全部 ${group.items.length} 条` : `收起 ${group.items.length - 1} 条`}
-                    </button>
-                  )}
+          <div key={group.key} className="space-y-3 animate-lib-rise-in" style={{ animationDelay: `${Math.min(gi, 12) * 60}ms` }}>
+            <div className="relative">
+              {canManage(first) && (
+                <div className="absolute right-1 top-3 z-10 opacity-50 transition-opacity hover:opacity-100">
+                  <DeleteActivityButton activityId={first.id} />
                 </div>
-              )
-            })}
+              )}
+              {collapsed ? <CollapsedGroupCard group={group} /> : <ActivityCard activity={first} />}
+            </div>
+            {collapsed && (
+              <button
+                onClick={() => toggle(group.key)}
+                className="mt-1.5 ml-12 rounded-md px-2 py-1 text-xs text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
+              >
+                展开全部 {group.items.length} 条
+              </button>
+            )}
+            {group.items.length > 1 && (
+              <div className="lib-collapse" data-open={!collapsed}>
+                <div className="space-y-3">
+                  {group.items.slice(1).map((a) => (
+                    <div key={a.id} className="relative">
+                      {canManage(a) && (
+                        <div className="absolute right-1 top-3 z-10 opacity-50 transition-opacity hover:opacity-100">
+                          <DeleteActivityButton activityId={a.id} />
+                        </div>
+                      )}
+                      <ActivityCard activity={a} />
+                    </div>
+                  ))}
+                  <button
+                    onClick={() => toggle(group.key)}
+                    className="mt-1.5 ml-12 rounded-md px-2 py-1 text-xs text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
+                  >
+                    收起 {group.items.length - 1} 条
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         )
       })}

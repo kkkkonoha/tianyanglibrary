@@ -95,8 +95,9 @@ export function AddResourceToCollection({
       <Button variant="outline" size="sm" onClick={toggleOpen}>
         ＋ 添加条目
       </Button>
-      {open && (
-        <div className="mt-3 rounded-lg border p-3">
+      <div className="lib-collapse" data-open={open}>
+        <div>
+          <div className="mt-3 rounded-lg border p-3">
           <div className="flex gap-2">
             <input
               type="text"
@@ -166,8 +167,9 @@ export function AddResourceToCollection({
             </Button>
             {msg && <span className="text-xs text-muted-foreground">{msg}</span>}
           </div>
+          </div>
         </div>
-      )}
+      </div>
     </div>
   )
 }

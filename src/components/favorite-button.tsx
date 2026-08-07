@@ -1,7 +1,7 @@
 "use client"
 
 import { useRouter } from "next/navigation"
-import { useTransition } from "react"
+import { useState, useTransition } from "react"
 import { Button } from "@/components/ui/button"
 
 // 收藏/取消收藏按钮（显示状态与收藏数）
@@ -18,12 +18,14 @@ export function FavoriteButton({
 }) {
   const router = useRouter()
   const [pending, startTransition] = useTransition()
+  const [pulse, setPulse] = useState(0)
 
   return (
     <Button
       variant={favorited ? "default" : "outline"}
       size={size}
       disabled={pending}
+      className={pulse > 0 ? "animate-lib-pulse-once" : undefined}
       onClick={() => {
         startTransition(async () => {
           const { toggleFavoriteResource } = await import("@/lib/actions/favorite")
@@ -32,6 +34,7 @@ export function FavoriteButton({
             alert(result.error)
             return
           }
+          setPulse((v) => v + 1)
           router.refresh()
         })
       }}

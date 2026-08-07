@@ -151,12 +151,12 @@ export default async function ExplorePage({
         </Card>
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-          {resources.map((resource) => (
-            <div key={resource.id} className="group relative">
+          {resources.map((resource, i) => (
+            <div key={resource.id} className="group relative animate-lib-rise-in" style={{ animationDelay: `${Math.min(i, 12) * 60}ms` }}>
               <Link href={`/resource/${resource.id}`} className="absolute inset-0 z-10">
                 <span className="sr-only">{resource.title}</span>
               </Link>
-              <Card className="h-full overflow-hidden border-transparent shadow-sm transition-all group-hover:border-border group-hover:shadow-md">
+              <Card className="h-full overflow-hidden border-transparent shadow-sm transition-all duration-200 group-hover:-translate-y-0.5 group-hover:border-border group-hover:shadow-md">
                 {resource.coverImage ? (
                   <ImagePreview src={resource.coverImage} alt={resource.title} className="block">
                     <img

@@ -128,3 +128,59 @@ body {
   background-color: oklch(0.546 0.245 262.881 / 0.2);
   color: oklch(0.372 0.149 262.881);
 }
+
+/* ===== 自定义动画（各司其职：内敛过渡 + 关键反馈微动效）===== */
+
+/* 页面/内容淡入（template、列表项等） */
+@keyframes lib-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* 卡片入场：轻微上浮 + 渐入（列表交错使用） */
+@keyframes lib-rise-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* 成功反馈脉冲（收藏/推荐等，一次性） */
+@keyframes lib-pulse-once {
+  0% { transform: scale(1); }
+  40% { transform: scale(1.25); }
+  100% { transform: scale(1); }
+}
+
+/* 通知红点等小元素弹现 */
+@keyframes lib-pop-in {
+  from { transform: scale(0.5); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+
+.animate-lib-fade-in { animation: lib-fade-in 0.15s ease-out both; }
+.animate-lib-rise-in { animation: lib-rise-in 0.3s ease-out both; }
+.animate-lib-pulse-once { animation: lib-pulse-once 0.2s ease-out; }
+.animate-lib-pop-in { animation: lib-pop-in 0.15s ease-out both; }
+
+/* 折叠面板展开/收起：grid-rows 高度过渡 */
+.lib-collapse {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 0.2s ease;
+}
+.lib-collapse[data-open="true"] {
+  grid-template-rows: 1fr;
+}
+.lib-collapse > * {
+  overflow: hidden;
+  min-height: 0;
+}
+
+/* 无障碍：系统开启「减少动态效果」时关闭动画与过渡 */
+@media (prefers-reduced-motion: reduce) {
+  *, ::before, ::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
