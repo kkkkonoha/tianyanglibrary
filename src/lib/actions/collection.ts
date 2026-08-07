@@ -176,6 +176,9 @@ export async function deleteCollection(collectionId: string) {
     return { error: "无权操作" }
   }
 
+  // Activity 外键无级联删除：先移除该目录的动态（创建/添加目录/目录评论等时间线记录）
+  await prisma.activity.deleteMany({ where: { collectionId } })
+
   await prisma.collection.delete({ where: { id: collectionId } })
 
   revalidatePath("/collections")
