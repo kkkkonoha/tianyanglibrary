@@ -321,8 +321,8 @@ export default async function ResourcePage({
                 <CardTitle className="text-base">相关推荐</CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
-                {relatedItems.map((item) => (
-                  <Link key={item.id} href={`/resource/${item.id}`} className="flex items-start gap-2.5 rounded-lg p-1.5 -mx-1.5 transition-colors hover:bg-muted/50">
+                {relatedItems.map((item, i) => (
+                  <Link key={item.id} href={`/resource/${item.id}`} className="flex items-start gap-2.5 rounded-lg p-1.5 -mx-1.5 transition-colors hover:bg-muted/50 animate-lib-rise-in" style={{ animationDelay: `${Math.min(i, 12) * 60}ms` }}>
                     {item.coverImage ? (
                       <img src={item.coverImage} alt={item.title} loading="lazy" decoding="async" className="h-10 w-7 shrink-0 rounded object-contain bg-muted/30" />
                     ) : (

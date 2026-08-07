@@ -75,8 +75,8 @@ export default async function ComicsPage({
             </Card>
           ) : (
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-              {result.mangas.map((m) => (
-                <Link key={m.id} href={`/comics/${m.id}`}>
+              {result.mangas.map((m, i) => (
+                <Link key={m.id} href={`/comics/${m.id}`} className="animate-lib-rise-in" style={{ animationDelay: `${Math.min(i, 12) * 60}ms` }}>
                   <Card className="h-full overflow-hidden transition-shadow hover:shadow-md">
                     <div className="flex h-56 items-center justify-center bg-muted/30">
                       {m.thumbnailUrl ? (

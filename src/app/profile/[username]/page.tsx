@@ -137,8 +137,8 @@ export default async function ProfilePage({
         ) : (
           <>
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-              {resources.map((r) => (
-                <Link key={r.id} href={`/resource/${r.id}`}>
+              {resources.map((r, i) => (
+                <Link key={r.id} href={`/resource/${r.id}`} className="animate-lib-rise-in" style={{ animationDelay: `${Math.min(i, 12) * 60}ms` }}>
                   <Card className="h-full overflow-hidden transition-shadow hover:shadow-md">
                     {r.coverImage ? (
                       <img src={r.coverImage} alt={r.title} loading="lazy" decoding="async" className="h-32 w-full object-contain bg-muted/30" />
@@ -174,8 +174,8 @@ export default async function ProfilePage({
         ) : (
           <>
             <div className="grid gap-4 sm:grid-cols-2">
-              {collections.map((c) => (
-                <Link key={c.id} href={`/collections/${c.id}`}>
+              {collections.map((c, i) => (
+                <Link key={c.id} href={`/collections/${c.id}`} className="animate-lib-rise-in" style={{ animationDelay: `${Math.min(i, 12) * 60}ms` }}>
                   <Card className="h-full transition-shadow hover:shadow-md">
                     <CardContent className="p-4">
                       <h3 className="font-medium">{c.title}</h3>
@@ -206,8 +206,8 @@ export default async function ProfilePage({
         ) : (
           <>
             <div className="space-y-3">
-              {recommendations.map((rec) => (
-                <Link key={rec.id} href={`/resource/${rec.resource.id}`}>
+              {recommendations.map((rec, i) => (
+                <Link key={rec.id} href={`/resource/${rec.resource.id}`} className="animate-lib-rise-in" style={{ animationDelay: `${Math.min(i, 12) * 60}ms` }}>
                   <Card className="transition-shadow hover:shadow-md">
                     <CardContent className="flex items-center gap-3 p-4">
                       {rec.resource.coverImage ? (
@@ -241,8 +241,8 @@ export default async function ProfilePage({
         ) : (
           <>
             <div className="space-y-3">
-              {comments.map((c) => (
-                <Card key={c.id} className="transition-shadow hover:shadow-md">
+              {comments.map((c, i) => (
+                <Card key={c.id} className="transition-shadow hover:shadow-md animate-lib-rise-in" style={{ animationDelay: `${Math.min(i, 12) * 60}ms` }}>
                   <CardContent className="p-4">
                     <p className="text-sm whitespace-pre-wrap"><ExpandableText text={c.content} /></p>
                     <div className="mt-2 flex items-center gap-2 text-xs text-muted-foreground">
@@ -277,11 +277,11 @@ export default async function ProfilePage({
         ) : (
           <>
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-              {favoriteResources.map((fav) => {
+              {favoriteResources.map((fav, i) => {
                 const r = fav.resource
                 const href = r.type === "COMIC" && r.comicMangaId ? `/comics/${r.comicMangaId}` : `/resource/${r.id}`
                 return (
-                  <Link key={fav.id} href={href}>
+                  <Link key={fav.id} href={href} className="animate-lib-rise-in" style={{ animationDelay: `${Math.min(i, 12) * 60}ms` }}>
                     <Card className="h-full overflow-hidden transition-shadow hover:shadow-md">
                       {r.coverImage ? (
                         <img src={r.coverImage} alt={r.title} loading="lazy" decoding="async" className="h-32 w-full object-contain bg-muted/30" />
@@ -317,8 +317,8 @@ export default async function ProfilePage({
         ) : (
           <>
             <div className="grid gap-4 sm:grid-cols-2">
-              {favorites.map((fav) => (
-                <Link key={fav.id} href={`/collections/${fav.collection.id}`}>
+              {favorites.map((fav, i) => (
+                <Link key={fav.id} href={`/collections/${fav.collection.id}`} className="animate-lib-rise-in" style={{ animationDelay: `${Math.min(i, 12) * 60}ms` }}>
                   <Card className="h-full transition-shadow hover:shadow-md">
                     <CardContent className="p-4">
                       <h3 className="font-medium">{fav.collection.title}</h3>

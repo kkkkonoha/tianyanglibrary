@@ -39,8 +39,8 @@ export default async function UserCollectionsPage({
       ) : (
         <>
           <div className="grid gap-4 sm:grid-cols-2">
-            {collections.map((c) => (
-              <Link key={c.id} href={`/collections/${c.id}`}><Card className="h-full transition-shadow hover:shadow-md"><CardContent className="p-4"><h3 className="font-medium">{c.title}</h3><div className="mt-2 flex gap-2 text-xs text-muted-foreground"><span>{c._count.resources} 资源</span><span>{c._count.favorites} 收藏</span></div></CardContent></Card></Link>
+            {collections.map((c, i) => (
+              <Link key={c.id} href={`/collections/${c.id}`} className="animate-lib-rise-in" style={{ animationDelay: `${Math.min(i, 12) * 60}ms` }}><Card className="h-full transition-shadow hover:shadow-md"><CardContent className="p-4"><h3 className="font-medium">{c.title}</h3><div className="mt-2 flex gap-2 text-xs text-muted-foreground"><span>{c._count.resources} 资源</span><span>{c._count.favorites} 收藏</span></div></CardContent></Card></Link>
             ))}
           </div>
           {totalPages > 1 && <Pagination path={`/profile/${user.username}/collections`} page={currentPage} total={totalPages} />}

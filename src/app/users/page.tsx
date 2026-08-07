@@ -63,8 +63,8 @@ export default async function UsersPage({
         </Card>
       ) : (
         <div className="space-y-3">
-          {users.map((user) => (
-            <Link key={user.id} href={`/profile/${user.username}`}>
+          {users.map((user, i) => (
+            <Link key={user.id} href={`/profile/${user.username}`} className="animate-lib-rise-in" style={{ animationDelay: `${Math.min(i, 12) * 60}ms` }}>
               <Card className="transition-colors hover:bg-muted/30">
                 <CardContent className="flex items-center gap-4 p-4">
                   <Avatar className="h-12 w-12">

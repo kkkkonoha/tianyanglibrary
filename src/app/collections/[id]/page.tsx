@@ -120,8 +120,8 @@ export default async function CollectionPage({
       )}
 
       <div className="space-y-4">
-        {collection.resources.map((cr) => (
-          <Card key={cr.id} className="group overflow-hidden">
+        {collection.resources.map((cr, i) => (
+          <Card key={cr.id} className="group overflow-hidden animate-lib-rise-in" style={{ animationDelay: `${Math.min(i, 12) * 60}ms` }}>
             <div className="flex gap-4 p-4">
               <Link href={`/resource/${cr.resource.id}`} className="shrink-0">
                 {cr.resource.coverImage ? (

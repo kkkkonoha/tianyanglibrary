@@ -47,8 +47,8 @@ export default async function UserResourcesPage({
       ) : (
         <>
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {resources.map((r) => (
-              <Link key={r.id} href={`/resource/${r.id}`}>
+            {resources.map((r, i) => (
+              <Link key={r.id} href={`/resource/${r.id}`} className="animate-lib-rise-in" style={{ animationDelay: `${Math.min(i, 12) * 60}ms` }}>
                 <Card className="h-full overflow-hidden transition-shadow hover:shadow-md">
                   {r.coverImage ? <img src={r.coverImage} alt={r.title} loading="lazy" decoding="async" className="h-32 w-full object-contain bg-muted/30" />
                     : <div className="flex h-32 items-center justify-center bg-muted"><span className="text-3xl font-bold text-muted-foreground/30">{typeIcons[r.type]}</span></div>}

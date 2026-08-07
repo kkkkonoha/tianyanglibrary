@@ -47,8 +47,8 @@ export default async function UserCommentsPage({
       ) : (
         <>
           <div className="space-y-3">
-            {comments.map((c) => (
-              <Card key={c.id} className="transition-shadow hover:shadow-md">
+            {comments.map((c, i) => (
+              <Card key={c.id} className="transition-shadow hover:shadow-md animate-lib-rise-in" style={{ animationDelay: `${Math.min(i, 12) * 60}ms` }}>
                 <CardContent className="p-4">
                   <p className="text-sm whitespace-pre-wrap"><ExpandableText text={c.content} /></p>
                   <div className="mt-2 flex items-center gap-2 text-xs text-muted-foreground">

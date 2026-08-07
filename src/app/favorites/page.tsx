@@ -79,8 +79,8 @@ export default async function FavoritesPage() {
   function renderGrid(list: ShelfItem[]) {
     return (
       <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
-        {list.map((item) => (
-          <Link key={item.id} href={item.type === "COMIC" && item.comicMangaId ? `/comics/${item.comicMangaId}` : `/resource/${item.id}`}>
+        {list.map((item, i) => (
+          <Link key={item.id} href={item.type === "COMIC" && item.comicMangaId ? `/comics/${item.comicMangaId}` : `/resource/${item.id}`} className="animate-lib-rise-in" style={{ animationDelay: `${Math.min(i, 12) * 60}ms` }}>
             <Card className="group overflow-hidden transition-all hover:border-primary/40 hover:shadow-md">
               <div className="relative aspect-[3/4] overflow-hidden bg-muted/30">
                 {item.coverImage ? (

@@ -66,7 +66,8 @@ export function ContributionList({ rows }: { rows: ContributionRow[] }) {
         return (
           <Card
             key={row.user.id}
-            className={`transition-colors ${expanded ? "border-primary/40 bg-muted/30" : "hover:border-primary/40 hover:bg-muted/30"}`}
+            className={`animate-lib-rise-in transition-colors ${expanded ? "border-primary/40 bg-muted/30" : "hover:border-primary/40 hover:bg-muted/30"}`}
+            style={{ animationDelay: `${Math.min(i, 12) * 60}ms` }}
           >
             <CardContent className="p-0">
               <div

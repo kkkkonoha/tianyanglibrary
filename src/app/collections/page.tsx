@@ -86,8 +86,8 @@ export default async function CollectionsPage({
         </Card>
       ) : (
         <div className="grid gap-4 sm:grid-cols-2">
-          {collections.map((collection) => (
-            <Link key={collection.id} href={`/collections/${collection.id}`}>
+          {collections.map((collection, i) => (
+            <Link key={collection.id} href={`/collections/${collection.id}`} className="animate-lib-rise-in" style={{ animationDelay: `${Math.min(i, 12) * 60}ms` }}>
               <Card className="h-full transition-shadow hover:shadow-md">
                 <CardContent className="p-5">
                   <h3 className="text-lg font-semibold">{collection.title}</h3>

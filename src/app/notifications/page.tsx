@@ -39,8 +39,10 @@ export default async function NotificationsPage() {
         </div>
       ) : (
         <div className="space-y-2">
-          {notifications.map((notif) => (
-            <NotificationItem key={notif.id} {...notif} />
+          {notifications.map((notif, i) => (
+            <div key={notif.id} className="animate-lib-rise-in" style={{ animationDelay: `${Math.min(i, 12) * 60}ms` }}>
+              <NotificationItem {...notif} />
+            </div>
           ))}
         </div>
       )}
