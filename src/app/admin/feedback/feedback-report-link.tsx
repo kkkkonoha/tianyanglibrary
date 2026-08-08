@@ -2,9 +2,11 @@
 
 import { useState, useTransition } from "react"
 import { Button } from "@/components/ui/button"
+import { useToast } from "@/components/toast"
 
 // 查看反馈汇总文档（服务端生成的 Markdown）
 export function FeedbackReportLink() {
+  const { toast } = useToast()
   const [pending, startTransition] = useTransition()
   const [content, setContent] = useState<{ filename: string; text: string } | null>(null)
 
@@ -15,7 +17,7 @@ export function FeedbackReportLink() {
       if (res?.success) {
         setContent({ filename: res.filename, text: res.content })
       } else {
-        alert(res?.error ?? "读取失败")
+        toast(res?.error ?? "读取失败", "error")
       }
     })
   }

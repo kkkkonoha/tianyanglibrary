@@ -4,7 +4,7 @@ import { prisma } from "@/lib/db"
 import Link from "next/link"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { fetchMangaChapters } from "@/lib/suwayomi"
+import { LatestChapter } from "@/components/latest-chapter"
 
 export const dynamic = "force-dynamic"
 
@@ -31,7 +31,7 @@ export default async function FavoritesPage() {
     orderBy: { createdAt: "desc" },
   })
 
-  // 漫画条目：取主源（comicMangaId）最新章节标题
+  // 书架渲染不阻塞：漫画「更新至」由客户端异步获取（api/comic-latest-chapter，服务端缓存）
   interface ShelfItem {
     id: number
     title: string
@@ -40,38 +40,23 @@ export default async function FavoritesPage() {
     type: string
     comicMangaId: string | null
     comicSourceId: string | null
-    latestChapter: string | null
     username: string
     favCount: number
   }
-  const items: ShelfItem[] = await Promise.all(
-    favorites.map(async (fav) => {
-      const r = fav.resource
-      let latestChapter: string | null = null
-      if (r.type === "COMIC" && r.comicMangaId) {
-        try {
-          const chapters = await fetchMangaChapters(r.comicMangaId)
-          if (chapters.length > 0) {
-            latestChapter = chapters[chapters.length - 1].name
-          }
-        } catch {
-          // 源不可用时静默
-        }
-      }
-      return {
-        id: r.id,
-        title: r.title,
-        author: r.author,
-        coverImage: r.coverImage,
-        type: r.type,
-        comicMangaId: r.comicMangaId,
-        comicSourceId: r.comicSourceId,
-        latestChapter,
-        username: r.uploader.username,
-        favCount: r._count.favorites,
-      }
-    })
-  )
+  const items: ShelfItem[] = favorites.map((fav) => {
+    const r = fav.resource
+    return {
+      id: r.id,
+      title: r.title,
+      author: r.author,
+      coverImage: r.coverImage,
+      type: r.type,
+      comicMangaId: r.comicMangaId,
+      comicSourceId: r.comicSourceId,
+      username: r.uploader.username,
+      favCount: r._count.favorites,
+    }
+  })
 
   const comics = items.filter((i) => i.type === "COMIC")
   const books = items.filter((i) => i.type === "BOOK")
@@ -103,8 +88,8 @@ export default async function FavoritesPage() {
               </div>
               <CardContent className="p-2.5">
                 <p className="truncate text-sm font-medium">{item.title}</p>
-                {item.type === "COMIC" && item.latestChapter ? (
-                  <p className="mt-0.5 truncate text-xs text-muted-foreground">更新至：{item.latestChapter}</p>
+                {item.type === "COMIC" && item.comicMangaId ? (
+                  <LatestChapter mangaId={item.comicMangaId} />
                 ) : (
                   <p className="mt-0.5 truncate text-xs text-muted-foreground">{item.author ?? item.username}</p>
                 )}

@@ -3,10 +3,12 @@
 import { useState, useTransition } from "react"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
+import { useToast } from "@/components/toast"
 
 // 手动合并漫画条目：把另一个条目合并进当前条目（源绑定/评论/推荐等全部转移）
 export function MergeComicButton({ resourceId }: { resourceId: string | number }) {
   const router = useRouter()
+  const { toast } = useToast()
   const [open, setOpen] = useState(false)
   const [sourceId, setSourceId] = useState("")
   const [pending, startTransition] = useTransition()
@@ -17,19 +19,19 @@ export function MergeComicButton({ resourceId }: { resourceId: string | number }
     const urlMatch = id.match(/\/resource\/([^/\s?]+)/)
     if (urlMatch) id = urlMatch[1]
     if (id === resourceId) {
-      alert("不能合并到自身")
+      toast("不能合并到自身", "error")
       return
     }
     startTransition(async () => {
       const { mergeComicResources } = await import("@/lib/actions/comic")
       const result = await mergeComicResources(resourceId, id)
       if (result?.error) {
-        alert(result.error)
+        toast(result.error, "error")
         return
       }
       setOpen(false)
       setSourceId("")
-      alert("合并成功，已进入目标条目")
+      toast("合并成功，已进入目标条目", "success")
       router.refresh()
     })
   }

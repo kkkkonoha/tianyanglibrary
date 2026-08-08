@@ -3,9 +3,11 @@
 import { useState, useTransition } from "react"
 import { Button } from "@/components/ui/button"
 import { ConfirmButton } from "@/components/confirm-button"
+import { useToast } from "@/components/toast"
 
 // 管理员重置用户密码：生成随机密码并一次性展示（可复制）
 export function ResetPasswordButton({ userId, username }: { userId: string; username: string }) {
+  const { toast } = useToast()
   const [pending, startTransition] = useTransition()
   const [result, setResult] = useState<{ password: string } | null>(null)
   const [copied, setCopied] = useState(false)
@@ -15,7 +17,7 @@ export function ResetPasswordButton({ userId, username }: { userId: string; user
       const { resetUserPassword } = await import("@/lib/actions/admin")
       const res = await resetUserPassword(userId)
       if (res?.error) {
-        alert(res.error)
+        toast(res.error, "error")
         return
       }
       if (res?.password) {

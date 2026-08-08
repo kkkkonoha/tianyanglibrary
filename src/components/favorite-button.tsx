@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation"
 import { useState, useTransition } from "react"
 import { Button } from "@/components/ui/button"
+import { useToast } from "@/components/toast"
 
 // 收藏/取消收藏按钮（显示状态与收藏数）
 export function FavoriteButton({
@@ -17,6 +18,7 @@ export function FavoriteButton({
   size?: "sm" | "default"
 }) {
   const router = useRouter()
+  const { toast } = useToast()
   const [pending, startTransition] = useTransition()
   const [pulse, setPulse] = useState(0)
 
@@ -31,7 +33,7 @@ export function FavoriteButton({
           const { toggleFavoriteResource } = await import("@/lib/actions/favorite")
           const result = await toggleFavoriteResource(resourceId)
           if (result?.error) {
-            alert(result.error)
+            toast(result.error, "error")
             return
           }
           setPulse((v) => v + 1)

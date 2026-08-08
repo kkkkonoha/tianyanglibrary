@@ -62,7 +62,7 @@ export function UploadForm() {
   }
 
   return (
-    <div className="container mx-auto max-w-lg px-4 py-8">
+    <div className="container mx-auto max-w-lg px-4 py-8 animate-lib-rise-in">
       <Card>
         <CardHeader>
           <CardTitle>上传资源</CardTitle>

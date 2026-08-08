@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation"
 import { useTransition } from "react"
 import { Button } from "@/components/ui/button"
+import { useToast } from "@/components/toast"
 
 export function ImportComicButton({
   mangaId,
@@ -12,6 +13,7 @@ export function ImportComicButton({
   sourceId: string
 }) {
   const router = useRouter()
+  const { toast } = useToast()
   const [pending, startTransition] = useTransition()
 
   return (
@@ -22,9 +24,10 @@ export function ImportComicButton({
           const { importComicResource } = await import("@/lib/actions/comic")
           const result = await importComicResource(mangaId, sourceId)
           if (result?.error) {
-            alert(result.error)
+            toast(result.error, "error")
             return
           }
+          toast("入库成功", "success")
           router.refresh()
         })
       }}

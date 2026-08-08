@@ -7,6 +7,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
+import { useToast } from "@/components/toast"
 
 // 轻量 Markdown 解析：## 版本标题 / ### 小节 / - 列表项 / 其他正文
 function renderChangelog(content: string): React.ReactNode[] {
@@ -48,6 +49,7 @@ function renderChangelog(content: string): React.ReactNode[] {
 
 // 动态页右下角悬浮按钮：点击弹窗查看更新日志
 export function ChangelogButton() {
+  const { toast } = useToast()
   const [open, setOpen] = useState(false)
   const [pending, startTransition] = useTransition()
   const [content, setContent] = useState<string | null>(null)
@@ -64,7 +66,7 @@ export function ChangelogButton() {
         setContent(res.content)
         setOpen(true)
       } else {
-        alert(res?.error ?? "读取失败")
+        toast(res?.error ?? "读取失败", "error")
       }
     })
   }

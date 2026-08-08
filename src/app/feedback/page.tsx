@@ -15,7 +15,7 @@ export default async function FeedbackPage() {
   })
 
   return (
-    <div className="container mx-auto max-w-2xl px-4 py-12">
+    <div className="container mx-auto max-w-2xl px-4 py-12 animate-lib-rise-in">
       <h1 className="text-3xl font-bold tracking-tight">反馈中心</h1>
       <p className="mt-1.5 text-muted-foreground">报告 Bug 或提出功能需求，反馈将直接送达管理员</p>
 

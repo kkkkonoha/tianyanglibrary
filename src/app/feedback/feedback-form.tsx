@@ -9,6 +9,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { ConfirmButton } from "@/components/confirm-button"
+import { useToast } from "@/components/toast"
 
 const statusLabels: Record<string, string> = {
   pending: "待处理",
@@ -128,14 +129,16 @@ export function FeedbackList({
   }>
 }) {
   const router = useRouter()
+  const { toast } = useToast()
 
   async function handleWithdraw(feedbackId: string) {
     const { withdrawFeedback } = await import("@/lib/actions/feedback")
     const result = await withdrawFeedback(feedbackId)
     if (result?.error) {
-      alert(result.error)
+      toast(result.error, "error")
       return
     }
+    toast("已撤回反馈", "success")
     router.refresh()
   }
 

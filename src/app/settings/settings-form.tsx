@@ -114,7 +114,7 @@ export function SettingsForm({
   }
 
   return (
-    <div className="container mx-auto max-w-lg px-4 py-12 space-y-6">
+    <div className="container mx-auto max-w-lg px-4 py-12 space-y-6 animate-lib-rise-in">
       <div>
         <h1 className="text-3xl font-bold tracking-tight">个人设置</h1>
         <p className="mt-1.5 text-muted-foreground">{username}</p>

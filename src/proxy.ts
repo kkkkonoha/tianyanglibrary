@@ -24,7 +24,9 @@ export function proxy(request: NextRequest) {
     request.cookies.get("authjs.session-token") ??
     request.cookies.get("__Secure-authjs.session-token")
   if (!sessionCookie) {
-    return NextResponse.redirect(new URL("/login", request.url))
+    // 带 callback 跳转登录，登录后回到原目标页
+    const callback = encodeURIComponent(pathname + (request.nextUrl.search ?? ""))
+    return NextResponse.redirect(new URL(`/login?callback=${callback}`, request.url))
   }
 
   if (isReader) {

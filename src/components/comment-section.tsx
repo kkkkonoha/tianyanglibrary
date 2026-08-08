@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { ConfirmButton } from "@/components/confirm-button"
 import { ExpandableText } from "@/components/expandable-text"
+import { useToast } from "@/components/toast"
 
 interface CommentUser {
   id: string
@@ -34,6 +35,7 @@ function ReplyForm({
   parentId: string
   onSuccess: () => void
 }) {
+  const { toast } = useToast()
   return (
     <form
       action={async (formData: FormData) => {
@@ -43,6 +45,7 @@ function ReplyForm({
         if (collectionId) formData.set("collectionId", collectionId)
         const result = await addComment(formData)
         if (result?.success) onSuccess()
+        else if (result?.error) toast(result.error, "error")
       }}
       className="mt-2 flex gap-2"
     >
@@ -196,6 +199,7 @@ export function CommentSection({
   currentUserId?: string
 }) {
   const [refreshKey, setRefreshKey] = useState(0)
+  const { toast } = useToast()
 
   const nestedComments = buildNestedComments(rawComments)
 
@@ -208,6 +212,7 @@ export function CommentSection({
           if (collectionId) formData.set("collectionId", collectionId)
           const result = await addComment(formData)
           if (result?.success) setRefreshKey(k => k + 1)
+          else if (result?.error) toast(result.error, "error")
         }}
         className="flex gap-2"
       >

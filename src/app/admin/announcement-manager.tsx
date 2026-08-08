@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
+import { ConfirmButton } from "@/components/confirm-button"
 import { Markdown } from "@/components/markdown"
 
 type AnnouncementItem = {
@@ -101,9 +102,11 @@ export function AnnouncementManager({ initialAnnouncements }: { initialAnnouncem
   }
 
   async function remove(id: string) {
-    if (!window.confirm("确定要删除这条公告吗？")) return
     const { deleteAnnouncement } = await import("@/lib/actions/announcement")
-    await deleteAnnouncement(id)
+    const result = await deleteAnnouncement(id)
+    if (result?.error) {
+      setMsg(result.error)
+    }
     router.refresh()
   }
 
@@ -202,9 +205,17 @@ export function AnnouncementManager({ initialAnnouncements }: { initialAnnouncem
               <Button variant="ghost" size="sm" className="h-7 px-2 text-xs" onClick={() => togglePin(a.id)}>
                 {a.pinnedAt ? "取消置顶" : "置顶"}
               </Button>
-              <Button variant="ghost" size="sm" className="h-7 px-2 text-xs text-destructive hover:text-destructive" onClick={() => remove(a.id)}>
+              <ConfirmButton
+                title="删除公告"
+                description={`确定要删除「${a.title}」吗？删除后动态页不再显示。`}
+                confirmText="删除"
+                variant="ghost"
+                size="sm"
+                className="h-7 px-2 text-xs text-destructive hover:text-destructive"
+                onConfirm={() => remove(a.id)}
+              >
                 删除
-              </Button>
+              </ConfirmButton>
             </div>
           ))}
         </div>
