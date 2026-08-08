@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button"
 import { SetRoleButton } from "./set-role-button"
 import { ApproveRejectButton } from "./approve-reject-button"
 import { ResetPasswordButton } from "./reset-password-button"
+import { AnnouncementManager } from "./announcement-manager"
 import { isFeedbackManager } from "@/lib/actions/feedback"
 
 export default async function AdminPage() {
@@ -48,6 +49,13 @@ export default async function AdminPage() {
   const approvedUsers = users.filter(u => u.status !== "pending")
   const feedbackManager = await isFeedbackManager()
 
+  // 已发布的公告（公告 Tab 置顶优先，按时间倒序）
+  const announcements = await prisma.activity.findMany({
+    where: { type: "ANNOUNCEMENT" },
+    orderBy: [{ pinnedAt: { sort: "desc", nulls: "last" } }, { createdAt: "desc" }],
+    select: { id: true, title: true, createdAt: true, pinnedAt: true },
+  })
+
   return (
     <div className="container mx-auto max-w-4xl px-4 py-12">
       <div className="mb-10">
@@ -58,6 +66,16 @@ export default async function AdminPage() {
             <Button variant="outline" size="sm">💬 反馈管理</Button>
           </Link>
         )}
+      </div>
+
+      <div className="mb-8">
+        <h2 className="mb-3 text-lg font-semibold">📢 公告管理</h2>
+        <AnnouncementManager initialAnnouncements={announcements.map((a) => ({
+          id: a.id,
+          title: a.title ?? "公告",
+          createdAt: a.createdAt.toISOString(),
+          pinnedAt: a.pinnedAt ? a.pinnedAt.toISOString() : null,
+        }))} />
       </div>
 
       {pendingUsers.length > 0 && (

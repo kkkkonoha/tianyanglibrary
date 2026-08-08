@@ -19,14 +19,15 @@ const TABS = [
   { key: "RECOMMEND", label: "推荐" },
   { key: "FAVORITE", label: "收藏" },
   { key: "DIR", label: "目录" },
+  { key: "ANNOUNCEMENT", label: "公告" },
 ] as const
 
 const DIR_TYPES: $Enums.ActivityType[] = ["CREATE_COLLECTION", "ADD_TO_COLLECTION"]
-const VALID_TYPES: $Enums.ActivityType[] = ["UPLOAD", "COMMENT", "RECOMMEND", "FAVORITE", ...DIR_TYPES]
+const VALID_TYPES: $Enums.ActivityType[] = ["UPLOAD", "COMMENT", "RECOMMEND", "FAVORITE", ...DIR_TYPES, "ANNOUNCEMENT"]
 
-// 与 timeline-list 客户端分组规则一致：同一用户同类型相邻 10 分钟内合并为一组；评论/推荐不合并
+// 与 timeline-list 客户端分组规则一致：同一用户同类型相邻 10 分钟内合并为一组；评论/推荐/公告不合并
 const GROUP_WINDOW_MS = 10 * 60 * 1000
-const NO_GROUP_TYPES = new Set(["COMMENT", "RECOMMEND"])
+const NO_GROUP_TYPES = new Set(["COMMENT", "RECOMMEND", "ANNOUNCEMENT"])
 
 type ServerActivity = {
   id: string
@@ -34,6 +35,8 @@ type ServerActivity = {
   metadata: string | null
   createdAt: Date
   userId: string
+  title?: string | null
+  pinnedAt?: Date | null
   user: { id: string; username: string; avatar: string | null }
   resource: { id: number; title: string; type: string } | null
   collection: { id: string; title: string } | null
@@ -68,6 +71,7 @@ const emptyLabels: Record<string, string> = {
   RECOMMEND: "还没有推荐动态",
   FAVORITE: "还没有收藏动态",
   DIR: "还没有目录动态",
+  ANNOUNCEMENT: "还没有公告",
 }
 
 // 构造带 types/size/page 的链接
@@ -118,13 +122,19 @@ export default async function HomePage({
     collection: { select: { id: true, title: true } },
   } as const
 
+  // 仅筛选公告时：置顶公告排最前（pinnedAt 优先，再按时间）
+  const onlyAnnouncements = selectedKeys.size === 1 && selectedKeys.has("ANNOUNCEMENT")
+  const orderBy = onlyAnnouncements
+    ? [{ pinnedAt: { sort: "desc", nulls: "last" } as const }, { createdAt: "desc" as const }]
+    : { createdAt: "desc" as const }
+
   // 读取全部符合条件的活动（分批取完），按折叠规则分组后按「卡片数」分页
   const allActivities: ServerActivity[] = []
   let offset = 0
   while (true) {
     const batch = await prisma.activity.findMany({
       where: typeFilter,
-      orderBy: { createdAt: "desc" },
+      orderBy,
       skip: offset,
       take: 1000,
       include: activityInclude,
@@ -147,6 +157,8 @@ export default async function HomePage({
       metadata: a.metadata,
       createdAt: a.createdAt.toISOString(),
       userId: a.userId,
+      title: a.title,
+      pinnedAt: a.pinnedAt ? a.pinnedAt.toISOString() : null,
       user: a.user,
       resource: a.resource,
       collection: a.collection,

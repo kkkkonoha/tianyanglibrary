@@ -7,6 +7,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { DeleteActivityButton } from "@/components/delete-activity-button"
 import { ExpandableText } from "@/components/expandable-text"
+import { Markdown } from "@/components/markdown"
 
 interface TimelineActivity {
   id: string
@@ -14,6 +15,8 @@ interface TimelineActivity {
   metadata: string | null
   createdAt: string
   userId: string
+  title?: string | null
+  pinnedAt?: string | null
   user: { id: string; username: string; avatar: string | null }
   resource: { id: number; title: string; type: string } | null
   collection: { id: string; title: string } | null
@@ -34,6 +37,7 @@ const activityLabels: Record<string, string> = {
   ADD_TO_COLLECTION: "向目录添加了",
   COMMENT: "评论了",
   FAVORITE: "收藏了",
+  ANNOUNCEMENT: "发布了公告",
 }
 
 const resourceTypeLabels: Record<string, string> = {
@@ -41,8 +45,8 @@ const resourceTypeLabels: Record<string, string> = {
   COMIC: "📘 漫画",
 }
 
-// 评论/推荐不折叠，始终完整显示
-const NO_GROUP_TYPES = new Set(["COMMENT", "RECOMMEND"])
+// 评论/推荐/公告不折叠，始终完整显示
+const NO_GROUP_TYPES = new Set(["COMMENT", "RECOMMEND", "ANNOUNCEMENT"])
 
 // 服务端已按时间倒序排列；按 (userId, type) 相邻时间窗口分组（评论/推荐除外）。
 // 组 key 取组内最老一条的时间桶，保证新动态并入时 key 稳定（展开状态不重置）。
@@ -71,6 +75,34 @@ function buildGroups(activities: TimelineActivity[]): ActivityGroup[] {
 }
 
 function ActivityCard({ activity }: { activity: TimelineActivity }) {
+  // 公告卡片：色条 + 徽章 + 标题 + MD 正文完整展示
+  if (activity.type === "ANNOUNCEMENT") {
+    return (
+      <Card className="group relative overflow-hidden border-primary/15 bg-primary/[0.02] shadow-sm transition-all hover:border-primary/30 hover:shadow-md">
+        <div className="absolute bottom-0 left-0 top-0 w-1 bg-primary/50" />
+        <CardHeader className="pb-3 pl-5">
+          <div className="flex items-start gap-3">
+            <div className="min-w-0 flex-1">
+              <div className="flex flex-wrap items-center gap-2">
+                <Badge className="text-xs">📢 公告</Badge>
+                {activity.pinnedAt && <Badge variant="outline" className="text-xs">📌 置顶</Badge>}
+                <span className="text-xs text-muted-foreground/70">
+                  {new Date(activity.createdAt).toLocaleString("zh-CN", { timeZone: "Asia/Shanghai" })}
+                </span>
+              </div>
+              <h3 className="mt-1.5 font-semibold leading-snug">{activity.title ?? "公告"}</h3>
+            </div>
+          </div>
+        </CardHeader>
+        {activity.metadata && (
+          <CardContent className="pt-0 pl-5">
+            <Markdown content={activity.metadata} />
+          </CardContent>
+        )}
+      </Card>
+    )
+  }
+
   return (
     <Card className="group relative overflow-hidden border-transparent shadow-sm transition-all hover:border-border hover:shadow-md">
       <CardHeader className="pb-3">

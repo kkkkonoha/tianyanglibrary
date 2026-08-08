@@ -19,6 +19,7 @@ enum ActivityType {
   ADD_TO_COLLECTION
   COMMENT
   FAVORITE
+  ANNOUNCEMENT
 }
 
 model User {
@@ -224,6 +225,8 @@ model Activity {
   resource     Resource?    @relation(fields: [resourceId], references: [id])
   collectionId String?
   collection   Collection?  @relation(fields: [collectionId], references: [id])
+  title        String?      // 公告标题（仅 ANNOUNCEMENT 使用）
+  pinnedAt     DateTime?    // 置顶时间（仅公告使用，非空 = 置顶）
   metadata     String?
   createdAt    DateTime     @default(now())
 }
