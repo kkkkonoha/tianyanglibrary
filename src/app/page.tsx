@@ -207,21 +207,27 @@ export default async function HomePage({
               <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" className="text-muted-foreground"><path d="M12 5v14M5 12h14"/></svg>
             </div>
             <p className="text-lg font-medium">{selectedKeys.size === 1 ? emptyLabels[[...selectedKeys][0]] ?? "还没有任何动态" : "还没有任何动态"}</p>
-            <p className="mt-1 text-sm text-muted-foreground">
-              成为第一个分享的人吧！
-            </p>
-            {session ? (
-              <Link href="/upload" className="mt-5">
-                <span className="inline-flex h-9 items-center justify-center rounded-lg bg-primary px-4 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90">
-                  上传资源
-                </span>
-              </Link>
+            {selectedKeys.has("ANNOUNCEMENT") && selectedKeys.size === 1 ? (
+              <p className="mt-1 text-sm text-muted-foreground">版本更新和站务公告会发布在这里</p>
             ) : (
-              <Link href="/login" className="mt-5">
-                <span className="inline-flex h-9 items-center justify-center rounded-lg bg-primary px-4 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90">
-                  登录后开始
-                </span>
-              </Link>
+              <>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  成为第一个分享的人吧！
+                </p>
+                {session ? (
+                  <Link href="/upload" className="mt-5">
+                    <span className="inline-flex h-9 items-center justify-center rounded-lg bg-primary px-4 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90">
+                      上传资源
+                    </span>
+                  </Link>
+                ) : (
+                  <Link href="/login" className="mt-5">
+                    <span className="inline-flex h-9 items-center justify-center rounded-lg bg-primary px-4 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90">
+                      登录后开始
+                    </span>
+                  </Link>
+                )}
+              </>
             )}
           </CardContent>
         </Card>
