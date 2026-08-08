@@ -208,7 +208,16 @@ export default async function HomePage({
             </div>
             <p className="text-lg font-medium">{selectedKeys.size === 1 ? emptyLabels[[...selectedKeys][0]] ?? "还没有任何动态" : "还没有任何动态"}</p>
             {selectedKeys.has("ANNOUNCEMENT") && selectedKeys.size === 1 ? (
-              <p className="mt-1 text-sm text-muted-foreground">版本更新和站务公告会发布在这里</p>
+              <>
+                <p className="mt-1 text-sm text-muted-foreground">版本更新和站务公告会发布在这里</p>
+                {isAdmin(session) && (
+                  <Link href="/admin" className="mt-5">
+                    <span className="inline-flex h-9 items-center justify-center rounded-lg bg-primary px-4 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90">
+                      前往管理面板发布公告
+                    </span>
+                  </Link>
+                )}
+              </>
             ) : (
               <>
                 <p className="mt-1 text-sm text-muted-foreground">
