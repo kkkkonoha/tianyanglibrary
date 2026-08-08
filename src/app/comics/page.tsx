@@ -1,6 +1,6 @@
 import { auth } from "@/lib/auth"
 import { redirect } from "next/navigation"
-import { searchManga, COMIC_SOURCES, DEFAULT_SOURCE_ID } from "@/lib/suwayomi"
+import { searchManga, fetchPopularManga, COMIC_SOURCES, DEFAULT_SOURCE_ID } from "@/lib/suwayomi"
 import Link from "next/link"
 import { Card, CardContent } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -28,6 +28,13 @@ export default async function ComicsPage({
       result = await searchManga(q, currentPage, selectedSource)
     } catch (e: any) {
       error = e.message ?? "搜索失败"
+    }
+  } else {
+    // 未搜索时默认展示热门漫画
+    try {
+      result = await fetchPopularManga(currentPage, selectedSource)
+    } catch {
+      result = null
     }
   }
 
@@ -64,12 +71,12 @@ export default async function ComicsPage({
         </Card>
       )}
 
-      {q && result && (
+      {result && (
         <>
           {result.mangas.length === 0 ? (
             <Card className="border-dashed">
               <CardContent className="flex flex-col items-center justify-center py-16 text-center">
-                <p className="text-lg font-medium">没有找到漫画</p>
+                <p className="text-lg font-medium">{q ? "没有找到漫画" : "暂无热门漫画"}</p>
                 <p className="mt-1 text-sm text-muted-foreground">尝试其他关键词或切换来源</p>
               </CardContent>
             </Card>
@@ -104,13 +111,13 @@ export default async function ComicsPage({
           {result.mangas.length > 0 && (
             <div className="mt-6 flex items-center justify-center gap-3">
               {currentPage > 1 && (
-                <Link href={`/comics?q=${encodeURIComponent(q)}&page=${currentPage - 1}&source=${selectedSource}`}>
+                <Link href={`/comics?${q ? `q=${encodeURIComponent(q)}&` : ""}page=${currentPage - 1}&source=${selectedSource}`}>
                   <Button variant="outline" size="sm">上一页</Button>
                 </Link>
               )}
               <span className="text-sm text-muted-foreground">第 {currentPage} 页</span>
               {result.hasNextPage && (
-                <Link href={`/comics?q=${encodeURIComponent(q)}&page=${currentPage + 1}&source=${selectedSource}`}>
+                <Link href={`/comics?${q ? `q=${encodeURIComponent(q)}&` : ""}page=${currentPage + 1}&source=${selectedSource}`}>
                   <Button variant="outline" size="sm">下一页</Button>
                 </Link>
               )}
@@ -119,9 +126,9 @@ export default async function ComicsPage({
         </>
       )}
 
-      {!q && (
+      {!q && !result && (
         <div className="rounded-lg border border-dashed p-8 text-center text-sm text-muted-foreground">
-          输入关键词搜索漫画
+          热门漫画暂时加载失败，输入关键词搜索漫画
         </div>
       )}
     </div>

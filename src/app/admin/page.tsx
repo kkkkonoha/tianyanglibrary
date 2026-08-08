@@ -68,7 +68,7 @@ export default async function AdminPage() {
         )}
       </div>
 
-      <div className="mb-8">
+      <div className="mb-8 animate-lib-rise-in">
         <h2 className="mb-3 text-lg font-semibold">📢 公告管理</h2>
         <AnnouncementManager initialAnnouncements={announcements.map((a) => ({
           id: a.id,
@@ -79,11 +79,11 @@ export default async function AdminPage() {
       </div>
 
       {pendingUsers.length > 0 && (
-        <div className="mb-8">
+        <div className="mb-8 animate-lib-rise-in" style={{ animationDelay: "120ms" }}>
           <h2 className="mb-3 text-lg font-semibold">待审核用户 ({pendingUsers.length})</h2>
           <div className="space-y-3">
-            {pendingUsers.map((user) => (
-              <Card key={user.id} className="border-amber-200 bg-amber-50/30 dark:border-amber-900 dark:bg-amber-950/10">
+            {pendingUsers.map((user, i) => (
+              <Card key={user.id} className="animate-lib-rise-in border-amber-200 bg-amber-50/30 dark:border-amber-900 dark:bg-amber-950/10" style={{ animationDelay: `${180 + Math.min(i, 10) * 60}ms` }}>
                 <CardContent className="flex items-center justify-between p-4">
                   <div>
                     <div className="flex items-center gap-2">
@@ -103,10 +103,10 @@ export default async function AdminPage() {
         </div>
       )}
 
-      <h2 className="mb-3 text-lg font-semibold">所有用户 ({users.length})</h2>
+      <h2 className="mb-3 text-lg font-semibold animate-lib-rise-in" style={{ animationDelay: "120ms" }}>所有用户 ({users.length})</h2>
       <div className="space-y-3">
-        {users.map((user) => (
-          <Card key={user.id}>
+        {users.map((user, i) => (
+          <Card key={user.id} className="animate-lib-rise-in" style={{ animationDelay: `${180 + Math.min(i, 14) * 60}ms` }}>
             <CardContent className="flex items-center justify-between p-5">
               <div className="flex-1">
                 <div className="flex items-center gap-2">
