@@ -34,14 +34,23 @@ export function AnnouncementManager({ initialAnnouncements }: { initialAnnouncem
   const [msg, setMsg] = useState<string | null>(null)
 
   useEffect(() => {
-    const { getChangelogStatus } = require("@/lib/actions/announcement")
-    getChangelogStatus().then((r: ChangelogStatus & { error?: string }) => {
-      setStatus(r?.latest ? r : { latest: null, alreadyPublished: true })
-      setLoadingStatus(false)
-    }).catch(() => {
-      setStatus({ latest: null, alreadyPublished: true })
-      setLoadingStatus(false)
-    })
+    let cancelled = false
+    import("@/lib/actions/announcement")
+      .then(({ getChangelogStatus }) => getChangelogStatus())
+      .then((r) => {
+        if (cancelled) return
+        setStatus(r?.latest ? r : { latest: null, alreadyPublished: true })
+        setLoadingStatus(false)
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setStatus({ latest: null, alreadyPublished: true })
+          setLoadingStatus(false)
+        }
+      })
+    return () => {
+      cancelled = true
+    }
   }, [])
 
   async function publishFromChangelog() {
