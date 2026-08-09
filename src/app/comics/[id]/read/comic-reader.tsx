@@ -84,6 +84,25 @@ export function ComicReader({
     }
   }, [chapter.id, startFromEnd, totalPages])
 
+  // 章节预加载：当前章挂载后预取下一章图片（翻章秒开）
+  useEffect(() => {
+    if (!nextChapter) return
+    let cancelled = false
+    fetch(`/api/comic-chapter-pages?chapterId=${encodeURIComponent(nextChapter.id)}`)
+      .then((r) => r.json())
+      .then((d) => {
+        if (cancelled || !d?.urls?.length) return
+        for (const url of d.urls) {
+          const img = new Image()
+          img.src = url
+        }
+      })
+      .catch(() => {})
+    return () => {
+      cancelled = true
+    }
+  }, [nextChapter?.id])
+
   // Load reading mode preference
   useEffect(() => {
     try {
