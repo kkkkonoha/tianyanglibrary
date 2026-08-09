@@ -27,6 +27,14 @@ jobs:
           distribution: temurin
           java-version: "17"
 
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Prepare web dir and sync
+        run: |
+          mkdir -p out
+          npx cap sync android
+
       - name: Build debug APK
         working-directory: android
         run: |
