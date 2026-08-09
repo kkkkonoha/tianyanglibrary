@@ -63,3 +63,6 @@ backups/
 /deploy.ps1
 /deploy.sh
 /backup-local.ps1
+
+# 本地下载的 APK 构建产物（不入库）
+/tianyang-library-apk*
