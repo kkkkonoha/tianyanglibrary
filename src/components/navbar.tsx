@@ -4,6 +4,7 @@ import { isSuperAdmin } from "@/lib/permissions"
 import { prisma } from "@/lib/db"
 import { Button } from "@/components/ui/button"
 import { ThemeToggle } from "@/components/theme-toggle"
+import { DownloadAppLink } from "@/components/download-app-link"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import {
   DropdownMenu,
@@ -127,6 +128,9 @@ export async function Navbar() {
                     <Link href="/settings" className="w-full">
                       设置
                     </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem>
+                    <DownloadAppLink className="w-full">下载手机 App</DownloadAppLink>
                   </DropdownMenuItem>
                   {isSuperAdmin(session) && (
                     <DropdownMenuItem>

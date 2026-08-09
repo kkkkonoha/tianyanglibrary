@@ -16,10 +16,22 @@ android {
             ignoreAssetsPattern = '!.svn:!.git:!.ds_store:!*.scc:.*:!CVS:!thumbs.db:!picasa.ini:!*~'
         }
     }
+    // 固定签名：仓库内置 keystore，保证每次构建签名一致（可覆盖安装）
+    signingConfigs {
+        debug {
+            storeFile file('library.keystore')
+            storePassword 'library2026'
+            keyAlias 'library'
+            keyPassword 'library2026'
+        }
+    }
     buildTypes {
         release {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+        }
+        debug {
+            signingConfig signingConfigs.debug
         }
     }
 }

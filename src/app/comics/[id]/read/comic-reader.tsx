@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState, useCallback } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
+import { setStatusBarStyle } from "@/lib/native"
 import { Button } from "@/components/ui/button"
 
 interface ChapterOption {
@@ -83,6 +84,14 @@ export function ComicReader({
       if (containerRef.current) containerRef.current.scrollTop = 0
     }
   }, [chapter.id, startFromEnd, totalPages])
+
+  // App 内：阅读器黑底 → 系统栏浅色图标；离开恢复深色
+  useEffect(() => {
+    setStatusBarStyle("LIGHT")
+    return () => {
+      setStatusBarStyle("DARK")
+    }
+  }, [])
 
   // 章节预加载：当前章挂载后预取下一章图片（翻章秒开）
   useEffect(() => {
@@ -300,10 +309,11 @@ export function ComicReader({
   }
 
   return (
-    <div className="flex h-screen flex-col">
+    // fixed inset-0：App 内沉浸式时黑底铺满全屏（含系统状态栏区域），不受 body safe-area padding 影响
+    <div className="fixed inset-0 flex flex-col bg-black">
       {/* Top bar */}
       {!immersive && (
-      <header className="animate-lib-fade-in sticky top-0 z-40 flex h-12 items-center justify-between border-b border-white/10 bg-black/90 px-3 backdrop-blur">
+      <header className="animate-lib-fade-in sticky top-0 z-40 flex h-12 items-center justify-between border-b border-white/10 bg-black/90 px-3 backdrop-blur pt-[env(safe-area-inset-top,0px)]" style={{ height: "calc(3rem + env(safe-area-inset-top, 0px))" }}>
         <div className="flex min-w-0 items-center gap-2">
           <Link href={`/comics/${mangaId}`} className="shrink-0 text-white/70 transition-colors hover:text-white">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>

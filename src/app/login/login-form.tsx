@@ -4,6 +4,7 @@ import { useState } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import { signIn } from "next-auth/react"
 import Link from "next/link"
+import { DownloadAppLink } from "@/components/download-app-link"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -90,6 +91,9 @@ export function LoginForm() {
               <Link href="/contact-admin" className="hover:underline">
                 联系管理员
               </Link>
+            </div>
+            <div className="text-center text-xs text-muted-foreground">
+              <DownloadAppLink className="hover:underline">📱 下载手机 App</DownloadAppLink>
             </div>
           </CardFooter>
         </form>

@@ -5,6 +5,11 @@ on:
   push:
     branches: [main, master]
 
+env:
+  CI_SSH_KEY: ${{ secrets.CI_SSH_KEY }}
+  CI_SSH_HOST: ${{ secrets.CI_SSH_HOST }}
+  CI_SSH_PORT: ${{ secrets.CI_SSH_PORT }}
+
 jobs:
   build-apk:
     runs-on: ubuntu-latest
@@ -41,7 +46,19 @@ jobs:
           chmod +x gradlew
           ./gradlew assembleDebug --no-daemon
 
-      - name: Upload APK
+      - name: Upload APK to server
+        if: env.CI_SSH_KEY != ''
+        run: |
+          VERSION=$(grep -oP 'versionName "\K[^"]+' android/app/build.gradle)
+          cp android/app/build/outputs/apk/debug/app-debug.apk "tylibrary-v${VERSION}.apk"
+          echo "$CI_SSH_KEY" > /tmp/ci_key
+          chmod 600 /tmp/ci_key
+          scp -O -i /tmp/ci_key -o StrictHostKeyChecking=no -P "${CI_SSH_PORT:-22}" \
+            "tylibrary-v${VERSION}.apk" "root@${CI_SSH_HOST}:/root/library/public/downloads/"
+          rm -f /tmp/ci_key
+          echo "已上传 tylibrary-v${VERSION}.apk"
+
+      - name: Upload APK (artifact)
         uses: actions/upload-artifact@v4
         with:
           name: tianyang-library-apk

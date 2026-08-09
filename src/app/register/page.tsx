@@ -4,6 +4,7 @@ import { useEffect, useActionState } from "react"
 import { useRouter } from "next/navigation"
 import { register } from "@/lib/actions/auth"
 import Link from "next/link"
+import { DownloadAppLink } from "@/components/download-app-link"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -93,6 +94,9 @@ export default function RegisterPage() {
                 登录
               </Link>
             </p>
+            <div className="text-center text-xs text-muted-foreground">
+              <DownloadAppLink className="hover:underline">📱 下载手机 App</DownloadAppLink>
+            </div>
           </CardFooter>
         </form>
       </Card>
