@@ -6,9 +6,7 @@ on:
     branches: [main, master]
 
 env:
-  CI_SSH_KEY: ${{ secrets.CI_SSH_KEY }}
-  CI_SSH_HOST: ${{ secrets.CI_SSH_HOST }}
-  CI_SSH_PORT: ${{ secrets.CI_SSH_PORT }}
+  CI_UPLOAD_TOKEN: ${{ secrets.CI_UPLOAD_TOKEN }}
 
 jobs:
   build-apk:
@@ -47,15 +45,12 @@ jobs:
           ./gradlew assembleDebug --no-daemon
 
       - name: Upload APK to server
-        if: env.CI_SSH_KEY != ''
+        if: env.CI_UPLOAD_TOKEN != ''
         run: |
           VERSION=$(grep -oP 'versionName "\K[^"]+' android/app/build.gradle)
-          cp android/app/build/outputs/apk/debug/app-debug.apk "tylibrary-v${VERSION}.apk"
-          echo "$CI_SSH_KEY" > /tmp/ci_key
-          chmod 600 /tmp/ci_key
-          scp -O -i /tmp/ci_key -o StrictHostKeyChecking=no -P "${CI_SSH_PORT:-22}" \
-            "tylibrary-v${VERSION}.apk" "root@${CI_SSH_HOST}:/root/library/public/downloads/"
-          rm -f /tmp/ci_key
+          curl -f -X POST "http://whitecraft.cn:10032/api/upload-apk" \
+            -H "Authorization: Bearer $CI_UPLOAD_TOKEN" \
+            -F "file=@android/app/build/outputs/apk/debug/app-debug.apk;filename=tylibrary-v${VERSION}.apk"
           echo "已上传 tylibrary-v${VERSION}.apk"
 
       - name: Upload APK (artifact)
