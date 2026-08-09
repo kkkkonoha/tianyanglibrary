@@ -488,11 +488,11 @@ export function ComicReader({
             </div>
           ) : (
             <div className="relative flex h-full w-full items-center justify-center">
-              {/* Page image：保留全部图片预加载，当前页用 opacity 过渡淡入淡出 */}
+              {/* Page image：absolute 定位避免 invisible 保留布局导致堆叠；当前页 opacity 过渡淡入淡出 */}
               {pages.map((p) => (
                 <div
                   key={p.index}
-                  className={`transition-opacity duration-200 ${
+                  className={`absolute inset-0 flex items-center justify-center transition-opacity duration-200 ${
                     p.index === pageIndex ? "opacity-100" : "pointer-events-none invisible opacity-0"
                   }`}
                 >

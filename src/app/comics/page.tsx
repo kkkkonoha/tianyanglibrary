@@ -1,6 +1,7 @@
 import { auth } from "@/lib/auth"
 import { redirect } from "next/navigation"
-import { searchManga, fetchPopularManga, COMIC_SOURCES, DEFAULT_SOURCE_ID } from "@/lib/suwayomi"
+import { prisma } from "@/lib/db"
+import { searchManga, COMIC_SOURCES, DEFAULT_SOURCE_ID } from "@/lib/suwayomi"
 import Link from "next/link"
 import { Card, CardContent } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -29,14 +30,17 @@ export default async function ComicsPage({
     } catch (e: any) {
       error = e.message ?? "搜索失败"
     }
-  } else {
-    // 未搜索时默认展示热门漫画
-    try {
-      result = await fetchPopularManga(currentPage, selectedSource)
-    } catch {
-      result = null
-    }
   }
+
+  // 未搜索时展示本地已入库的漫画（数据库查询秒出，保证页面有内容、切换丝滑）
+  const localComics = !q
+    ? await prisma.resource.findMany({
+        where: { type: "COMIC", comicMangaId: { not: null } },
+        orderBy: { updatedAt: "desc" },
+        take: 24,
+        select: { id: true, title: true, author: true, coverImage: true, comicMangaId: true, type: true },
+      })
+    : []
 
   return (
     <div className="container mx-auto max-w-6xl px-4 py-10">
@@ -76,7 +80,7 @@ export default async function ComicsPage({
           {result.mangas.length === 0 ? (
             <Card className="border-dashed">
               <CardContent className="flex flex-col items-center justify-center py-16 text-center">
-                <p className="text-lg font-medium">{q ? "没有找到漫画" : "暂无热门漫画"}</p>
+                <p className="text-lg font-medium">没有找到漫画</p>
                 <p className="mt-1 text-sm text-muted-foreground">尝试其他关键词或切换来源</p>
               </CardContent>
             </Card>
@@ -126,10 +130,45 @@ export default async function ComicsPage({
         </>
       )}
 
-      {!q && !result && (
-        <div className="rounded-lg border border-dashed p-8 text-center text-sm text-muted-foreground">
-          热门漫画暂时加载失败，输入关键词搜索漫画
-        </div>
+      {!q && (
+        <>
+          <div className="mb-4 flex items-center gap-2 text-sm text-muted-foreground">
+            <span>已入库漫画（{localComics.length}）</span>
+            <span className="opacity-50">·</span>
+            <span>输入关键词可在线搜索更多</span>
+          </div>
+          {localComics.length === 0 ? (
+            <div className="rounded-lg border border-dashed p-8 text-center text-sm text-muted-foreground">
+              还没有入库的漫画，输入关键词搜索并点「入库」添加
+            </div>
+          ) : (
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+              {localComics.map((m, i) => (
+                <Link key={m.id} href={`/comics/${m.comicMangaId}`} className="animate-lib-rise-in" style={{ animationDelay: `${Math.min(i, 12) * 60}ms` }}>
+                  <Card className="h-full overflow-hidden transition-shadow hover:shadow-md">
+                    <div className="flex h-56 items-center justify-center bg-muted/30">
+                      {m.coverImage ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img
+                          src={m.coverImage}
+                          alt={m.title}
+                          loading="lazy" decoding="async"
+                          className="h-full w-full object-contain"
+                        />
+                      ) : (
+                        <span className="text-4xl font-bold text-muted-foreground/30">📘</span>
+                      )}
+                    </div>
+                    <CardContent className="p-3">
+                      <h3 className="font-medium text-sm line-clamp-1">{m.title}</h3>
+                      {m.author && <p className="mt-0.5 text-xs text-muted-foreground line-clamp-1">{m.author}</p>}
+                    </CardContent>
+                  </Card>
+                </Link>
+              ))}
+            </div>
+          )}
+        </>
       )}
     </div>
   )

@@ -71,18 +71,6 @@ export async function searchManga(query: string, page = 1, sourceId = DEFAULT_SO
   `).then((d) => d.fetchSourceManga)
 }
 
-// 默认展示热门漫画（未搜索时的页面内容）
-export async function fetchPopularManga(page = 1, sourceId = DEFAULT_SOURCE_ID): Promise<{ mangas: SuwayomiManga[]; hasNextPage: boolean }> {
-  return suwayomiGql<any>(`
-    mutation {
-      fetchSourceManga(input: { source: "${sourceId}", page: ${page}, type: POPULAR }) {
-        hasNextPage
-        mangas { id title author artist description genre thumbnailUrl url inLibrary sourceId }
-      }
-    }
-  `).then((d) => d.fetchSourceManga)
-}
-
 export async function getManga(id: string): Promise<SuwayomiManga> {
   return suwayomiGql(`
     query {
