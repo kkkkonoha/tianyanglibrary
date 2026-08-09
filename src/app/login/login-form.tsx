@@ -2,7 +2,7 @@
 
 import { useState } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
-import { signIn } from "next-auth/react"
+import { signIn, useSession } from "next-auth/react"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -14,6 +14,7 @@ export function LoginForm() {
   const searchParams = useSearchParams()
   const registered = searchParams.get("registered")
   const callback = searchParams.get("callback")
+  const { update } = useSession()
   const [error, setError] = useState("")
   const [loading, setLoading] = useState(false)
 
@@ -34,6 +35,12 @@ export function LoginForm() {
       setError("邮箱或密码错误")
       setLoading(false)
     } else {
+      // 同步 SessionProvider 的 session 状态（signIn 只写 cookie，客户端状态需手动刷新），再跳转
+      try {
+        await update()
+      } catch {
+        // 刷新失败不阻断跳转（刷新页面即可恢复）
+      }
       router.push(callback ?? "/")
       router.refresh()
     }
