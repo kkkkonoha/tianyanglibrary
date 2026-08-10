@@ -48,9 +48,10 @@ jobs:
           VERSION=$(grep -oP 'versionName "\K[^"]+' android/app/build.gradle)
           # 服务器通过 Release 拉取（海外 runner 直传国内服务器超时，Release 走 GitHub 内部网络稳定）
           gh release delete "v${VERSION}" --yes --repo "${{ github.repository }}" 2>/dev/null || true
-          gh release create "v${VERSION}" android/app/build/outputs/apk/debug/app-debug.apk \
+          gh release create "v${VERSION}" \
+            "android/app/build/outputs/apk/debug/app-debug.apk#tylibrary-v${VERSION}.apk" \
             --title "v${VERSION}" --notes "自动构建" --repo "${{ github.repository }}"
-          echo "已发布 Release v${VERSION}"
+          echo "已发布 Release v${VERSION}（tylibrary-v${VERSION}.apk）"
 
       - name: Upload APK (artifact)
         uses: actions/upload-artifact@v4
