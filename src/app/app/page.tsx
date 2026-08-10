@@ -51,7 +51,7 @@ export default async function AppDownloadPage() {
                 <span>大小 {""}</span>
               </div>
               <a
-                href={`/downloads/${latest.name}`}
+                href="/api/download-apk"
                 download
                 className="inline-flex h-10 w-full items-center justify-center rounded-lg bg-primary text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
               >
