@@ -5,9 +5,6 @@ on:
   push:
     branches: [main, master]
 
-env:
-  CI_UPLOAD_TOKEN: ${{ secrets.CI_UPLOAD_TOKEN }}
-
 jobs:
   build-apk:
     runs-on: ubuntu-latest
@@ -44,16 +41,16 @@ jobs:
           chmod +x gradlew
           ./gradlew assembleDebug --no-daemon
 
-      - name: Upload APK to server
-        if: env.CI_UPLOAD_TOKEN != ''
+      - name: Publish to GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
           VERSION=$(grep -oP 'versionName "\K[^"]+' android/app/build.gradle)
-          # 海外 runner → 国内服务器链路偶发慢：重试 5 次应对雨云转发超时(408)
-          curl -f --retry 5 --retry-delay 5 --retry-all-errors --max-time 180 \
-            -X POST "http://whitecraft.cn:10032/api/upload-apk" \
-            -H "Authorization: Bearer $CI_UPLOAD_TOKEN" \
-            -F "file=@android/app/build/outputs/apk/debug/app-debug.apk;filename=tylibrary-v${VERSION}.apk"
-          echo "已上传 tylibrary-v${VERSION}.apk"
+          # 服务器通过 Release 拉取（海外 runner 直传国内服务器超时，Release 走 GitHub 内部网络稳定）
+          gh release delete "v${VERSION}" --yes --repo "${{ github.repository }}" 2>/dev/null || true
+          gh release create "v${VERSION}" android/app/build/outputs/apk/debug/app-debug.apk \
+            --title "v${VERSION}" --notes "自动构建" --repo "${{ github.repository }}"
+          echo "已发布 Release v${VERSION}"
 
       - name: Upload APK (artifact)
         uses: actions/upload-artifact@v4
