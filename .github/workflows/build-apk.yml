@@ -48,7 +48,9 @@ jobs:
         if: env.CI_UPLOAD_TOKEN != ''
         run: |
           VERSION=$(grep -oP 'versionName "\K[^"]+' android/app/build.gradle)
-          curl -f -X POST "http://whitecraft.cn:10032/api/upload-apk" \
+          # 海外 runner → 国内服务器链路偶发慢：重试 5 次应对雨云转发超时(408)
+          curl -f --retry 5 --retry-delay 5 --retry-all-errors --max-time 180 \
+            -X POST "http://whitecraft.cn:10032/api/upload-apk" \
             -H "Authorization: Bearer $CI_UPLOAD_TOKEN" \
             -F "file=@android/app/build/outputs/apk/debug/app-debug.apk;filename=tylibrary-v${VERSION}.apk"
           echo "已上传 tylibrary-v${VERSION}.apk"
