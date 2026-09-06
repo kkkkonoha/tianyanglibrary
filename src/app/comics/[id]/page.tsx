@@ -16,6 +16,7 @@ import { AddToDirectoryButton } from "@/components/add-to-directory-button"
 import { ImportComicButton } from "@/components/import-comic-button"
 import { MergeComicButton } from "@/components/merge-comic-button"
 import { FavoriteButton } from "@/components/favorite-button"
+import { ResourceTypeIcon } from "@/components/resource-type"
 
 export const dynamic = "force-dynamic"
 
@@ -126,7 +127,9 @@ export default async function ComicDetailPage({
             // eslint-disable-next-line @next/next/no-img-element
             <img src={`/api/suwayomi${manga.thumbnailUrl}`} alt={manga.title} className="h-full w-full object-contain" />
           ) : (
-            <div className="flex h-full w-full items-center justify-center text-4xl font-bold text-muted-foreground/30">📘</div>
+            <div className="flex h-full w-full items-center justify-center text-muted-foreground/30">
+              <ResourceTypeIcon type="COMIC" className="h-12 w-12" />
+            </div>
           )}
         </div>
         <div className="min-w-0 flex-1">

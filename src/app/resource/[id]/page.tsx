@@ -16,11 +16,8 @@ import { ImagePreview } from "@/components/image-preview"
 import { MergeComicButton } from "@/components/merge-comic-button"
 import { FavoriteButton } from "@/components/favorite-button"
 import { ExpandableText } from "@/components/expandable-text"
-
-const typeLabels: Record<string, string> = {
-  BOOK: "📖 电子书",
-  COMIC: "📘 漫画",
-}
+import { ResourceTypeIcon, ResourceTypeLabel } from "@/components/resource-type"
+import { BookOpen } from "lucide-react"
 
 export default async function ResourcePage({
   params,
@@ -146,7 +143,7 @@ export default async function ResourcePage({
                 </ImagePreview>
               ) : (
                 <div className="flex h-48 w-32 items-center justify-center rounded-lg bg-muted">
-                  <span className="text-4xl font-bold text-muted-foreground/30">{resource.type}</span>
+                  <ResourceTypeIcon type={resource.type} className="h-12 w-12 text-muted-foreground/30" />
                 </div>
               )}
               <div className="flex-1">
@@ -155,7 +152,7 @@ export default async function ResourcePage({
                   <p className="mt-1 text-sm text-muted-foreground">{resource.author}</p>
                 )}
                 <div className="mt-2 flex items-center gap-2">
-                  <Badge variant="secondary">{typeLabels[resource.type]}</Badge>
+                  <Badge variant="secondary"><ResourceTypeLabel type={resource.type} iconClassName="h-3.5 w-3.5" /></Badge>
                   {resource.tags.map((rt) => (
                     <Badge key={rt.tag.id} variant="outline">
                       {rt.tag.name}
@@ -184,7 +181,7 @@ export default async function ResourcePage({
                 {effectiveReadMangaId && (
                   <div className="mt-3">
                     <Link href={`/comics/${effectiveReadMangaId}`}>
-                      <Button size="sm">📖 在线阅读</Button>
+                      <Button size="sm"><BookOpen className="h-4 w-4" aria-hidden="true" />在线阅读</Button>
                     </Link>
                   </div>
                 )}
@@ -326,7 +323,9 @@ export default async function ResourcePage({
                     {item.coverImage ? (
                       <img src={item.coverImage} alt={item.title} loading="lazy" decoding="async" className="h-10 w-7 shrink-0 rounded object-contain bg-muted/30" />
                     ) : (
-                      <div className="flex h-10 w-7 shrink-0 items-center justify-center rounded bg-muted text-xs">{typeLabels[item.type]?.charAt(0) ?? "?"}</div>
+                      <div className="flex h-10 w-7 shrink-0 items-center justify-center rounded bg-muted text-xs">
+                        <ResourceTypeIcon type={item.type} className="h-4 w-4 text-muted-foreground" />
+                      </div>
                     )}
                     <div className="min-w-0 flex-1">
                       <p className="text-sm font-medium line-clamp-1">{item.title}</p>

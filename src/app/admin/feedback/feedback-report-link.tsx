@@ -3,6 +3,7 @@
 import { useState, useTransition } from "react"
 import { Button } from "@/components/ui/button"
 import { useToast } from "@/components/toast"
+import { FileText } from "lucide-react"
 
 // 查看反馈汇总文档（服务端生成的 Markdown）
 export function FeedbackReportLink() {
@@ -43,7 +44,7 @@ export function FeedbackReportLink() {
 
   return (
     <Button size="sm" variant="outline" onClick={load} disabled={pending}>
-      {pending ? "读取中..." : "📄 查看反馈汇总"}
+      {pending ? "读取中..." : <><FileText className="h-4 w-4" aria-hidden="true" />查看反馈汇总</>}
     </Button>
   )
 }

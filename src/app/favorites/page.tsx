@@ -5,13 +5,10 @@ import Link from "next/link"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { LatestChapter } from "@/components/latest-chapter"
+import { ResourceTypeIcon, ResourceTypeLabel } from "@/components/resource-type"
+import { Star } from "lucide-react"
 
 export const dynamic = "force-dynamic"
-
-const typeLabels: Record<string, string> = {
-  BOOK: "📖 电子书",
-  COMIC: "📘 漫画",
-}
 
 export default async function FavoritesPage() {
   const session = await auth()
@@ -79,11 +76,11 @@ export default async function FavoritesPage() {
                   />
                 ) : (
                   <div className="flex h-full w-full items-center justify-center text-3xl font-bold text-muted-foreground/30">
-                    {item.type === "COMIC" ? "📘" : "📖"}
+                    <ResourceTypeIcon type={item.type} className="h-10 w-10" />
                   </div>
                 )}
                 <span className="absolute left-1.5 top-1.5 rounded-full bg-black/60 px-2 py-0.5 text-[10px] text-white">
-                  {typeLabels[item.type]}
+                  <ResourceTypeLabel type={item.type} iconClassName="h-3 w-3" />
                 </span>
               </div>
               <CardContent className="p-2.5">
@@ -109,9 +106,11 @@ export default async function FavoritesPage() {
       {favorites.length === 0 ? (
         <Card className="mt-8 border-dashed">
           <CardContent className="flex flex-col items-center justify-center py-16 text-center">
-            <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-secondary text-3xl">☆</div>
+            <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-secondary text-muted-foreground">
+              <Star className="h-8 w-8" aria-hidden="true" />
+            </div>
             <p className="text-lg font-medium">书架还是空的</p>
-            <p className="mt-1 text-sm text-muted-foreground">在漫画或资源页点击「☆ 收藏」加入书架</p>
+            <p className="mt-1 text-sm text-muted-foreground">在漫画或资源页点击「收藏」加入书架</p>
             <Link href="/explore" className="mt-5 text-sm text-primary hover:underline">去探索 →</Link>
           </CardContent>
         </Card>
@@ -120,7 +119,7 @@ export default async function FavoritesPage() {
           {comics.length > 0 && (
             <section>
               <h2 className="mb-3 flex items-center gap-2 text-lg font-semibold">
-                📘 漫画追更
+                <ResourceTypeIcon type="COMIC" className="h-5 w-5 text-primary" />漫画追更
                 <Badge variant="secondary">{comics.length}</Badge>
               </h2>
               {renderGrid(comics)}
@@ -129,7 +128,7 @@ export default async function FavoritesPage() {
           {books.length > 0 && (
             <section>
               <h2 className="mb-3 flex items-center gap-2 text-lg font-semibold">
-                📖 电子书
+                <ResourceTypeIcon type="BOOK" className="h-5 w-5 text-primary" />电子书
                 <Badge variant="secondary">{books.length}</Badge>
               </h2>
               {renderGrid(books)}

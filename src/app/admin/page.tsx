@@ -11,6 +11,7 @@ import { ApproveRejectButton } from "./approve-reject-button"
 import { ResetPasswordButton } from "./reset-password-button"
 import { AnnouncementManager } from "./announcement-manager"
 import { isFeedbackManager } from "@/lib/actions/feedback"
+import { Megaphone, MessageSquare } from "lucide-react"
 
 export default async function AdminPage() {
   const session = await auth()
@@ -63,13 +64,13 @@ export default async function AdminPage() {
         <p className="mt-1.5 text-muted-foreground">用户管理与审核</p>
         {feedbackManager && (
           <Link href="/admin/feedback" className="mt-3 inline-block">
-            <Button variant="outline" size="sm">💬 反馈管理</Button>
+            <Button variant="outline" size="sm"><MessageSquare className="h-4 w-4" aria-hidden="true" />反馈管理</Button>
           </Link>
         )}
       </div>
 
       <div className="mb-8 animate-lib-rise-in">
-        <h2 className="mb-3 text-lg font-semibold">📢 公告管理</h2>
+        <h2 className="mb-3 flex items-center gap-2 text-lg font-semibold"><Megaphone className="h-5 w-5 text-primary" aria-hidden="true" />公告管理</h2>
         <AnnouncementManager initialAnnouncements={announcements.map((a) => ({
           id: a.id,
           title: a.title ?? "公告",

@@ -35,7 +35,10 @@ export async function Navbar() {
   }
 
   return (
-    <header className="sticky top-0 z-50 border-b border-primary/10 bg-background/80 backdrop-blur-xl supports-[backdrop-filter]:bg-background/60">
+    <header
+      className="sm:sticky z-50 border-b border-primary/10 bg-background/80 backdrop-blur-xl supports-[backdrop-filter]:bg-background/60"
+      style={{ top: "env(safe-area-inset-top, 0px)" }}
+    >
       <div className="container mx-auto flex h-14 items-center justify-between px-4">
         <div className="flex items-center gap-8">
           <Link href="/" className="flex items-center gap-2 text-lg font-bold tracking-tight">

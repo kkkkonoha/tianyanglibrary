@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
+import { Settings2 } from "lucide-react"
 
 const STORAGE_KEY = "timeline-page-size"
 const MAX_SIZE = 1000
@@ -51,9 +52,10 @@ export function TimelinePageSize({ currentSize }: { currentSize: number }) {
       <button
         onClick={() => setOpen((v) => !v)}
         title={`每页条数：${currentSize}`}
+        aria-label={`每页条数：${currentSize}`}
         className="flex h-7 w-7 items-center justify-center rounded-full text-sm text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
       >
-        ⚙️
+        <Settings2 className="h-4 w-4" aria-hidden="true" />
       </button>
       {open && (
         <>

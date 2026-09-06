@@ -1,6 +1,12 @@
 import { prisma } from "@/lib/db"
 import { getManga } from "@/lib/suwayomi"
 
+function normalizeDescription(value: unknown) {
+  if (typeof value !== "string") return null
+  const description = value.trim()
+  return description || null
+}
+
 // 查找已入库的本地 Resource（只查不建）。
 // 优先按 (sourceId, mangaId) binding 精确匹配，失败时按标题去重匹配。
 export async function findComicResource(mangaId: string, sourceId: string, title?: string) {
@@ -26,14 +32,27 @@ export async function findComicResource(mangaId: string, sourceId: string, title
 export async function ensureComicResource(mangaId: string, sourceId: string, userId: string) {
   // 1. 精确查重：(sourceId, mangaId) binding
   const existing = await findComicResource(mangaId, sourceId)
-  if (existing) return { resourceId: existing.id, alreadyExisted: true }
+  if (existing?.description?.trim()) return { resourceId: existing.id, alreadyExisted: true }
 
-  // 2. 从 Suwayomi 拉取详情
+  // 2. 从 Suwayomi 拉取详情。已有但简介为空的条目也要借此补齐简介。
   let manga: any
   try {
     manga = await getManga(mangaId)
   } catch {
+    if (existing) return { resourceId: existing.id, alreadyExisted: true }
     return { error: "获取漫画信息失败" }
+  }
+  const description = normalizeDescription(manga.description)
+
+  // 已按源精确匹配到的条目：只补充空简介，不覆盖已有人工简介。
+  if (existing) {
+    if (description) {
+      await prisma.resource.update({
+        where: { id: existing.id },
+        data: { description },
+      })
+    }
+    return { resourceId: existing.id, alreadyExisted: true }
   }
 
   // 3. 按标题去重：同名跨源合并为同一条目，并把当前源挂载为 binding（源不丢弃）
@@ -46,6 +65,13 @@ export async function ensureComicResource(mangaId: string, sourceId: string, use
         create: { resourceId: sameTitle.id, sourceId, mangaId },
         update: {},
       })
+      // 同名条目可能是手动创建的；一键入库时只补齐空简介。
+      if (!sameTitle.description?.trim() && description) {
+        await prisma.resource.update({
+          where: { id: sameTitle.id },
+          data: { description },
+        })
+      }
       return { resourceId: sameTitle.id, alreadyExisted: true }
     }
   }
@@ -55,7 +81,7 @@ export async function ensureComicResource(mangaId: string, sourceId: string, use
     data: {
       title: title || "未命名漫画",
       author: manga.author ?? null,
-      description: manga.description ?? null,
+      description,
       coverImage: manga.thumbnailUrl ? `/api/suwayomi${manga.thumbnailUrl}` : null,
       type: "COMIC",
       comicSourceId: sourceId,

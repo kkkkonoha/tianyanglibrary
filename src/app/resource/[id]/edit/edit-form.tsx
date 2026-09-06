@@ -9,11 +9,12 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { GripVertical, ArrowUp, ArrowDown } from "lucide-react"
+import { GripVertical, ArrowUp, ArrowDown, Check, X } from "lucide-react"
+import { ResourceTypeIcon } from "@/components/resource-type"
 
 const resourceTypes = [
-  { value: "BOOK", label: "📖 电子书" },
-  { value: "COMIC", label: "📘 漫画" },
+  { value: "BOOK", label: "电子书" },
+  { value: "COMIC", label: "漫画" },
 ]
 
 type FileStatus = "done" | "queued" | "uploading" | "failed"
@@ -273,6 +274,7 @@ export function EditResourceForm({ id, title, author, description, type, coverIm
               <div className="flex flex-wrap gap-2">
                 {resourceTypes.map((rt) => (
                   <Button key={rt.value} type="button" variant={currentType === rt.value ? "default" : "outline"} size="sm" onClick={() => setCurrentType(rt.value)}>
+                    <ResourceTypeIcon type={rt.value} className="h-4 w-4" />
                     {rt.label}
                   </Button>
                 ))}
@@ -285,7 +287,7 @@ export function EditResourceForm({ id, title, author, description, type, coverIm
               {currentTags.length > 0 && (
                 <div className="flex flex-wrap gap-1.5 pt-2">
                   {currentTags.map((tag) => (
-                    <Badge key={tag} variant="secondary" className="cursor-pointer" onClick={() => removeTag(tag)}>{tag} ✕</Badge>
+                    <Badge key={tag} variant="secondary" className="cursor-pointer" onClick={() => removeTag(tag)}>{tag}<X className="h-3 w-3" aria-hidden="true" /></Badge>
                   ))}
                 </div>
               )}
@@ -335,7 +337,7 @@ export function EditResourceForm({ id, title, author, description, type, coverIm
                         {f.status === "failed" && (
                           <Button type="button" variant="outline" size="sm" className="h-6 px-2 text-xs text-destructive" onClick={() => retryFile(i)}>上传失败，重试</Button>
                         )}
-                        {f.status === "done" && <span className="shrink-0 text-xs text-green-600">✓</span>}
+                        {f.status === "done" && <Check className="h-4 w-4 shrink-0 text-green-600" aria-label="上传完成" />}
 
                         <Button type="button" variant="ghost" size="icon" className="h-6 w-6 text-muted-foreground"
                           disabled={mutationsDisabled} onClick={() => moveItem(i, Math.max(0, i - 1))} title="上移">
@@ -347,7 +349,7 @@ export function EditResourceForm({ id, title, author, description, type, coverIm
                         </Button>
                         <Button type="button" variant="ghost" size="icon" className="h-6 w-6 text-muted-foreground hover:text-destructive"
                           disabled={mutationsDisabled} onClick={() => f.id && handleDeleteFile(f.id)}>
-                          ✕
+                          <X className="h-3.5 w-3.5" aria-hidden="true" />
                         </Button>
                       </div>
                     ))}

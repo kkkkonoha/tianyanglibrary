@@ -9,10 +9,12 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
+import { ResourceTypeIcon } from "@/components/resource-type"
+import { X } from "lucide-react"
 
 const resourceTypes = [
-  { value: "BOOK", label: "📖 电子书" },
-  { value: "COMIC", label: "📘 漫画" },
+  { value: "BOOK", label: "电子书" },
+  { value: "COMIC", label: "漫画" },
 ]
 
 export function UploadForm() {
@@ -87,13 +89,15 @@ export function UploadForm() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="description">描述</Label>
+              <Label htmlFor="description">简介 *</Label>
               <Textarea
                 id="description"
                 name="description"
-                placeholder="简单介绍一下这个资源..."
+                placeholder="请尽量寻找并填写官方介绍，帮助读者了解资源内容"
                 rows={3}
+                required
               />
+              <p className="text-xs text-muted-foreground">优先使用出版社、作者、官方页面或漫画源提供的介绍。</p>
             </div>
 
             <div className="space-y-2">
@@ -107,6 +111,7 @@ export function UploadForm() {
                     size="sm"
                     onClick={() => setType(rt.value)}
                   >
+                    <ResourceTypeIcon type={rt.value} className="h-4 w-4" />
                     {rt.label}
                   </Button>
                 ))}
@@ -127,7 +132,7 @@ export function UploadForm() {
                 <div className="flex flex-wrap gap-1.5 pt-2">
                   {tagList.map((tag) => (
                     <Badge key={tag} variant="secondary" className="cursor-pointer" onClick={() => removeTag(tag)}>
-                      {tag} ✕
+                      {tag}<X className="h-3 w-3" aria-hidden="true" />
                     </Badge>
                   ))}
                 </div>

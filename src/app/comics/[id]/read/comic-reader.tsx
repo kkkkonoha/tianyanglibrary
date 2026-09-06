@@ -4,6 +4,7 @@ import { useEffect, useRef, useState, useCallback } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { setStatusBarStyle } from "@/lib/native"
+import { ArrowDownUp, ArrowLeftRight, Maximize2, X } from "lucide-react"
 import { Button } from "@/components/ui/button"
 
 interface ChapterOption {
@@ -333,7 +334,7 @@ export function ComicReader({
             onClick={toggleImmersive}
             title="沉浸阅读（快捷键 i / f，Esc 退出）"
           >
-            ⛶ 沉浸
+            <Maximize2 className="h-4 w-4" aria-hidden="true" />沉浸
           </Button>
           <Button
             variant="outline"
@@ -342,7 +343,7 @@ export function ComicReader({
             onClick={() => switchMode(mode === "scroll" ? "page" : "scroll")}
             title={mode === "scroll" ? "切换到左右翻页" : "切换到上下滚动"}
           >
-            {mode === "scroll" ? "⇋ 翻页" : "⇅ 滚动"}
+            {mode === "scroll" ? <><ArrowLeftRight className="h-4 w-4" aria-hidden="true" />翻页</> : <><ArrowDownUp className="h-4 w-4" aria-hidden="true" />滚动</>}
           </Button>
           <Button
             variant="outline"
@@ -370,7 +371,7 @@ export function ComicReader({
             onClick={() => router.push(`/comics/${mangaId}`)}
             title="退出阅读"
           >
-            ✕ 退出
+            <X className="h-4 w-4" aria-hidden="true" />退出
           </Button>
         </div>
       </header>

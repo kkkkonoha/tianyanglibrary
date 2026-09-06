@@ -7,6 +7,7 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { ConfirmButton } from "@/components/confirm-button"
 import { Markdown } from "@/components/markdown"
+import { Pin } from "lucide-react"
 
 type AnnouncementItem = {
   id: string
@@ -196,7 +197,9 @@ export function AnnouncementManager({ initialAnnouncements }: { initialAnnouncem
           {announcements.map((a) => (
             <div key={a.id} className="flex items-center gap-2 rounded-lg border bg-card px-3 py-2">
               <Badge variant={a.pinnedAt ? "default" : "secondary"} className="shrink-0 text-xs">
-                {a.pinnedAt ? "📌 置顶" : "公告"}
+                {a.pinnedAt ? (
+                  <span className="inline-flex items-center gap-1"><Pin className="h-3 w-3" aria-hidden="true" />置顶</span>
+                ) : "公告"}
               </Badge>
               <span className="min-w-0 flex-1 truncate text-sm">{a.title}</span>
               <span className="shrink-0 text-xs text-muted-foreground">

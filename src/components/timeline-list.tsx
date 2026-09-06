@@ -8,6 +8,8 @@ import { Badge } from "@/components/ui/badge"
 import { DeleteActivityButton } from "@/components/delete-activity-button"
 import { ExpandableText } from "@/components/expandable-text"
 import { Markdown } from "@/components/markdown"
+import { Megaphone, Pin } from "lucide-react"
+import { ResourceTypeLabel } from "@/components/resource-type"
 
 interface TimelineActivity {
   id: string
@@ -38,11 +40,6 @@ const activityLabels: Record<string, string> = {
   COMMENT: "评论了",
   FAVORITE: "收藏了",
   ANNOUNCEMENT: "发布了公告",
-}
-
-const resourceTypeLabels: Record<string, string> = {
-  BOOK: "📖 电子书",
-  COMIC: "📘 漫画",
 }
 
 // 评论/推荐/公告不折叠，始终完整显示
@@ -84,8 +81,12 @@ function ActivityCard({ activity }: { activity: TimelineActivity }) {
           <div className="flex items-start gap-3">
             <div className="min-w-0 flex-1">
               <div className="flex flex-wrap items-center gap-2">
-                <Badge className="text-xs">📢 公告</Badge>
-                {activity.pinnedAt && <Badge variant="outline" className="text-xs">📌 置顶</Badge>}
+                <Badge className="inline-flex items-center gap-1 text-xs"><Megaphone className="h-3 w-3" aria-hidden="true" />公告</Badge>
+                {activity.pinnedAt && (
+                  <Badge variant="outline" className="inline-flex items-center gap-1 text-xs">
+                    <Pin className="h-3 w-3" aria-hidden="true" />置顶
+                  </Badge>
+                )}
                 <span className="text-xs text-muted-foreground/70">
                   {new Date(activity.createdAt).toLocaleString("zh-CN", { timeZone: "Asia/Shanghai" })}
                 </span>
@@ -133,7 +134,7 @@ function ActivityCard({ activity }: { activity: TimelineActivity }) {
             <div className="mt-1.5 flex items-center gap-2">
               {activity.resource && (
                 <Badge variant="secondary" className="text-xs font-normal">
-                  {resourceTypeLabels[activity.resource.type] ?? "其他"}
+                  <ResourceTypeLabel type={activity.resource.type} iconClassName="h-3 w-3" />
                 </Badge>
               )}
               <span className="text-xs text-muted-foreground/70">

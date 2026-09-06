@@ -14,6 +14,7 @@ import { EditCollectionButton } from "@/components/edit-collection-button"
 import { CollectionResourceNote } from "./resource-note"
 import { RemoveResourceButton } from "./remove-resource-button"
 import { AddResourceToCollection } from "./add-resource"
+import { FileText } from "lucide-react"
 
 export default async function CollectionPage({
   params,
@@ -127,7 +128,9 @@ export default async function CollectionPage({
                 {cr.resource.coverImage ? (
                   <img src={cr.resource.coverImage} alt={cr.resource.title} loading="lazy" decoding="async" className="h-24 w-16 rounded object-contain bg-muted/30" />
                 ) : (
-                  <div className="flex h-24 w-16 items-center justify-center rounded bg-muted text-xl">📄</div>
+                  <div className="flex h-24 w-16 items-center justify-center rounded bg-muted">
+                    <FileText className="h-8 w-8 text-muted-foreground/50" aria-hidden="true" />
+                  </div>
                 )}
               </Link>
               <div className="min-w-0 flex-1">

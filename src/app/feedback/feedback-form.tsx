@@ -10,6 +10,7 @@ import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { ConfirmButton } from "@/components/confirm-button"
 import { useToast } from "@/components/toast"
+import { Bug, Sparkles } from "lucide-react"
 
 const statusLabels: Record<string, string> = {
   pending: "待处理",
@@ -87,11 +88,11 @@ export function FeedbackForm() {
             <div className="mt-1 flex gap-2">
               <label className="flex cursor-pointer items-center gap-1.5 rounded-lg border px-3 py-1.5 text-sm has-[:checked]:border-primary has-[:checked]:bg-primary/10">
                 <input type="radio" name="type" value="BUG" defaultChecked className="accent-primary" />
-                🐞 Bug 反馈
+                <Bug className="h-4 w-4" aria-hidden="true" />Bug 反馈
               </label>
               <label className="flex cursor-pointer items-center gap-1.5 rounded-lg border px-3 py-1.5 text-sm has-[:checked]:border-primary has-[:checked]:bg-primary/10">
                 <input type="radio" name="type" value="FEATURE" className="accent-primary" />
-                ✨ 功能需求
+                <Sparkles className="h-4 w-4" aria-hidden="true" />功能需求
               </label>
             </div>
           </div>
@@ -159,7 +160,10 @@ export function FeedbackList({
           <CardContent className="space-y-2 p-4">
             <div className="flex flex-wrap items-center gap-2">
               <Badge variant={f.type === "BUG" ? "destructive" : "default"}>
-                {f.type === "BUG" ? "🐞 Bug" : "✨ 需求"}
+                <span className="inline-flex items-center gap-1">
+                  {f.type === "BUG" ? <Bug className="h-3.5 w-3.5" aria-hidden="true" /> : <Sparkles className="h-3.5 w-3.5" aria-hidden="true" />}
+                  {f.type === "BUG" ? "Bug" : "需求"}
+                </span>
               </Badge>
               <span className="font-medium">{f.title}</span>
               <span className="ml-auto flex items-center gap-2">

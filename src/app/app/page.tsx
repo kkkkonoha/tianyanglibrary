@@ -1,6 +1,7 @@
 import { readdir } from "fs/promises"
 import { join } from "path"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Smartphone } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { NativeRedirect } from "@/components/native-redirect"
 
@@ -41,7 +42,7 @@ export default async function AppDownloadPage() {
 
       <Card className="mt-6">
         <CardHeader>
-          <CardTitle className="text-lg">📱 安卓版下载</CardTitle>
+          <CardTitle className="flex items-center gap-2 text-lg"><Smartphone className="h-5 w-5 text-primary" aria-hidden="true" />安卓版下载</CardTitle>
         </CardHeader>
         <CardContent className="space-y-3">
           {latest ? (

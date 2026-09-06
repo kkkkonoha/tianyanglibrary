@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
+import { Smartphone } from "lucide-react"
 
 export default function RegisterPage() {
   const router = useRouter()
@@ -95,7 +96,7 @@ export default function RegisterPage() {
               </Link>
             </p>
             <div className="text-center text-xs text-muted-foreground">
-              <DownloadAppLink className="hover:underline">📱 下载手机 App</DownloadAppLink>
+              <DownloadAppLink className="inline-flex items-center gap-1.5 hover:underline"><Smartphone className="h-3.5 w-3.5" aria-hidden="true" />下载手机 App</DownloadAppLink>
             </div>
           </CardFooter>
         </form>

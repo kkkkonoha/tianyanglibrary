@@ -4,11 +4,9 @@ import Link from "next/link"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
+import { ResourceTypeIcon, ResourceTypeLabel } from "@/components/resource-type"
 
 const PAGE_SIZE = 24
-
-const typeLabels: Record<string, string> = { BOOK: "📖 电子书", COMIC: "📘 漫画" }
-const typeIcons: Record<string, string> = { BOOK: "BOOK", COMIC: "COMIC" }
 
 export default async function UserResourcesPage({
   params,
@@ -51,8 +49,8 @@ export default async function UserResourcesPage({
               <Link key={r.id} href={`/resource/${r.id}`} className="animate-lib-rise-in" style={{ animationDelay: `${Math.min(i, 12) * 60}ms` }}>
                 <Card className="h-full overflow-hidden transition-shadow hover:shadow-md">
                   {r.coverImage ? <img src={r.coverImage} alt={r.title} loading="lazy" decoding="async" className="h-32 w-full object-contain bg-muted/30" />
-                    : <div className="flex h-32 items-center justify-center bg-muted"><span className="text-3xl font-bold text-muted-foreground/30">{typeIcons[r.type]}</span></div>}
-                  <CardContent className="p-3"><Badge variant="secondary" className="text-xs mb-1">{typeLabels[r.type]}</Badge><h3 className="font-medium text-sm line-clamp-1">{r.title}</h3><p className="text-xs text-muted-foreground mt-1">{r._count.recommendations} 推荐 · {r._count.comments} 评论</p></CardContent>
+                    : <div className="flex h-32 items-center justify-center bg-muted"><ResourceTypeIcon type={r.type} className="h-9 w-9 text-muted-foreground/30" /></div>}
+                  <CardContent className="p-3"><Badge variant="secondary" className="mb-1 text-xs"><ResourceTypeLabel type={r.type} iconClassName="h-3 w-3" /></Badge><h3 className="font-medium text-sm line-clamp-1">{r.title}</h3><p className="mt-1 text-xs text-muted-foreground">{r._count.recommendations} 推荐 · {r._count.comments} 评论</p></CardContent>
                 </Card>
               </Link>
             ))}

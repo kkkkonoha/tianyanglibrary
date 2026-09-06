@@ -5,9 +5,9 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { ExpandableText } from "@/components/expandable-text"
+import { ResourceTypeLabel } from "@/components/resource-type"
 
 const PAGE_SIZE = 24
-const typeLabels: Record<string, string> = { BOOK: "📖 电子书", COMIC: "📘 漫画" }
 
 export default async function UserCommentsPage({
   params, searchParams,
@@ -58,7 +58,7 @@ export default async function UserCommentsPage({
                     <Link href={`/resource/${c.resource!.id}`} className="font-medium text-primary hover:underline">
                       {c.resource!.title}
                     </Link>
-                    <Badge variant="secondary" className="text-xs">{typeLabels[c.resource!.type]}</Badge>
+                    <Badge variant="secondary" className="text-xs"><ResourceTypeLabel type={c.resource!.type} iconClassName="h-3 w-3" /></Badge>
                     <span className="ml-auto">{new Date(c.createdAt).toLocaleString("zh-CN", { timeZone: "Asia/Shanghai" })}</span>
                   </div>
                 </CardContent>

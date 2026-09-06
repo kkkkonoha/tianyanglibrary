@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { updateCollection } from "@/lib/actions/collection"
+import { Pencil } from "lucide-react"
 
 export function EditCollectionButton({ id, title, description }: { id: string; title: string; description: string }) {
   const router = useRouter()
@@ -37,7 +38,9 @@ export function EditCollectionButton({ id, title, description }: { id: string; t
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger onClick={() => { setNewTitle(title); setNewDesc(description); setError("") }}>
-        <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-foreground">✎</Button>
+        <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-foreground" aria-label="编辑目录" title="编辑目录">
+          <Pencil className="h-3.5 w-3.5" aria-hidden="true" />
+        </Button>
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>

@@ -8,6 +8,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog"
 import { useToast } from "@/components/toast"
+import { ScrollText } from "lucide-react"
 
 // 轻量 Markdown 解析：## 版本标题 / ### 小节 / - 列表项 / 其他正文
 function renderChangelog(content: string): React.ReactNode[] {
@@ -76,9 +77,10 @@ export function ChangelogButton() {
       <button
         onClick={load}
         title="更新日志"
+        aria-label="更新日志"
         className="fixed bottom-20 right-4 z-40 flex h-11 w-11 items-center justify-center rounded-full border bg-background/90 text-lg shadow-lg backdrop-blur transition-all hover:scale-105 hover:border-primary/40 sm:bottom-6 sm:right-6"
       >
-        📜
+        <ScrollText className="h-5 w-5" aria-hidden="true" />
       </button>
 
       <Dialog open={open} onOpenChange={setOpen}>

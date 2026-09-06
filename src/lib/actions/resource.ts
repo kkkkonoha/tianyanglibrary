@@ -11,7 +11,7 @@ import { unlink } from "fs/promises"
 import { existsSync } from "fs"
 import { join } from "path"
 
-const resourceSchema = z.object({
+const resourceBaseSchema = z.object({
   title: z.string().min(1, "标题不能为空").max(200),
   author: z.string().max(100).optional(),
   description: z.string().max(2000).optional(),
@@ -19,11 +19,15 @@ const resourceSchema = z.object({
   tags: z.string().optional(),
 })
 
+const createResourceSchema = resourceBaseSchema.extend({
+  description: z.string().trim().min(1, "简介不能为空，请尽量填写官方介绍").max(2000),
+})
+
 export async function createResource(formData: FormData) {
   const session = await auth()
   if (!session?.user) return { error: "请先登录" }
 
-  const validated = resourceSchema.safeParse({
+  const validated = createResourceSchema.safeParse({
     title: formData.get("title"),
     author: formData.get("author"),
     description: formData.get("description"),
@@ -85,7 +89,7 @@ export async function updateResource(formData: FormData) {
     return { error: "无权操作" }
   }
 
-  const validated = resourceSchema.safeParse({
+  const validated = resourceBaseSchema.safeParse({
     title: formData.get("title"),
     author: formData.get("author"),
     description: formData.get("description"),

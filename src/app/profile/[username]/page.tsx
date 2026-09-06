@@ -9,16 +9,7 @@ import { EditAvatar } from "@/components/edit-avatar"
 import { ExpandableText } from "@/components/expandable-text"
 
 import { Button } from "@/components/ui/button"
-
-const typeLabels: Record<string, string> = {
-  BOOK: "📖 电子书",
-  COMIC: "📘 漫画",
-}
-
-const typeIcons: Record<string, string> = {
-  BOOK: "BOOK",
-  COMIC: "COMIC",
-}
+import { ResourceTypeIcon, ResourceTypeLabel } from "@/components/resource-type"
 
 const SECTION_LIMIT = 6
 
@@ -144,11 +135,11 @@ export default async function ProfilePage({
                       <img src={r.coverImage} alt={r.title} loading="lazy" decoding="async" className="h-32 w-full object-contain bg-muted/30" />
                     ) : (
                       <div className="flex h-32 items-center justify-center bg-muted">
-                        <span className="text-3xl font-bold text-muted-foreground/30">{typeIcons[r.type]}</span>
+                        <ResourceTypeIcon type={r.type} className="h-9 w-9 text-muted-foreground/30" />
                       </div>
                     )}
                     <CardContent className="p-3">
-                      <Badge variant="secondary" className="text-xs mb-1">{typeLabels[r.type]}</Badge>
+                      <Badge variant="secondary" className="mb-1 text-xs"><ResourceTypeLabel type={r.type} iconClassName="h-3 w-3" /></Badge>
                       <h3 className="font-medium text-sm line-clamp-1">{r.title}</h3>
                       <p className="text-xs text-muted-foreground mt-1">{r._count.recommendations} 推荐 · {r._count.comments} 评论</p>
                     </CardContent>
@@ -215,7 +206,7 @@ export default async function ProfilePage({
                       ) : null}
                       <div className="min-w-0 flex-1">
                         <h4 className="font-medium text-sm">{rec.resource.title}</h4>
-                        <Badge variant="secondary" className="text-xs mt-1">{typeLabels[rec.resource.type]}</Badge>
+                        <Badge variant="secondary" className="mt-1 text-xs"><ResourceTypeLabel type={rec.resource.type} iconClassName="h-3 w-3" /></Badge>
                         {rec.note && <p className="text-xs text-muted-foreground mt-1 line-clamp-1"><ExpandableText text={rec.note} /></p>}
                       </div>
                     </CardContent>
@@ -252,7 +243,7 @@ export default async function ProfilePage({
                       <Link href={`/resource/${c.resource!.id}`} className="font-medium text-primary hover:underline">
                         {c.resource!.title}
                       </Link>
-                      <Badge variant="secondary" className="text-xs">{typeLabels[c.resource!.type]}</Badge>
+                      <Badge variant="secondary" className="text-xs"><ResourceTypeLabel type={c.resource!.type} iconClassName="h-3 w-3" /></Badge>
                       <span className="ml-auto">{new Date(c.createdAt).toLocaleString("zh-CN", { timeZone: "Asia/Shanghai" })}</span>
                     </div>
                   </CardContent>
@@ -287,11 +278,11 @@ export default async function ProfilePage({
                         <img src={r.coverImage} alt={r.title} loading="lazy" decoding="async" className="h-32 w-full object-contain bg-muted/30" />
                       ) : (
                         <div className="flex h-32 items-center justify-center bg-muted">
-                          <span className="text-3xl font-bold text-muted-foreground/30">{typeIcons[r.type]}</span>
+                          <ResourceTypeIcon type={r.type} className="h-9 w-9 text-muted-foreground/30" />
                         </div>
                       )}
                       <CardContent className="p-3">
-                        <Badge variant="secondary" className="text-xs mb-1">{typeLabels[r.type]}</Badge>
+                        <Badge variant="secondary" className="mb-1 text-xs"><ResourceTypeLabel type={r.type} iconClassName="h-3 w-3" /></Badge>
                         <h3 className="font-medium text-sm line-clamp-1">{r.title}</h3>
                       </CardContent>
                     </Card>

@@ -6,15 +6,12 @@ import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { ImagePreview } from "@/components/image-preview"
+import { ResourceTypeIcon } from "@/components/resource-type"
+import { X } from "lucide-react"
 
 const typeLabels: Record<string, string> = {
   BOOK: "电子书",
   COMIC: "漫画",
-}
-
-const typeIcons: Record<string, string> = {
-  BOOK: "📖",
-  COMIC: "📘",
 }
 
 export default async function ExplorePage({
@@ -137,7 +134,9 @@ export default async function ExplorePage({
           <span className="text-muted-foreground">标签过滤：</span>
           <Badge variant="default" className="gap-1">
             {tag}
-            <Link href={buildUrl({ type: type ?? "", q: q ?? "" })} className="ml-0.5 hover:text-destructive">✕</Link>
+            <Link href={buildUrl({ type: type ?? "", q: q ?? "" })} className="ml-0.5 hover:text-destructive" aria-label="清除标签">
+              <X className="h-3.5 w-3.5" aria-hidden="true" />
+            </Link>
           </Badge>
         </div>
       )}
@@ -169,7 +168,7 @@ export default async function ExplorePage({
                 ) : (
                   <div className="flex h-44 items-center justify-center bg-gradient-to-br from-secondary to-secondary/50 transition-colors group-hover:from-secondary/80">
                     <div className="flex flex-col items-center gap-2">
-                      <span className="text-4xl">{typeIcons[resource.type]}</span>
+                      <ResourceTypeIcon type={resource.type} className="h-10 w-10 text-muted-foreground/70" />
                       <span className="text-xs font-medium text-muted-foreground">{typeLabels[resource.type]}</span>
                     </div>
                   </div>

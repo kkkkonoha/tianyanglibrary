@@ -7,9 +7,10 @@ import { setStatusBarStyle } from "@/lib/native"
 import type { ReactNode } from "react"
 
 export function Providers({ children }: { children: ReactNode }) {
-  // App 内默认深色系统栏图标（适配浅色页面）；阅读器会自行切换为浅色图标
+  // 根据页面主题设置系统栏图标颜色；阅读器会自行切换为浅色图标。
   useEffect(() => {
-    setStatusBarStyle("DARK")
+    const dark = document.documentElement.classList.contains("dark")
+    setStatusBarStyle(dark ? "LIGHT" : "DARK")
   }, [])
 
   return (

@@ -7,6 +7,7 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
+import { ResourceTypeIcon } from "@/components/resource-type"
 
 export const dynamic = "force-dynamic"
 
@@ -99,7 +100,7 @@ export default async function ComicsPage({
                           className="h-full w-full object-contain"
                         />
                       ) : (
-                        <span className="text-4xl font-bold text-muted-foreground/30">📘</span>
+                        <ResourceTypeIcon type="COMIC" className="h-10 w-10 text-muted-foreground/30" />
                       )}
                     </div>
                     <CardContent className="p-3">
@@ -156,7 +157,7 @@ export default async function ComicsPage({
                           className="h-full w-full object-contain"
                         />
                       ) : (
-                        <span className="text-4xl font-bold text-muted-foreground/30">📘</span>
+                        <ResourceTypeIcon type="COMIC" className="h-10 w-10 text-muted-foreground/30" />
                       )}
                     </div>
                     <CardContent className="p-3">

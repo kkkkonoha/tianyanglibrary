@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react"
 import Link from "next/link"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Card, CardContent } from "@/components/ui/card"
+import { Trophy } from "lucide-react"
 
 export type ContributionDetail =
   | { type: "recommend"; resourceId?: number; title: string | null | undefined; text?: string }
@@ -23,11 +24,10 @@ const DETAIL_LABEL: Record<ContributionDetail["type"], string> = {
   upload: "上传",
 }
 
-function rankMedal(i: number) {
-  if (i === 0) return "🥇"
-  if (i === 1) return "🥈"
-  if (i === 2) return "🥉"
-  return null
+function rankMarker(i: number) {
+  if (i > 2) return i + 1
+  const colors = ["text-amber-500", "text-slate-400", "text-orange-600"]
+  return <Trophy className={`mx-auto h-5 w-5 ${colors[i]}`} aria-label={`第 ${i + 1} 名`} />
 }
 
 // 数字滚动：值变化时 400ms 缓动滚动（配合贡献榜月份切换）
@@ -75,7 +75,7 @@ export function ContributionList({ rows }: { rows: ContributionRow[] }) {
                 onClick={() => setExpandedId(expanded ? null : row.user.id)}
               >
                 <span className="w-8 shrink-0 text-center text-lg font-bold tabular-nums">
-                  {rankMedal(i) ?? i + 1}
+                  {rankMarker(i)}
                 </span>
                 <Link
                   href={`/profile/${row.user.username}`}

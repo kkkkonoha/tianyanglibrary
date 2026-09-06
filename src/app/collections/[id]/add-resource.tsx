@@ -4,6 +4,8 @@ import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
+import { ResourceTypeIcon, ResourceTypeLabel } from "@/components/resource-type"
+import { Plus } from "lucide-react"
 
 type SearchItem = {
   id: number
@@ -11,11 +13,6 @@ type SearchItem = {
   author: string | null
   coverImage: string | null
   type: string
-}
-
-const typeLabels: Record<string, string> = {
-  BOOK: "📖 电子书",
-  COMIC: "📘 漫画",
 }
 
 // 目录添加条目面板：默认展示最近条目，支持关键词搜索、多选批量加入
@@ -93,7 +90,7 @@ export function AddResourceToCollection({
   return (
     <div>
       <Button variant="outline" size="sm" onClick={toggleOpen}>
-        ＋ 添加条目
+        <Plus className="h-4 w-4" aria-hidden="true" />添加条目
       </Button>
       <div className="lib-collapse" data-open={open}>
         <div>
@@ -145,7 +142,7 @@ export function AddResourceToCollection({
                       <img src={r.coverImage} alt="" className="h-9 w-6 shrink-0 rounded object-contain bg-muted/30" />
                     ) : (
                       <span className="flex h-9 w-6 shrink-0 items-center justify-center rounded bg-muted/30 text-xs">
-                        {typeLabels[r.type]?.slice(0, 1)}
+                        <ResourceTypeIcon type={r.type} className="h-4 w-4 text-muted-foreground" />
                       </span>
                     )}
                     <span className="min-w-0 flex-1 truncate text-sm">{r.title}</span>
@@ -153,7 +150,7 @@ export function AddResourceToCollection({
                     {disabled ? (
                       <Badge variant="secondary" className="shrink-0 text-xs">已在目录</Badge>
                     ) : (
-                      <Badge variant="outline" className="hidden shrink-0 text-xs sm:inline">{typeLabels[r.type] ?? r.type}</Badge>
+                      <Badge variant="outline" className="hidden shrink-0 text-xs sm:inline"><ResourceTypeLabel type={r.type} iconClassName="h-3 w-3" /></Badge>
                     )}
                   </label>
                 )
