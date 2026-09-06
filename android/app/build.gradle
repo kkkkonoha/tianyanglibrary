@@ -7,8 +7,9 @@ android {
         applicationId "com.tianyang.library"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 1
-        versionName "1.0"
+        // 与面向用户的更新日志版本保持一致；versionCode 需单调递增，保证旧版可覆盖升级。
+        versionCode 903
+        versionName "0.9.3"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         aaptOptions {
              // Files and dirs to omit from the packaged assets dir, modified to accommodate modern web apps.
