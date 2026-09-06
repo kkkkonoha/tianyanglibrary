@@ -4,14 +4,9 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Smartphone } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { NativeRedirect } from "@/components/native-redirect"
+import { compareApkVersions, getApkFilename, parseApkVersion } from "@/lib/apk"
 
 export const dynamic = "force-dynamic"
-
-// 解析 APK 文件名中的版本号（tylibrary-v1.0.apk）
-function parseVersion(name: string): string | null {
-  const m = /v?(\d+\.\d+(?:\.\d+)?)/.exec(name)
-  return m ? m[1] : null
-}
 
 export default async function AppDownloadPage() {
   let latest: { name: string; version: string | null } | null = null
@@ -19,16 +14,8 @@ export default async function AppDownloadPage() {
     const files = await readdir(join(process.cwd(), "public", "downloads"))
     const apks = files
       .filter((f) => f.endsWith(".apk"))
-      .map((name) => ({ name, version: parseVersion(name) }))
-      .sort((a, b) => {
-        const va = a.version ? a.version.split(".").map(Number) : [0]
-        const vb = b.version ? b.version.split(".").map(Number) : [0]
-        for (let i = 0; i < Math.max(va.length, vb.length); i++) {
-          const d = (vb[i] ?? 0) - (va[i] ?? 0)
-          if (d !== 0) return d
-        }
-        return 0
-      })
+      .map((name) => ({ name, version: parseApkVersion(name) }))
+      .sort((a, b) => compareApkVersions(a.version, b.version))
     latest = apks[0] ?? null
   } catch {
     latest = null
@@ -53,11 +40,14 @@ export default async function AppDownloadPage() {
               </div>
               <a
                 href="/api/download-apk"
-                download
+                download={latest.version ? getApkFilename(latest.version) : undefined}
                 className="inline-flex h-10 w-full items-center justify-center rounded-lg bg-primary text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
               >
                 下载安装包
               </a>
+              {latest.version && (
+                <p className="text-center text-xs text-muted-foreground">文件名：{getApkFilename(latest.version)}</p>
+              )}
               <p className="text-xs text-muted-foreground/80">
                 安卓手机下载后点击安装。若提示「未知来源」，请在系统设置中允许安装。已安装过旧版会直接覆盖更新。
               </p>
