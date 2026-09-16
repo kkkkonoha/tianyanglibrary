@@ -6,11 +6,17 @@ set -euo pipefail
 PROXY="http://127.0.0.1:7890"
 DEST="/root/library/public/downloads"
 LATEST_URL="https://github.com/kkkkonoha/tianyanglibrary/releases/latest"
+RELEASE_API="https://api.github.com/repos/kkkkonoha/tianyanglibrary/releases/latest"
 
-FINAL=$(curl --silent --output /dev/null --proxy "$PROXY" --max-time 30 --write-out "%{url_effective}" --location "$LATEST_URL")
-TAG=$(echo "$FINAL" | sed 's/.*tag\///')
+if ! RELEASE_JSON=$(curl --fail --silent --proxy "$PROXY" --max-time 30 --location "$RELEASE_API"); then
+  echo "$(date '+%F %T') 获取最新 Release 失败" >> /var/log/fetch-apk.log
+  exit 0
+fi
+
+# 服务器代理偶尔不会正确跟随 releases/latest 的跳转，改用 GitHub API 读取 tag。
+TAG=$(printf '%s' "$RELEASE_JSON" | sed -n 's/.*"tag_name"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' | head -n 1)
 if [[ ! "$TAG" =~ ^v[0-9]+\.[0-9]+(\.[0-9]+)?$ ]]; then
-  echo "$(date '+%F %T') 解析最新版本失败（final=$FINAL tag=$TAG）" >> /var/log/fetch-apk.log
+  echo "$(date '+%F %T') 解析最新版本失败（tag=$TAG）" >> /var/log/fetch-apk.log
   exit 0
 fi
 
