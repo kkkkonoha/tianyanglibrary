@@ -1,6 +1,6 @@
 "use client"
 
-import Link from "next/link"
+import { FullPageLink as Link } from "@/components/full-page-link"
 import { usePathname } from "next/navigation"
 
 const links = [

@@ -1,7 +1,7 @@
 "use client"
 
 import { useMemo, useState } from "react"
-import Link from "next/link"
+import { FullPageLink as Link } from "@/components/full-page-link"
 import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"

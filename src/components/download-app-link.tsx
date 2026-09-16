@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import Link from "next/link"
+import { FullPageLink as Link } from "@/components/full-page-link"
 import { isNativeApp } from "@/lib/native"
 
 // 下载 App 入口：App 内自动隐藏（正在使用 App 无需下载自己）

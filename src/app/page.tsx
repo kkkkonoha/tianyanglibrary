@@ -1,7 +1,7 @@
 import { auth } from "@/lib/auth"
 import { prisma } from "@/lib/db"
 import type { $Enums } from "@/generated/prisma/client"
-import Link from "next/link"
+import { FullPageLink as Link } from "@/components/full-page-link"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { TimelineList } from "@/components/timeline-list"
