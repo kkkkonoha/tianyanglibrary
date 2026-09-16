@@ -27,9 +27,6 @@ jobs:
           distribution: temurin
           java-version: "21"
 
-      - name: Set up Android SDK
-        uses: android-actions/setup-android@v4
-
       - name: Prepare web dir and sync
         run: |
           mkdir -p out
