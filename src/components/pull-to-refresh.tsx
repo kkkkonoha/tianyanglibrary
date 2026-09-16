@@ -115,7 +115,7 @@ export function PullToRefresh({ children }: { children: ReactNode }) {
         aria-hidden="true"
         className="pointer-events-none fixed left-1/2 z-[100] flex size-9 items-center justify-center rounded-full border bg-background/95 text-primary shadow-lg backdrop-blur transition-[opacity,transform]"
         style={{
-          top: "env(safe-area-inset-top, 0px)",
+          top: "var(--app-safe-top)",
           opacity: refreshing || distance > 0 ? 1 : 0,
           transform: `translate(-50%, ${Math.max(8, distance) - 44}px)`,
         }}

@@ -13,6 +13,12 @@ const config: CapacitorConfig = {
   android: {
     allowMixedContent: true,
   },
+  // 由网页侧统一使用原生读取的安全区，避免 Capacitor SystemBars 与网页重复补偿。
+  plugins: {
+    SystemBars: {
+      insetsHandling: 'disable',
+    },
+  },
 };
 
 export default config;

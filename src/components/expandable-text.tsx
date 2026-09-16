@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import { cn } from "@/lib/utils"
 
 // 长文本截断 + 展开/收起。超限后默认显示前 MAX_CHARS 字，点击「展开」显示全文。
 export const MAX_CHARS = 100
@@ -9,11 +10,11 @@ export function ExpandableText({ text, className }: { text: string; className?: 
   const [expanded, setExpanded] = useState(false)
 
   if (text.length <= MAX_CHARS) {
-    return <span className={className}>{text}</span>
+    return <span className={cn("whitespace-pre-wrap break-words", className)}>{text}</span>
   }
 
   return (
-    <span className={className}>
+    <span className={cn("whitespace-pre-wrap break-words", className)}>
       {expanded ? text : `${text.slice(0, MAX_CHARS)}…`}
       <button
         type="button"

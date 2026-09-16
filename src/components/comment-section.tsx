@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { ConfirmButton } from "@/components/confirm-button"
 import { ExpandableText } from "@/components/expandable-text"
+import { AutoResizeTextarea } from "@/components/ui/auto-resize-textarea"
 import { useToast } from "@/components/toast"
 
 interface CommentUser {
@@ -49,7 +50,15 @@ function ReplyForm({
       }}
       className="mt-2 flex gap-2"
     >
-      <input type="text" name="content" placeholder="写下回复..." required className="flex-1 rounded-md border px-3 py-1.5 text-sm" autoComplete="off" />
+      <AutoResizeTextarea
+        name="content"
+        placeholder="写下回复..."
+        required
+        minRows={1}
+        maxHeight={160}
+        className="min-h-0 flex-1 rounded-md border px-3 py-1.5 text-sm"
+        autoComplete="off"
+      />
       <Button type="submit" size="sm" variant="outline">回复</Button>
     </form>
   )
@@ -97,7 +106,7 @@ function CommentItem({
               {new Date(comment.createdAt).toLocaleString("zh-CN", { timeZone: "Asia/Shanghai" })}
             </span>
           </div>
-          <p className="mt-0.5 text-sm leading-relaxed"><ExpandableText text={comment.content} /></p>
+          <p className="mt-0.5 whitespace-pre-wrap break-words text-sm leading-relaxed"><ExpandableText text={comment.content} /></p>
           <div className="mt-1 flex items-center gap-2">
             {currentUserId && (
               <button
@@ -148,7 +157,14 @@ function CommentItem({
             }}
             className="mt-2 flex gap-2"
           >
-            <input type="text" name="content" defaultValue={editText} required className="flex-1 rounded-md border px-3 py-1.5 text-sm" />
+            <AutoResizeTextarea
+              name="content"
+              defaultValue={editText}
+              required
+              minRows={1}
+              maxHeight={160}
+              className="min-h-0 flex-1 rounded-md border px-3 py-1.5 text-sm"
+            />
             <Button type="submit" size="sm" variant="outline">保存</Button>
             <Button type="button" size="sm" variant="ghost" onClick={() => setEditing(false)}>取消</Button>
           </form>
@@ -216,12 +232,13 @@ export function CommentSection({
         }}
         className="flex gap-2"
       >
-        <input
-          type="text"
+        <AutoResizeTextarea
           name="content"
           placeholder="写下你的评论..."
           required
-          className="flex-1 rounded-md border px-3 py-2 text-sm"
+          minRows={1}
+          maxHeight={200}
+          className="min-h-0 flex-1 rounded-md border px-3 py-2 text-sm"
           autoComplete="off"
         />
         <Button type="submit" size="sm">发送</Button>

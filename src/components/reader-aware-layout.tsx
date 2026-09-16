@@ -24,7 +24,7 @@ export function ReaderAwareLayout({
   return (
     <PullToRefresh>
       {navbar}
-      <main className="min-h-screen pb-14 sm:pb-0">{children}</main>
+      <main className="app-page-main min-h-screen">{children}</main>
       {mobilenav}
     </PullToRefresh>
   )

@@ -29,7 +29,7 @@ export async function findComicResource(mangaId: string, sourceId: string, title
 }
 
 // 查找或创建本地 Resource（入库）。仅供 server action 调用，不得在页面渲染中直接调用。
-export async function ensureComicResource(mangaId: string, sourceId: string, userId: string) {
+export async function ensureComicResource(mangaId: string, sourceId: string, userId: string, manualDescription?: string) {
   // 1. 精确查重：(sourceId, mangaId) binding
   const existing = await findComicResource(mangaId, sourceId)
   if (existing?.description?.trim()) return { resourceId: existing.id, alreadyExisted: true }
@@ -39,13 +39,26 @@ export async function ensureComicResource(mangaId: string, sourceId: string, use
   try {
     manga = await getManga(mangaId)
   } catch {
-    if (existing) return { resourceId: existing.id, alreadyExisted: true }
+    if (existing?.description?.trim()) return { resourceId: existing.id, alreadyExisted: true }
+    if (existing && manualDescription?.trim()) {
+      await prisma.resource.update({
+        where: { id: existing.id },
+        data: { description: manualDescription.trim() },
+      })
+      return { resourceId: existing.id, alreadyExisted: true }
+    }
+    if (existing) {
+      return { error: "暂时无法获取漫画源简介，请填写简介后再入库", requiresDescription: true }
+    }
     return { error: "获取漫画信息失败" }
   }
-  const description = normalizeDescription(manga.description)
+  const description = normalizeDescription(manga.description) ?? normalizeDescription(manualDescription)
 
   // 已按源精确匹配到的条目：只补充空简介，不覆盖已有人工简介。
   if (existing) {
+    if (!description) {
+      return { error: "漫画源没有提供简介，请填写简介后再入库", requiresDescription: true }
+    }
     if (description) {
       await prisma.resource.update({
         where: { id: existing.id },
@@ -60,6 +73,9 @@ export async function ensureComicResource(mangaId: string, sourceId: string, use
   if (title) {
     const sameTitle = await findComicResource(mangaId, sourceId, title)
     if (sameTitle) {
+      if (!sameTitle.description?.trim() && !description) {
+        return { error: "漫画源没有提供简介，请填写简介后再入库", requiresDescription: true }
+      }
       await prisma.comicBinding.upsert({
         where: { sourceId_mangaId: { sourceId, mangaId } },
         create: { resourceId: sameTitle.id, sourceId, mangaId },
@@ -74,6 +90,10 @@ export async function ensureComicResource(mangaId: string, sourceId: string, use
       }
       return { resourceId: sameTitle.id, alreadyExisted: true }
     }
+  }
+
+  if (!description) {
+    return { error: "漫画源没有提供简介，请填写简介后再入库", requiresDescription: true }
   }
 
   // 4. 创建新条目 + 主 binding

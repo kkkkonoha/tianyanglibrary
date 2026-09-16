@@ -15,15 +15,17 @@ const comicImportSchema = z.object({
 })
 
 // 手动入库：由用户点击「入库」按钮触发，创建本地条目并生成 UPLOAD 动态。
-export async function importComicResource(mangaId: string, sourceId: string) {
+export async function importComicResource(mangaId: string, sourceId: string, manualDescription?: string) {
   const session = await auth()
   if (!session?.user) return { error: "请先登录" }
 
   const validated = comicImportSchema.safeParse({ mangaId, sourceId })
   if (!validated.success) return { error: "参数错误" }
+  const description = manualDescription?.trim()
+  if (description && description.length > 2000) return { error: "简介不能超过 2000 字" }
 
-  const result = await ensureComicResource(mangaId, sourceId, session.user.id as string)
-  if (result.error) return { error: result.error }
+  const result = await ensureComicResource(mangaId, sourceId, session.user.id as string, description)
+  if (result.error) return { error: result.error, requiresDescription: result.requiresDescription }
 
   if (!result.alreadyExisted) {
     await createActivity({

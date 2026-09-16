@@ -22,8 +22,8 @@ export const metadata: Metadata = {
   description: "天央图书馆，共享资源、发现好物",
 }
 
-// Android 壳使用透明状态栏和 edge-to-edge，必须让 WebView 暴露系统安全区，
-// 这样 globals.css 中的 env(safe-area-inset-top) 才能把顶部内容向下避让。
+// Android 壳使用透明状态栏和 edge-to-edge，网页会读取原生壳注入的系统安全区变量，
+// 普通浏览器则由 globals.css 中的 env() 作为回退。
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,

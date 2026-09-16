@@ -5,6 +5,10 @@
 
 :root {
   --radius: 0.75rem;
+  --app-safe-top: env(safe-area-inset-top, 0px);
+  --app-safe-right: env(safe-area-inset-right, 0px);
+  --app-safe-bottom: env(safe-area-inset-bottom, 0px);
+  --app-safe-left: env(safe-area-inset-left, 0px);
   --background: oklch(0.985 0.002 247.839);
   --foreground: oklch(0.21 0.006 285.885);
   --card: oklch(1 0 0);
@@ -122,8 +126,18 @@ body {
     radial-gradient(ellipse 80% 50% at 50% -20%, oklch(0.546 0.245 262.881 / 0.06), transparent),
     radial-gradient(ellipse 60% 40% at 80% 80%, oklch(0.623 0.214 259.815 / 0.04), transparent);
   background-attachment: fixed;
-  /* App 内沉浸式（edge-to-edge）：内容避开系统状态栏；浏览器中 env() 为 0 无影响 */
-  padding-top: env(safe-area-inset-top, 0px);
+  /* App 内 edge-to-edge：原生壳会覆盖这些变量；浏览器使用 env() 回退。 */
+  padding-top: var(--app-safe-top);
+}
+
+.app-page-main {
+  padding-bottom: calc(3.5rem + var(--app-safe-bottom));
+}
+
+@media (min-width: 640px) {
+  .app-page-main {
+    padding-bottom: 0;
+  }
 }
 
 ::selection {
