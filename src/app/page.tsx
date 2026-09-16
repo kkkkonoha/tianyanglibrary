@@ -3,7 +3,7 @@ import { prisma } from "@/lib/db"
 import type { $Enums } from "@/generated/prisma/client"
 import { FullPageLink as Link } from "@/components/full-page-link"
 import { Card, CardContent } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
+import { buttonVariants } from "@/components/ui/button"
 import { TimelineList } from "@/components/timeline-list"
 import { isAdmin } from "@/lib/permissions"
 import { ChangelogButton } from "@/components/changelog-button"
@@ -251,16 +251,22 @@ export default async function HomePage({
       {totalPages > 1 && (
         <div className="mt-8 flex items-center justify-center gap-4">
           {currentPage > 1 && (
-            <Link href={buildHref([...selectedKeys], pageSize, currentPage - 1)}>
-              <Button variant="outline" size="sm">上一页</Button>
+            <Link
+              href={buildHref([...selectedKeys], pageSize, currentPage - 1)}
+              className={buttonVariants({ variant: "outline", size: "sm" })}
+            >
+              上一页
             </Link>
           )}
           <span className="text-sm text-muted-foreground">
             {currentPage} / {totalPages}
           </span>
           {currentPage < totalPages && (
-            <Link href={buildHref([...selectedKeys], pageSize, currentPage + 1)}>
-              <Button variant="outline" size="sm">下一页</Button>
+            <Link
+              href={buildHref([...selectedKeys], pageSize, currentPage + 1)}
+              className={buttonVariants({ variant: "outline", size: "sm" })}
+            >
+              下一页
             </Link>
           )}
         </div>

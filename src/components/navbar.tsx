@@ -2,7 +2,7 @@ import { FullPageLink as Link } from "@/components/full-page-link"
 import { auth, signOut } from "@/lib/auth"
 import { isSuperAdmin } from "@/lib/permissions"
 import { prisma } from "@/lib/db"
-import { Button } from "@/components/ui/button"
+import { buttonVariants } from "@/components/ui/button"
 import { ThemeToggle } from "@/components/theme-toggle"
 import { DownloadAppLink } from "@/components/download-app-link"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
@@ -90,11 +90,12 @@ export async function Navbar() {
           )}
           {session?.user ? (
             <>
-              <Link href="/upload">
-                <Button variant="default" size="sm" className="shadow-none">
-                  上传资源
-                </Button>
-                </Link>
+              <Link
+                href="/upload"
+                className={buttonVariants({ variant: "default", size: "sm", className: "shadow-none" })}
+              >
+                上传资源
+              </Link>
 
               <Link href="/notifications" className="relative p-1.5 text-muted-foreground hover:text-foreground transition-colors">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>
@@ -159,10 +160,11 @@ export async function Navbar() {
               </DropdownMenu>
             </>
           ) : (
-            <Link href="/login">
-              <Button variant="default" size="sm" className="shadow-none">
-                登录
-              </Button>
+            <Link
+              href="/login"
+              className={buttonVariants({ variant: "default", size: "sm", className: "shadow-none" })}
+            >
+              登录
             </Link>
           )}
         </div>
