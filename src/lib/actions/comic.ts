@@ -8,6 +8,7 @@ import { isAdmin } from "@/lib/permissions"
 import { revalidatePath } from "next/cache"
 import { redirect } from "next/navigation"
 import { z } from "zod"
+import { recordContribution } from "@/lib/contribution"
 
 const comicImportSchema = z.object({
   mangaId: z.string().regex(/^\d+$/),
@@ -38,6 +39,12 @@ export async function importComicResource(
       type: "UPLOAD",
       userId: session.user.id as string,
       resourceId: result.resourceId,
+    })
+    await recordContribution({
+      userId: session.user.id as string,
+      action: "upload",
+      sourceType: "resource",
+      sourceId: result.resourceId,
     })
   }
 
