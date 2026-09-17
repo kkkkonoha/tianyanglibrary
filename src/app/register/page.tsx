@@ -38,7 +38,9 @@ export default function RegisterPage() {
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
           <CardTitle className="text-2xl">注册账号</CardTitle>
-          <CardDescription>加入天央图书馆</CardDescription>
+          <CardDescription>
+            加入天央图书馆。注册前请确保你已加入社团群，且用户名与通用昵称 CN 一致，管理员会进行人工审核。
+          </CardDescription>
         </CardHeader>
         <form action={formAction}>
           <CardContent className="space-y-4">
