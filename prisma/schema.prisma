@@ -19,47 +19,57 @@ enum ActivityType {
   ADD_TO_COLLECTION
   COMMENT
   FAVORITE
+  READING_STATUS
   ANNOUNCEMENT
 }
 
+enum ReadingStatus {
+  WANT
+  READING
+  READ
+  DROPPED
+}
+
 model User {
-  id               String               @id @default(cuid())
-  email            String               @unique
-  username         String               @unique
-  passwordHash     String
-  avatar           String?
-  bio              String?
-  role             String               @default("user")
-  status           String               @default("pending")
+  id                   String               @id @default(cuid())
+  email                String               @unique
+  username             String               @unique
+  passwordHash         String
+  avatar               String?
+  bio                  String?
+  role                 String               @default("user")
+  status               String               @default("pending")
   lastUsernameChangeAt DateTime?
-  securityQuestion String?
-  securityAnswer   String?
-  roleHidden       Boolean              @default(false)
-  feedbacks        Feedback[]
-  createdAt        DateTime             @default(now())
-  updatedAt        DateTime             @updatedAt
-  resources        Resource[]
-  collections      Collection[]
-  comments         Comment[]
-  recommendations  Recommendation[]
-  favorites        FavoriteCollection[]
-  favoriteResources FavoriteResource[]
-  activities       Activity[]
-  notifications    Notification[]
-  readingHistory   ReadingHistory[]
+  securityQuestion     String?
+  securityAnswer       String?
+  roleHidden           Boolean              @default(false)
+  feedbacks            Feedback[]
+  createdAt            DateTime             @default(now())
+  updatedAt            DateTime             @updatedAt
+  resources            Resource[]
+  collections          Collection[]
+  comments             Comment[]
+  recommendations      Recommendation[]
+  favorites            FavoriteCollection[]
+  favoriteResources    FavoriteResource[]
+  readingStatuses      ReadingStatusEntry[]
+  contributionEntries  ContributionEntry[]
+  activities           Activity[]
+  notifications        Notification[]
+  readingHistory       ReadingHistory[]
 }
 
 model Resource {
-  id              Int                @id @default(autoincrement())
+  id              Int                  @id @default(autoincrement())
   title           String
   author          String?
   description     String?
   coverImage      String?
-  type            ResourceType       @default(BOOK)
+  type            ResourceType         @default(BOOK)
   comicSourceId   String?
   comicMangaId    String?
   uploaderId      String
-  uploader        User               @relation(fields: [uploaderId], references: [id], onDelete: Cascade)
+  uploader        User                 @relation(fields: [uploaderId], references: [id], onDelete: Cascade)
   tags            ResourceTag[]
   comments        Comment[]
   recommendations Recommendation[]
@@ -68,8 +78,9 @@ model Resource {
   files           ResourceFile[]
   bindings        ComicBinding[]
   favorites       FavoriteResource[]
-  createdAt       DateTime           @default(now())
-  updatedAt       DateTime           @updatedAt
+  readingStatuses ReadingStatusEntry[]
+  createdAt       DateTime             @default(now())
+  updatedAt       DateTime             @updatedAt
 }
 
 // 用户收藏的资源（书架/追更）
@@ -83,6 +94,56 @@ model FavoriteResource {
 
   @@unique([userId, resourceId])
   @@index([resourceId])
+}
+
+// 用户对资源的当前阅读状态和短评。每个用户对同一资源只有一条当前记录。
+model ReadingStatusEntry {
+  id         String                 @id @default(cuid())
+  userId     String
+  user       User                   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  resourceId Int
+  resource   Resource               @relation(fields: [resourceId], references: [id], onDelete: Cascade)
+  status     ReadingStatus
+  note       String?
+  activityId String?
+  createdAt  DateTime               @default(now())
+  updatedAt  DateTime               @updatedAt
+  history    ReadingStatusHistory[]
+
+  @@unique([userId, resourceId])
+  @@index([userId, status])
+  @@index([resourceId, status])
+}
+
+// 阅读状态变更历史；历史迁移记录可以不绑定动态，避免批量迁移污染时间线。
+model ReadingStatusHistory {
+  id         String             @id @default(cuid())
+  entryId    String
+  entry      ReadingStatusEntry @relation(fields: [entryId], references: [id], onDelete: Cascade)
+  userId     String
+  resourceId Int
+  fromStatus ReadingStatus?
+  toStatus   ReadingStatus
+  note       String?
+  activityId String?
+  createdAt  DateTime           @default(now())
+
+  @@index([userId, resourceId, createdAt])
+}
+
+// 不可变贡献流水。分值在行为发生时写入，后续调整权重不会改写历史分值。
+model ContributionEntry {
+  id         String   @id @default(cuid())
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  action     String
+  points     Int
+  sourceType String?
+  sourceId   String?
+  createdAt  DateTime @default(now())
+
+  @@index([userId, createdAt])
+  @@index([action, createdAt])
 }
 
 // 用户反馈（Bug / 功能需求），管理侧状态流转 + 回复；withdrawnAt 非空 = 作者已撤回（软删除）
@@ -139,6 +200,7 @@ model ResourceTag {
   tagId      String
   resource   Resource @relation(fields: [resourceId], references: [id], onDelete: Cascade)
   tag        Tag      @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
   @@id([resourceId, tagId])
 }
 
@@ -166,6 +228,7 @@ model CollectionResource {
   resource     Resource   @relation(fields: [resourceId], references: [id], onDelete: Cascade)
   note         String?
   addedAt      DateTime   @default(now())
+
   @@unique([collectionId, resourceId])
 }
 
@@ -185,14 +248,14 @@ model Comment {
 }
 
 model Notification {
-  id         String   @id @default(cuid())
-  userId     String
-  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  type       String
-  content    String
-  link       String?
-  read       Boolean  @default(false)
-  createdAt  DateTime @default(now())
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type      String
+  content   String
+  link      String?
+  read      Boolean  @default(false)
+  createdAt DateTime @default(now())
 }
 
 model Recommendation {
@@ -203,6 +266,7 @@ model Recommendation {
   resource   Resource @relation(fields: [resourceId], references: [id], onDelete: Cascade)
   note       String?
   createdAt  DateTime @default(now())
+
   @@unique([userId, resourceId])
 }
 
@@ -213,6 +277,7 @@ model FavoriteCollection {
   collectionId String
   collection   Collection @relation(fields: [collectionId], references: [id], onDelete: Cascade)
   createdAt    DateTime   @default(now())
+
   @@unique([userId, collectionId])
 }
 
@@ -225,8 +290,8 @@ model Activity {
   resource     Resource?    @relation(fields: [resourceId], references: [id])
   collectionId String?
   collection   Collection?  @relation(fields: [collectionId], references: [id])
-  title        String?      // 公告标题（仅 ANNOUNCEMENT 使用）
-  pinnedAt     DateTime?    // 置顶时间（仅公告使用，非空 = 置顶）
+  title        String? // 公告标题（仅 ANNOUNCEMENT 使用）
+  pinnedAt     DateTime? // 置顶时间（仅公告使用，非空 = 置顶）
   metadata     String?
   createdAt    DateTime     @default(now())
 }

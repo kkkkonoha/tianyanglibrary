@@ -4,16 +4,12 @@ import Link from "next/link"
 import { Card, CardContent } from "@/components/ui/card"
 import { ContributionList, type ContributionRow } from "@/components/contribution-list"
 import { MonthSelector } from "@/components/month-selector"
+import { CONTRIBUTION_POINTS } from "@/lib/contribution-constants"
 
 export const dynamic = "force-dynamic"
 
 // 贡献分权重（统一管理，调整只改这里）
-const POINTS = {
-  recommend: 10,
-  comment: 10,
-  feedback: 2,
-  upload: 1,
-} as const
+const POINTS = CONTRIBUTION_POINTS
 
 const MAX_DETAIL_PER_TYPE = 20
 
@@ -66,13 +62,14 @@ export default async function LeaderboardPage({
   const monthSelected = monthKey(month.y, month.m)
 
   // 最早数据月份 → 当前月，生成可选月份列表（倒序）
-  const [minRec, minCmt, minFb, minRes] = await Promise.all([
+  const [minRec, minCmt, minFb, minRes, minContribution] = await Promise.all([
     prisma.recommendation.findFirst({ orderBy: { createdAt: "asc" }, select: { createdAt: true } }),
     prisma.comment.findFirst({ orderBy: { createdAt: "asc" }, select: { createdAt: true } }),
     prisma.feedback.findFirst({ orderBy: { createdAt: "asc" }, select: { createdAt: true } }),
     prisma.resource.findFirst({ orderBy: { createdAt: "asc" }, select: { createdAt: true } }),
+    prisma.contributionEntry.findFirst({ orderBy: { createdAt: "asc" }, select: { createdAt: true } }),
   ])
-  const earliest = [minRec?.createdAt, minCmt?.createdAt, minFb?.createdAt, minRes?.createdAt]
+  const earliest = [minRec?.createdAt, minCmt?.createdAt, minFb?.createdAt, minRes?.createdAt, minContribution?.createdAt]
     .filter((d): d is Date => Boolean(d))
     .reduce<Date | null>((acc, d) => (acc && acc < d ? acc : d), null)
   const firstMonth = earliest
@@ -97,7 +94,12 @@ export default async function LeaderboardPage({
 
   const { start, end } = monthRange(month.y, month.m)
 
-  const [recommendations, comments, feedbacks, resources, users] = await Promise.all([
+  const [contributionEntries, recommendations, comments, feedbacks, resources, users] = await Promise.all([
+    prisma.contributionEntry.findMany({
+      where: { createdAt: { gte: start, lt: end } },
+      orderBy: { createdAt: "desc" },
+      select: { userId: true, action: true, points: true },
+    }),
     prisma.recommendation.findMany({
       where: { note: { not: null }, createdAt: { gte: start, lt: end } },
       orderBy: { createdAt: "desc" },
@@ -139,27 +141,22 @@ export default async function LeaderboardPage({
     details.set(uid, arr)
   }
 
+  for (const entry of contributionEntries) {
+    if (!(entry.action in POINTS)) continue
+    const action = entry.action as keyof typeof POINTS
+    const c = ensure(entry.userId)
+    c[action] += entry.points >= 0 ? 1 : -1
+    addScore(entry.userId, entry.points)
+  }
+
   for (const r of recommendations) {
-    const c = ensure(r.userId)
-    c.recommend++
-    addScore(r.userId, POINTS.recommend)
     addDetail(r.userId, { type: "recommend", resourceId: r.resource?.id, title: r.resource?.title, text: r.note ?? undefined })
   }
   for (const c of comments) {
-    const cnt = ensure(c.userId)
-    cnt.comment++
-    addScore(c.userId, POINTS.comment)
     addDetail(c.userId, { type: "comment", resourceId: c.resource?.id, title: c.resource?.title, text: c.content })
   }
-  for (const f of feedbacks) {
-    const cnt = ensure(f.userId)
-    cnt.feedback++
-    addScore(f.userId, POINTS.feedback)
-  }
+  for (const f of feedbacks) ensure(f.userId)
   for (const r of resources) {
-    const cnt = ensure(r.uploaderId)
-    cnt.upload++
-    addScore(r.uploaderId, POINTS.upload)
     addDetail(r.uploaderId, { type: "upload", resourceId: r.id, title: r.title })
   }
 
@@ -169,7 +166,7 @@ export default async function LeaderboardPage({
       const c = counts.get(uid)!
       return {
         user: userMap.get(uid)!,
-        score: c.recommend * POINTS.recommend + c.comment * POINTS.comment + c.feedback * POINTS.feedback + c.upload * POINTS.upload,
+        score: scores.get(uid) ?? 0,
         counts: c,
         details: details.get(uid) ?? [],
       }

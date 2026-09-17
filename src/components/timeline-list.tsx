@@ -38,12 +38,30 @@ const activityLabels: Record<string, string> = {
   CREATE_COLLECTION: "创建了目录",
   ADD_TO_COLLECTION: "向目录添加了",
   COMMENT: "评论了",
-  FAVORITE: "收藏了",
+  READING_STATUS: "更新了阅读状态",
   ANNOUNCEMENT: "发布了公告",
 }
 
 // 评论/推荐/公告不折叠，始终完整显示
-const NO_GROUP_TYPES = new Set(["COMMENT", "RECOMMEND", "ANNOUNCEMENT"])
+const NO_GROUP_TYPES = new Set(["COMMENT", "RECOMMEND", "READING_STATUS", "ANNOUNCEMENT"])
+
+const readingStatusLabels: Record<string, string> = {
+  WANT: "想读",
+  READING: "在读",
+  READ: "读过",
+  DROPPED: "抛弃",
+}
+
+function parseReadingStatus(metadata: string | null) {
+  if (!metadata) return null
+  try {
+    const value = JSON.parse(metadata) as { status?: string; note?: string | null }
+    if (!value.status || !readingStatusLabels[value.status]) return null
+    return { label: readingStatusLabels[value.status], note: value.note ?? null }
+  } catch {
+    return null
+  }
+}
 
 // 服务端已按时间倒序排列；按 (userId, type) 相邻时间窗口分组（评论/推荐除外）。
 // 组 key 取组内最老一条的时间桶，保证新动态并入时 key 稳定（展开状态不重置）。
@@ -72,6 +90,7 @@ function buildGroups(activities: TimelineActivity[]): ActivityGroup[] {
 }
 
 function ActivityCard({ activity }: { activity: TimelineActivity }) {
+  const readingStatus = activity.type === "READING_STATUS" ? parseReadingStatus(activity.metadata) : null
   // 公告卡片：色条 + 徽章 + 标题 + MD 正文完整展示
   if (activity.type === "ANNOUNCEMENT") {
     return (
@@ -148,6 +167,14 @@ function ActivityCard({ activity }: { activity: TimelineActivity }) {
         <CardContent className="pt-0">
           <div className="rounded-lg border border-primary/10 bg-primary/[0.03] p-3 text-sm italic leading-relaxed text-foreground/80">
             <ExpandableText text={`“${activity.metadata}”`} />
+          </div>
+        </CardContent>
+      )}
+      {activity.type === "READING_STATUS" && readingStatus && (
+        <CardContent className="pt-0">
+          <div className="rounded-lg border border-primary/10 bg-primary/[0.03] p-3 text-sm leading-relaxed text-foreground/80">
+            <p className="text-xs text-muted-foreground">状态：{readingStatus.label}</p>
+            {readingStatus.note && <ExpandableText text={`“${readingStatus.note}”`} />}
           </div>
         </CardContent>
       )}

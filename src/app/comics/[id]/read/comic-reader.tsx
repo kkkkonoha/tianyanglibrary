@@ -25,6 +25,8 @@ interface SourceOption {
 type ReaderMode = "scroll" | "page"
 
 const MODE_KEY = "comic-reader-mode"
+const DIRECTION_KEY = "comic-reader-page-direction"
+type PageDirection = "next-left" | "next-right"
 
 export function ComicReader({
   mangaId,
@@ -48,11 +50,14 @@ export function ComicReader({
   const [showChapters, setShowChapters] = useState(false)
   const [showSources, setShowSources] = useState(false)
   const [mode, setMode] = useState<ReaderMode>("scroll")
+  const [pageDirection, setPageDirection] = useState<PageDirection>("next-right")
   const [pageIndex, setPageIndex] = useState(0)
   const [immersive, setImmersive] = useState(false)
   const containerRef = useRef<HTMLDivElement>(null)
   // 章节切换首帧守卫：切章瞬间 pageIndex 还是旧章节的值，跳过保存防止污染目标章节进度
   const chapterRef = useRef<string | undefined>(undefined)
+  const touchStartXRef = useRef<number | null>(null)
+  const suppressClickRef = useRef(false)
 
   const chapter = chapters[activeIndex]
   const prevChapter = activeIndex > 0 ? chapters[activeIndex - 1] : null
@@ -118,6 +123,8 @@ export function ComicReader({
     try {
       const saved = localStorage.getItem(MODE_KEY)
       if (saved === "page" || saved === "scroll") setMode(saved)
+      const direction = localStorage.getItem(DIRECTION_KEY)
+      if (direction === "next-left" || direction === "next-right") setPageDirection(direction)
     } catch {}
   }, [])
 
@@ -255,9 +262,11 @@ export function ComicReader({
           if (containerRef.current) containerRef.current.scrollTop = containerRef.current.scrollHeight
         }
       } else {
-        if (e.key === "ArrowLeft") {
+        const nextKey = pageDirection === "next-left" ? "ArrowLeft" : "ArrowRight"
+        const prevKey = pageDirection === "next-left" ? "ArrowRight" : "ArrowLeft"
+        if (e.key === prevKey) {
           setPageIndex((i) => Math.max(0, i - 1))
-        } else if (e.key === "ArrowRight" || e.key === " " || e.key === "PageDown") {
+        } else if (e.key === nextKey || e.key === " " || e.key === "PageDown") {
           e.preventDefault()
           setPageIndex((i) => Math.min(totalPages - 1, i + 1))
         } else if (e.key === "Home") {
@@ -269,7 +278,7 @@ export function ComicReader({
     }
     window.addEventListener("keydown", handleKey)
     return () => window.removeEventListener("keydown", handleKey)
-  }, [mode, totalPages])
+  }, [mode, pageDirection, totalPages])
 
   // Close chapter/source list on scroll
   useEffect(() => {
@@ -283,15 +292,41 @@ export function ComicReader({
   // Click zones for page mode: left 30% = prev, right 30% = next, middle = immersive toggle
   function handleClickZone(e: React.MouseEvent<HTMLDivElement>) {
     if (mode !== "page") return
+    if (suppressClickRef.current) {
+      suppressClickRef.current = false
+      return
+    }
     const rect = e.currentTarget.getBoundingClientRect()
     const x = e.clientX - rect.left
+    const leftIsNext = pageDirection === "next-left"
     if (x < rect.width * 0.3) {
-      setPageIndex((i) => Math.max(0, i - 1))
+      setPageIndex((i) => leftIsNext ? Math.min(totalPages - 1, i + 1) : Math.max(0, i - 1))
     } else if (x > rect.width * 0.7) {
-      setPageIndex((i) => Math.min(totalPages - 1, i + 1))
+      setPageIndex((i) => leftIsNext ? Math.max(0, i - 1) : Math.min(totalPages - 1, i + 1))
     } else {
       toggleImmersive()
     }
+  }
+
+  function handleTouchStart(e: React.TouchEvent<HTMLDivElement>) {
+    if (mode === "page" && e.touches.length === 1) touchStartXRef.current = e.touches[0].clientX
+  }
+
+  function handleTouchEnd(e: React.TouchEvent<HTMLDivElement>) {
+    if (mode !== "page" || touchStartXRef.current === null) return
+    const deltaX = e.changedTouches[0].clientX - touchStartXRef.current
+    touchStartXRef.current = null
+    if (Math.abs(deltaX) < 45) return
+    const swipedLeft = deltaX < 0
+    const nextBySwipe = pageDirection === "next-left" ? swipedLeft : !swipedLeft
+    suppressClickRef.current = true
+    window.setTimeout(() => { suppressClickRef.current = false }, 400)
+    setPageIndex((i) => nextBySwipe ? Math.min(totalPages - 1, i + 1) : Math.max(0, i - 1))
+  }
+
+  function switchDirection(direction: PageDirection) {
+    setPageDirection(direction)
+    try { localStorage.setItem(DIRECTION_KEY, direction) } catch {}
   }
 
   // Click middle area in scroll mode to toggle immersive
@@ -345,6 +380,17 @@ export function ComicReader({
           >
             {mode === "scroll" ? <><ArrowLeftRight className="h-4 w-4" aria-hidden="true" />翻页</> : <><ArrowDownUp className="h-4 w-4" aria-hidden="true" />滚动</>}
           </Button>
+          {mode === "page" && (
+            <Button
+              variant="outline"
+              size="sm"
+              className="border-white/20 bg-transparent text-white hover:bg-white/10"
+              onClick={() => switchDirection(pageDirection === "next-left" ? "next-right" : "next-left")}
+              title="切换下一页的翻页方向"
+            >
+              {pageDirection === "next-left" ? "左翻" : "右翻"}
+            </Button>
+          )}
           <Button
             variant="outline"
             size="sm"
@@ -484,6 +530,8 @@ export function ComicReader({
         <div
           className="flex flex-1 items-center justify-center overflow-hidden bg-black select-none"
           onClick={handleClickZone}
+          onTouchStart={handleTouchStart}
+          onTouchEnd={handleTouchEnd}
         >
           {totalPages === 0 ? (
             <div className="flex flex-col items-center justify-center gap-3 px-6 text-center">

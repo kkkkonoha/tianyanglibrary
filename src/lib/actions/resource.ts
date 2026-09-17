@@ -10,13 +10,17 @@ import { isAdmin } from "@/lib/permissions"
 import { unlink } from "fs/promises"
 import { existsSync } from "fs"
 import { join } from "path"
+import { recordContribution } from "@/lib/contribution"
 
 const resourceBaseSchema = z.object({
   title: z.string().min(1, "标题不能为空").max(200),
-  author: z.string().max(100).optional(),
+  author: z.string().trim().min(1, "作者不能为空").max(100),
   description: z.string().max(2000).optional(),
   type: z.enum(["BOOK", "COMIC"]),
-  tags: z.string().optional(),
+  tags: z.string().refine(
+    (value) => value.split(",").some((tag) => tag.trim().length > 0),
+    "至少填写一个标签"
+  ),
 })
 
 const createResourceSchema = resourceBaseSchema.extend({
@@ -44,14 +48,14 @@ export async function createResource(formData: FormData) {
   const resource = await prisma.resource.create({
     data: {
       title,
-      author: author ?? null,
+      author,
       description: description ?? null,
       type,
       uploaderId: session.user.id as string,
     },
   })
 
-  if (tags?.trim()) {
+  if (tags.trim()) {
     const tagNames = tags.split(",").map((t) => t.trim()).filter(Boolean)
     for (const name of tagNames) {
       const tag = await prisma.tag.upsert({
@@ -69,6 +73,12 @@ export async function createResource(formData: FormData) {
     type: "UPLOAD",
     userId: session.user.id as string,
     resourceId: resource.id,
+  })
+  await recordContribution({
+    userId: session.user.id as string,
+    action: "upload",
+    sourceType: "resource",
+    sourceId: resource.id,
   })
 
   revalidatePath("/")

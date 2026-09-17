@@ -7,6 +7,15 @@ function normalizeDescription(value: unknown) {
   return description || null
 }
 
+function normalizeText(value: unknown) {
+  return typeof value === "string" ? value.trim() : ""
+}
+
+function normalizeTags(value: unknown) {
+  if (!Array.isArray(value)) return []
+  return value.map((tag) => normalizeText(tag)).filter(Boolean).slice(0, 20)
+}
+
 // 查找已入库的本地 Resource（只查不建）。
 // 优先按 (sourceId, mangaId) binding 精确匹配，失败时按标题去重匹配。
 export async function findComicResource(mangaId: string, sourceId: string, title?: string) {
@@ -29,7 +38,14 @@ export async function findComicResource(mangaId: string, sourceId: string, title
 }
 
 // 查找或创建本地 Resource（入库）。仅供 server action 调用，不得在页面渲染中直接调用。
-export async function ensureComicResource(mangaId: string, sourceId: string, userId: string, manualDescription?: string) {
+export async function ensureComicResource(
+  mangaId: string,
+  sourceId: string,
+  userId: string,
+  manualDescription?: string,
+  manualAuthor?: string,
+  manualTags?: string,
+) {
   // 1. 精确查重：(sourceId, mangaId) binding
   const existing = await findComicResource(mangaId, sourceId)
   if (existing?.description?.trim()) return { resourceId: existing.id, alreadyExisted: true }
@@ -53,6 +69,10 @@ export async function ensureComicResource(mangaId: string, sourceId: string, use
     return { error: "获取漫画信息失败" }
   }
   const description = normalizeDescription(manga.description) ?? normalizeDescription(manualDescription)
+  const author = normalizeText(manga.author) || normalizeText(manualAuthor)
+  const tags = normalizeTags(manga.genre)
+  const fallbackTags = (manualTags ?? "").split(",").map((tag) => tag.trim()).filter(Boolean)
+  const finalTags = tags.length > 0 ? tags : fallbackTags
 
   // 已按源精确匹配到的条目：只补充空简介，不覆盖已有人工简介。
   if (existing) {
@@ -93,14 +113,17 @@ export async function ensureComicResource(mangaId: string, sourceId: string, use
   }
 
   if (!description) {
-    return { error: "漫画源没有提供简介，请填写简介后再入库", requiresDescription: true }
+    return { error: "漫画源没有提供简介，请填写简介后再入库", requiresDescription: true, requiresMetadata: !author || finalTags.length === 0 }
+  }
+  if (!author || finalTags.length === 0) {
+    return { error: "漫画源没有提供完整作者或标签，请补充后再入库", requiresMetadata: true }
   }
 
   // 4. 创建新条目 + 主 binding
   const resource = await prisma.resource.create({
     data: {
       title: title || "未命名漫画",
-      author: manga.author ?? null,
+      author,
       description,
       coverImage: manga.thumbnailUrl ? `/api/suwayomi${manga.thumbnailUrl}` : null,
       type: "COMIC",
@@ -109,6 +132,10 @@ export async function ensureComicResource(mangaId: string, sourceId: string, use
       uploaderId: userId,
     },
   })
+  for (const name of finalTags) {
+    const tag = await prisma.tag.upsert({ where: { name }, create: { name }, update: {} })
+    await prisma.resourceTag.create({ data: { resourceId: resource.id, tagId: tag.id } })
+  }
   await prisma.comicBinding.create({
     data: { resourceId: resource.id, sourceId, mangaId },
   })

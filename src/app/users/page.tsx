@@ -19,7 +19,7 @@ export default async function UsersPage({
 }) {
   const { q } = await searchParams
 
-  const where: any = {}
+  const where: any = { status: "active" }
   if (q) {
     where.OR = [
       { username: { contains: q } },

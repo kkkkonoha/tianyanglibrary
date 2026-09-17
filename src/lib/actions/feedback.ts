@@ -4,6 +4,7 @@ import { auth } from "@/lib/auth"
 import { prisma } from "@/lib/db"
 import { z } from "zod"
 import { revalidatePath } from "next/cache"
+import { recordContribution } from "@/lib/contribution"
 
 // 反馈管理权限：隐藏超管（实际负责人），公用超管账号不可见
 export async function isFeedbackManager() {
@@ -17,7 +18,7 @@ export async function isFeedbackManager() {
 }
 
 const feedbackSchema = z.object({
-  type: z.enum(["BUG", "FEATURE"]),
+  type: z.enum(["BUG", "OPTIMIZATION", "FEATURE"]),
   title: z.string().min(1, "标题不能为空").max(100, "标题最多100字"),
   content: z.string().min(5, "描述至少5个字").max(2000, "描述最多2000字"),
 })
@@ -42,6 +43,12 @@ export async function submitFeedback(formData: FormData) {
         content: validated.data.content.trim(),
       },
     })
+    await recordContribution({
+      userId: session.user.id as string,
+      action: "feedback",
+      sourceType: "feedback",
+      sourceId: feedback.id,
+    })
 
     // 通知实际负责人（隐藏超管），不广播
     const manager = await prisma.user.findFirst({
@@ -49,7 +56,11 @@ export async function submitFeedback(formData: FormData) {
       select: { id: true },
     })
     if (manager) {
-      const typeLabel = validated.data.type === "BUG" ? "Bug" : "功能需求"
+      const typeLabel = validated.data.type === "BUG"
+        ? "Bug"
+        : validated.data.type === "OPTIMIZATION"
+          ? "功能优化"
+          : "新功能需求"
       await prisma.notification.create({
         data: {
           userId: manager.id,
@@ -83,6 +94,13 @@ export async function withdrawFeedback(feedbackId: string) {
     await prisma.feedback.update({
       where: { id: feedbackId },
       data: { withdrawnAt: new Date() },
+    })
+    await recordContribution({
+      userId: session.user.id as string,
+      action: "feedback",
+      sourceType: "feedback",
+      sourceId: feedback.id,
+      points: -10,
     })
 
     // 删除管理员侧对应通知（按标题匹配），撤回不产生新通知

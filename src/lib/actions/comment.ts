@@ -5,6 +5,7 @@ import { prisma } from "@/lib/db"
 import { createActivity } from "@/lib/activity"
 import { revalidatePath } from "next/cache"
 import { randomUUID } from "crypto"
+import { recordContribution } from "@/lib/contribution"
 
 async function notify(userId: string, type: string, content: string, link: string) {
   await prisma.$executeRawUnsafe(
@@ -42,6 +43,14 @@ export async function addComment(formData: FormData) {
       parent: { include: { user: { select: { id: true, username: true } } } },
     },
   })
+  if (!parentId && resourceId) {
+    await recordContribution({
+      userId,
+      action: "comment",
+      sourceType: "comment",
+      sourceId: comment.id,
+    })
+  }
 
   // Reply notification
   if (parentId && comment.parent && comment.parent.userId !== userId) {

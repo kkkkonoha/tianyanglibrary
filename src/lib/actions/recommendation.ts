@@ -5,6 +5,7 @@ import { prisma } from "@/lib/db"
 import { createActivity } from "@/lib/activity"
 import { revalidatePath } from "next/cache"
 import { randomUUID } from "crypto"
+import { recordContribution } from "@/lib/contribution"
 
 export async function updateRecommendationNote(formData: FormData) {
   const session = await auth()
@@ -51,6 +52,13 @@ export async function toggleRecommendation(formData: FormData) {
 
   if (existing) {
     await prisma.recommendation.delete({ where: { id: existing.id } })
+    await recordContribution({
+      userId,
+      action: "recommend",
+      sourceType: "recommendation",
+      sourceId: existing.id,
+      points: -5,
+    })
     revalidatePath(`/resource/${resourceId}`)
     return { success: true, recommended: false }
   }
@@ -80,6 +88,12 @@ export async function toggleRecommendation(formData: FormData) {
     userId,
     resourceId,
     metadata: note,
+  })
+  await recordContribution({
+    userId,
+    action: "recommend",
+    sourceType: "recommendation",
+    sourceId: resourceId,
   })
 
   revalidatePath("/")

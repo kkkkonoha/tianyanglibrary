@@ -3,6 +3,8 @@
 import bcrypt from "bcryptjs"
 import { prisma } from "@/lib/db"
 import { z } from "zod"
+import { saveAvatarFile } from "@/lib/avatar-file"
+import { randomUUID } from "crypto"
 
 const registerSchema = z.object({
   qq: z
@@ -17,6 +19,7 @@ const registerSchema = z.object({
   confirmPassword: z.string().min(6, "确认密码至少6个字符"),
   securityQuestion: z.string().min(1, "请选择或填写安全问题").max(100),
   securityAnswer: z.string().min(2, "安全答案至少2个字符").max(100),
+  bio: z.string().trim().min(1, "请填写个人简介").max(500, "个人简介最多500字"),
 }).refine((d) => d.password === d.confirmPassword, {
   message: "两次输入的密码不一致",
   path: ["confirmPassword"],
@@ -35,32 +38,46 @@ export async function register(prevState: unknown, formData: FormData) {
     confirmPassword: formData.get("confirmPassword"),
     securityQuestion: question,
     securityAnswer: formData.get("securityAnswer"),
+    bio: formData.get("bio"),
   })
 
   if (!validated.success) {
-    return { error: validated.error.issues[0].message }
+    return {
+      error: validated.error.issues[0].message,
+      fields: getRegisterFields(formData),
+    }
   }
 
-  const { qq, username, password, securityQuestion, securityAnswer } = validated.data
+  const { qq, username, password, securityQuestion, securityAnswer, bio } = validated.data
+  const avatar = formData.get("avatar")
+  if (!(avatar instanceof File) || avatar.size === 0) {
+    return { error: "请上传头像", fields: getRegisterFields(formData) }
+  }
+  if (avatar.size > 5 * 1024 * 1024 || !avatar.type.startsWith("image/")) {
+    return { error: "头像必须是 5MB 以内的图片", fields: getRegisterFields(formData) }
+  }
 
   const existingQQ = await prisma.user.findUnique({ where: { email: qq } })
   if (existingQQ) {
-    return { error: "该 QQ 号已被注册" }
+    return { error: "该 QQ 号已被注册", fields: getRegisterFields(formData) }
   }
 
   const existingUsername = await prisma.user.findUnique({ where: { username } })
   if (existingUsername) {
-    return { error: "该用户名已被使用" }
+    return { error: "该用户名已被使用", fields: getRegisterFields(formData) }
   }
 
   const passwordHash = await bcrypt.hash(password, 12)
   const securityAnswerHash = await bcrypt.hash(securityAnswer, 10)
+  const avatarPath = await saveAvatarFile(avatar, randomUUID())
 
   await prisma.user.create({
     data: {
       email: qq,
       username,
       passwordHash,
+      avatar: avatarPath,
+      bio,
       status: "pending",
       securityQuestion,
       securityAnswer: securityAnswerHash,
@@ -68,4 +85,15 @@ export async function register(prevState: unknown, formData: FormData) {
   })
 
   return { success: true, message: "注册成功，请等待管理员审核通过后方可登录" }
+}
+
+function getRegisterFields(formData: FormData) {
+  return {
+    qq: String(formData.get("qq") ?? ""),
+    username: String(formData.get("username") ?? ""),
+    securityQuestion: String(formData.get("securityQuestion") ?? ""),
+    securityQuestionCustom: String(formData.get("securityQuestionCustom") ?? ""),
+    securityAnswer: String(formData.get("securityAnswer") ?? ""),
+    bio: String(formData.get("bio") ?? ""),
+  }
 }

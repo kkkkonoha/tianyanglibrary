@@ -12,23 +12,30 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { CommentSection } from "@/components/comment-section"
 import { RecommendButton } from "@/components/recommend-button"
+import { ReadingStatusPanel } from "@/components/reading-status-panel"
+import { getCurrentReadingStatus, getResourceStatusReviews } from "@/lib/reading-status-query"
 import { AddToDirectoryButton } from "@/components/add-to-directory-button"
 import { ImportComicButton } from "@/components/import-comic-button"
 import { MergeComicButton } from "@/components/merge-comic-button"
-import { FavoriteButton } from "@/components/favorite-button"
 import { ResourceTypeIcon } from "@/components/resource-type"
 
 export const dynamic = "force-dynamic"
 
 export default async function ComicDetailPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ id: string }>
+  searchParams: Promise<{ return?: string }>
 }) {
   const session = await auth()
   if (!session?.user) redirect("/login")
 
   const { id } = await params
+  const returnParam = (await searchParams).return
+  const returnTo = returnParam && returnParam.startsWith("/") && !returnParam.startsWith("//")
+    ? returnParam
+    : "/comics"
   if (!/^\d+$/.test(id)) notFound()
 
   let manga: any
@@ -77,7 +84,7 @@ export default async function ComicDetailPage({
           },
           orderBy: { createdAt: "asc" },
         },
-        _count: { select: { recommendations: true, comments: true, favorites: true } },
+        _count: { select: { recommendations: true, comments: true } },
       },
     })
     if (resource) {
@@ -94,14 +101,13 @@ export default async function ComicDetailPage({
     }
   }
 
-  // 当前用户是否已收藏
-  let isFavorited = false
+  let currentReadingStatus = null
+  let statusReviews: Awaited<ReturnType<typeof getResourceStatusReviews>> = []
   if (session?.user && resource) {
-    const fav = await prisma.favoriteResource.findUnique({
-      where: { userId_resourceId: { userId: session.user.id as string, resourceId: resource.id } },
-      select: { id: true },
-    })
-    isFavorited = !!fav
+    ;[currentReadingStatus, statusReviews] = await Promise.all([
+      getCurrentReadingStatus(session.user.id as string, resource.id),
+      getResourceStatusReviews(resource.id),
+    ])
   }
 
   // 该条目绑定的所有漫画源（跨源同名合并后用于源切换）
@@ -117,7 +123,7 @@ export default async function ComicDetailPage({
 
   return (
     <div className="container mx-auto max-w-4xl px-4 py-8">
-      <Link href="/comics" className="text-sm text-muted-foreground hover:underline">
+      <Link href={returnTo} className="text-sm text-muted-foreground hover:underline">
         ← 回到漫画搜索
       </Link>
 
@@ -162,11 +168,6 @@ export default async function ComicDetailPage({
                   <Link href={`/resource/${resource.id}`}>
                     <Button variant="outline" size="sm">查看条目</Button>
                   </Link>
-                  <FavoriteButton
-                    resourceId={resource.id}
-                    favorited={isFavorited}
-                    count={resource._count?.favorites ?? 0}
-                  />
                 </>
               )
             ) : (
@@ -248,6 +249,12 @@ export default async function ComicDetailPage({
 
           <div className="grid gap-6 lg:grid-cols-3">
             <div className="lg:col-span-2 space-y-6">
+              <ReadingStatusPanel
+                resourceId={resource.id}
+                current={currentReadingStatus}
+                reviews={statusReviews}
+                currentUserId={session.user ? (session.user as { id: string }).id : undefined}
+              />
               <CommentSection
                 resourceId={resource.id}
                 comments={resource.comments}

@@ -8,6 +8,7 @@ import { DownloadAppLink } from "@/components/download-app-link"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { Textarea } from "@/components/ui/textarea"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Smartphone } from "lucide-react"
 
@@ -47,28 +48,28 @@ export default function RegisterPage() {
               </div>
             )}
             <div className="space-y-2">
-              <Label htmlFor="qq">QQ 号</Label>
-              <Input id="qq" name="qq" type="text" placeholder="你的 QQ 号" required />
+              <Label htmlFor="qq">QQ 号 *</Label>
+              <Input id="qq" name="qq" type="text" placeholder="你的 QQ 号" required defaultValue={result?.fields?.qq ?? ""} />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="username">用户名</Label>
-              <Input id="username" name="username" type="text" placeholder="你的用户名" required />
+              <Label htmlFor="username">用户名 *</Label>
+              <Input id="username" name="username" type="text" placeholder="你的用户名" required defaultValue={result?.fields?.username ?? ""} />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="password">密码</Label>
+              <Label htmlFor="password">密码 *</Label>
               <Input id="password" name="password" type="password" placeholder="至少6个字符" required />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="confirmPassword">确认密码</Label>
+              <Label htmlFor="confirmPassword">确认密码 *</Label>
               <Input id="confirmPassword" name="confirmPassword" type="password" placeholder="再次输入密码" required />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="securityQuestion">安全问题</Label>
+              <Label htmlFor="securityQuestion">安全问题 *</Label>
               <select
                 id="securityQuestion"
                 name="securityQuestion"
                 className="w-full rounded-md border bg-background px-3 py-2 text-sm"
-                defaultValue=""
+                defaultValue={result?.fields?.securityQuestion ?? ""}
               >
                 <option value="" disabled>请选择安全问题（或自行填写）</option>
                 <option value="你的小学名称是什么？">你的小学名称是什么？</option>
@@ -78,11 +79,20 @@ export default function RegisterPage() {
                 <option value="你的出生城市是哪里？">你的出生城市是哪里？</option>
                 <option value="你最难忘的旅行目的地是哪里？">你最难忘的旅行目的地是哪里？</option>
               </select>
-              <Input id="securityQuestionCustom" name="securityQuestionCustom" type="text" placeholder="或自定义安全问题" />
+              <Input id="securityQuestionCustom" name="securityQuestionCustom" type="text" placeholder="或自定义安全问题" defaultValue={result?.fields?.securityQuestionCustom ?? ""} />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="securityAnswer">安全答案</Label>
-              <Input id="securityAnswer" name="securityAnswer" type="text" placeholder="至少2个字符（用于找回密码）" required />
+              <Label htmlFor="securityAnswer">安全答案 *</Label>
+              <Input id="securityAnswer" name="securityAnswer" type="text" placeholder="至少2个字符（用于找回密码）" required defaultValue={result?.fields?.securityAnswer ?? ""} />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="avatar">头像 *</Label>
+              <Input id="avatar" name="avatar" type="file" accept="image/*" required />
+              <p className="text-xs text-muted-foreground">请上传 5MB 以内的图片。</p>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="bio">个人简介 *</Label>
+              <Textarea id="bio" name="bio" placeholder="请简单介绍自己" required defaultValue={result?.fields?.bio ?? ""} />
             </div>
           </CardContent>
           <CardFooter className="flex-col gap-3">

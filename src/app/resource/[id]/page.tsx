@@ -12,20 +12,27 @@ import { CommentSection } from "@/components/comment-section"
 import { DeleteResourceButton } from "@/components/delete-resource-button"
 import { AddToDirectoryButton } from "@/components/add-to-directory-button"
 import { RecommendButton } from "@/components/recommend-button"
+import { ReadingStatusPanel } from "@/components/reading-status-panel"
+import { getCurrentReadingStatus, getResourceStatusReviews } from "@/lib/reading-status-query"
 import { ImagePreview } from "@/components/image-preview"
 import { MergeComicButton } from "@/components/merge-comic-button"
-import { FavoriteButton } from "@/components/favorite-button"
 import { ExpandableText } from "@/components/expandable-text"
 import { ResourceTypeIcon, ResourceTypeLabel } from "@/components/resource-type"
 import { BookOpen } from "lucide-react"
 
 export default async function ResourcePage({
   params,
+  searchParams,
 }: {
   params: Promise<{ id: string }>
+  searchParams: Promise<{ return?: string }>
 }) {
   const id = Number((await params).id)
   if (!Number.isInteger(id)) notFound()
+  const returnParam = (await searchParams).return
+  const returnTo = returnParam && returnParam.startsWith("/") && !returnParam.startsWith("//")
+    ? returnParam
+    : "/explore"
   const session = await auth()
 
   const resource = await prisma.resource.findUnique({
@@ -47,7 +54,7 @@ export default async function ResourcePage({
         orderBy: { createdAt: "asc" },
       },
       files: { orderBy: { order: "asc" } },
-      _count: { select: { recommendations: true, comments: true, favorites: true } },
+      _count: { select: { recommendations: true, comments: true } },
     },
   })
 
@@ -108,15 +115,10 @@ export default async function ResourcePage({
   }
   const effectiveReadMangaId = readMangaId ?? readBindings[0]?.mangaId ?? null
 
-  // 当前用户是否已收藏
-  let isFavorited = false
-  if (session?.user) {
-    const fav = await prisma.favoriteResource.findUnique({
-      where: { userId_resourceId: { userId: session.user.id as string, resourceId: resource.id } },
-      select: { id: true },
-    })
-    isFavorited = !!fav
-  }
+  const [currentReadingStatus, statusReviews] = await Promise.all([
+    getCurrentReadingStatus(session?.user ? (session.user.id as string) : undefined, resource.id),
+    getResourceStatusReviews(resource.id),
+  ])
 
   const isOwner = session?.user
     ? resource.uploaderId === (session.user as { id: string }).id
@@ -129,7 +131,7 @@ export default async function ResourcePage({
       <div className="grid gap-6 lg:grid-cols-3">
         <div className="lg:col-span-2 space-y-6">
           <div>
-            <Link href="/explore" className="text-sm text-muted-foreground hover:underline">
+            <Link href={returnTo} className="text-sm text-muted-foreground hover:underline">
               ← 回到探索
             </Link>
             <div className="mt-4 flex items-start gap-4">
@@ -245,6 +247,13 @@ export default async function ResourcePage({
 
           <Separator />
 
+          <ReadingStatusPanel
+            resourceId={resource.id}
+            current={currentReadingStatus}
+            reviews={statusReviews}
+            currentUserId={session?.user ? (session.user as { id: string }).id : undefined}
+          />
+
           <CommentSection
             resourceId={resource.id}
             comments={resource.comments}
@@ -265,12 +274,6 @@ export default async function ResourcePage({
             </CardHeader>
             <CardContent>
               <div className="flex flex-col gap-2">
-                <FavoriteButton
-                  resourceId={resource.id}
-                  favorited={isFavorited}
-                  count={resource._count.favorites}
-                  size="default"
-                />
                 <RecommendButton
                   resourceId={resource.id}
                   hasRecommended={hasRecommended}

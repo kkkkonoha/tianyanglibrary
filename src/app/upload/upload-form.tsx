@@ -84,8 +84,8 @@ export function UploadForm() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="author">作者</Label>
-              <Input id="author" name="author" placeholder="作者名" />
+              <Label htmlFor="author">作者 *</Label>
+              <Input id="author" name="author" placeholder="作者名" required />
             </div>
 
             <div className="space-y-2">
@@ -120,13 +120,14 @@ export function UploadForm() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="tags">标签</Label>
+              <Label htmlFor="tags">标签 *</Label>
               <Input
                 id="tags"
                 value={tags}
                 onChange={(e) => setTags(e.target.value)}
                 onKeyDown={addTag}
-                placeholder="输入标签后按回车添加"
+                placeholder="输入标签后按回车添加（至少一个）"
+                required={tagList.length === 0}
               />
               {tagList.length > 0 && (
                 <div className="flex flex-wrap gap-1.5 pt-2">

@@ -3,137 +3,105 @@ import { redirect } from "next/navigation"
 import { prisma } from "@/lib/db"
 import Link from "next/link"
 import { Card, CardContent } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
 import { LatestChapter } from "@/components/latest-chapter"
 import { ResourceTypeIcon, ResourceTypeLabel } from "@/components/resource-type"
-import { Star } from "lucide-react"
+import { READING_STATUS_LABELS } from "@/lib/reading-status-constants"
 
 export const dynamic = "force-dynamic"
 
-export default async function FavoritesPage() {
+const STATUS_OPTIONS = [
+  { value: "WANT", label: READING_STATUS_LABELS.WANT },
+  { value: "READING", label: READING_STATUS_LABELS.READING },
+  { value: "READ", label: READING_STATUS_LABELS.READ },
+  { value: "DROPPED", label: READING_STATUS_LABELS.DROPPED },
+] as const
+
+export default async function ReadingShelfPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ status?: string }>
+}) {
   const session = await auth()
   if (!session?.user) redirect("/login")
 
-  const favorites = await prisma.favoriteResource.findMany({
-    where: { userId: session.user.id as string },
+  const params = await searchParams
+  const status = STATUS_OPTIONS.some((option) => option.value === params.status)
+    ? params.status as (typeof STATUS_OPTIONS)[number]["value"]
+    : "WANT"
+
+  const entries = await prisma.readingStatusEntry.findMany({
+    where: { userId: session.user.id as string, status },
     include: {
       resource: {
-        include: {
-          uploader: { select: { username: true } },
-          bindings: true,
-          _count: { select: { favorites: true, recommendations: true } },
-        },
+        include: { uploader: { select: { username: true } }, bindings: true },
       },
     },
-    orderBy: { createdAt: "desc" },
+    orderBy: { updatedAt: "desc" },
   })
-
-  // 书架渲染不阻塞：漫画「更新至」由客户端异步获取（api/comic-latest-chapter，服务端缓存）
-  interface ShelfItem {
-    id: number
-    title: string
-    author: string | null
-    coverImage: string | null
-    type: string
-    comicMangaId: string | null
-    comicSourceId: string | null
-    username: string
-    favCount: number
-  }
-  const items: ShelfItem[] = favorites.map((fav) => {
-    const r = fav.resource
-    return {
-      id: r.id,
-      title: r.title,
-      author: r.author,
-      coverImage: r.coverImage,
-      type: r.type,
-      comicMangaId: r.comicMangaId,
-      comicSourceId: r.comicSourceId,
-      username: r.uploader.username,
-      favCount: r._count.favorites,
-    }
-  })
-
-  const comics = items.filter((i) => i.type === "COMIC")
-  const books = items.filter((i) => i.type === "BOOK")
-
-  function renderGrid(list: ShelfItem[]) {
-    return (
-      <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
-        {list.map((item, i) => (
-          <Link key={item.id} href={item.type === "COMIC" && item.comicMangaId ? `/comics/${item.comicMangaId}` : `/resource/${item.id}`} className="animate-lib-rise-in" style={{ animationDelay: `${Math.min(i, 12) * 60}ms` }}>
-            <Card className="group overflow-hidden transition-all hover:border-primary/40 hover:shadow-md">
-              <div className="relative aspect-[3/4] overflow-hidden bg-muted/30">
-                {item.coverImage ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img
-                    src={item.coverImage}
-                    alt={item.title}
-                    loading="lazy"
-                    decoding="async"
-                    className="h-full w-full object-cover transition-transform group-hover:scale-105"
-                  />
-                ) : (
-                  <div className="flex h-full w-full items-center justify-center text-3xl font-bold text-muted-foreground/30">
-                    <ResourceTypeIcon type={item.type} className="h-10 w-10" />
-                  </div>
-                )}
-                <span className="absolute left-1.5 top-1.5 rounded-full bg-black/60 px-2 py-0.5 text-[10px] text-white">
-                  <ResourceTypeLabel type={item.type} iconClassName="h-3 w-3" />
-                </span>
-              </div>
-              <CardContent className="p-2.5">
-                <p className="truncate text-sm font-medium">{item.title}</p>
-                {item.type === "COMIC" && item.comicMangaId ? (
-                  <LatestChapter mangaId={item.comicMangaId} />
-                ) : (
-                  <p className="mt-0.5 truncate text-xs text-muted-foreground">{item.author ?? item.username}</p>
-                )}
-              </CardContent>
-            </Card>
-          </Link>
-        ))}
-      </div>
-    )
-  }
 
   return (
     <div className="container mx-auto max-w-5xl px-4 py-8">
-      <h1 className="text-3xl font-bold tracking-tight">书架</h1>
-      <p className="mt-1.5 text-muted-foreground">你收藏的 {favorites.length} 个资源</p>
+      <h1 className="text-3xl font-bold tracking-tight">阅读资源</h1>
+      <p className="mt-1.5 text-muted-foreground">按阅读状态查看你的资源</p>
 
-      {favorites.length === 0 ? (
+      <div className="mt-6 flex flex-wrap gap-2">
+        {STATUS_OPTIONS.map((option) => (
+          <Link
+            key={option.value}
+            href={`/favorites?status=${option.value}`}
+            className={`rounded-full px-3.5 py-1.5 text-sm font-medium transition-colors ${
+              status === option.value
+                ? "bg-primary text-primary-foreground"
+                : "bg-secondary text-secondary-foreground hover:bg-secondary/80"
+            }`}
+          >
+            {option.label}
+          </Link>
+        ))}
+      </div>
+
+      {entries.length === 0 ? (
         <Card className="mt-8 border-dashed">
-          <CardContent className="flex flex-col items-center justify-center py-16 text-center">
-            <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-secondary text-muted-foreground">
-              <Star className="h-8 w-8" aria-hidden="true" />
-            </div>
-            <p className="text-lg font-medium">书架还是空的</p>
-            <p className="mt-1 text-sm text-muted-foreground">在漫画或资源页点击「收藏」加入书架</p>
-            <Link href="/explore" className="mt-5 text-sm text-primary hover:underline">去探索 →</Link>
+          <CardContent className="py-16 text-center text-muted-foreground">
+            暂无“{READING_STATUS_LABELS[status]}”状态的资源
           </CardContent>
         </Card>
       ) : (
-        <div className="mt-6 space-y-8">
-          {comics.length > 0 && (
-            <section>
-              <h2 className="mb-3 flex items-center gap-2 text-lg font-semibold">
-                <ResourceTypeIcon type="COMIC" className="h-5 w-5 text-primary" />漫画追更
-                <Badge variant="secondary">{comics.length}</Badge>
-              </h2>
-              {renderGrid(comics)}
-            </section>
-          )}
-          {books.length > 0 && (
-            <section>
-              <h2 className="mb-3 flex items-center gap-2 text-lg font-semibold">
-                <ResourceTypeIcon type="BOOK" className="h-5 w-5 text-primary" />电子书
-                <Badge variant="secondary">{books.length}</Badge>
-              </h2>
-              {renderGrid(books)}
-            </section>
-          )}
+        <div className="mt-8 grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
+          {entries.map((entry, i) => {
+            const resource = entry.resource
+            const href = resource.type === "COMIC" && resource.comicMangaId
+              ? `/comics/${resource.comicMangaId}`
+              : `/resource/${resource.id}`
+            return (
+              <Link key={entry.id} href={href} className="animate-lib-rise-in" style={{ animationDelay: `${Math.min(i, 12) * 60}ms` }}>
+                <Card className="group h-full overflow-hidden transition-all hover:border-primary/40 hover:shadow-md">
+                  <div className="relative aspect-[3/4] overflow-hidden bg-muted/30">
+                    {resource.coverImage ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src={resource.coverImage} alt={resource.title} loading="lazy" decoding="async" className="h-full w-full object-cover transition-transform group-hover:scale-105" />
+                    ) : (
+                      <div className="flex h-full w-full items-center justify-center text-muted-foreground/30">
+                        <ResourceTypeIcon type={resource.type} className="h-10 w-10" />
+                      </div>
+                    )}
+                    <span className="absolute left-1.5 top-1.5 rounded-full bg-black/60 px-2 py-0.5 text-[10px] text-white">
+                      <ResourceTypeLabel type={resource.type} iconClassName="h-3 w-3" />
+                    </span>
+                  </div>
+                  <CardContent className="p-2.5">
+                    <p className="truncate text-sm font-medium">{resource.title}</p>
+                    {resource.type === "COMIC" && resource.comicMangaId ? (
+                      <LatestChapter mangaId={resource.comicMangaId} />
+                    ) : (
+                      <p className="mt-0.5 truncate text-xs text-muted-foreground">{resource.author ?? resource.uploader.username}</p>
+                    )}
+                    {entry.note && <p className="mt-1 line-clamp-2 text-xs text-muted-foreground">{entry.note}</p>}
+                  </CardContent>
+                </Card>
+              </Link>
+            )
+          })}
         </div>
       )}
     </div>

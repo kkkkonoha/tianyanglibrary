@@ -17,13 +17,13 @@ const TABS = [
   { key: "UPLOAD", label: "上传" },
   { key: "COMMENT", label: "评论" },
   { key: "RECOMMEND", label: "推荐" },
-  { key: "FAVORITE", label: "收藏" },
+  { key: "READING_STATUS", label: "阅读状态" },
   { key: "DIR", label: "目录" },
   { key: "ANNOUNCEMENT", label: "公告" },
 ] as const
 
 const DIR_TYPES: $Enums.ActivityType[] = ["CREATE_COLLECTION", "ADD_TO_COLLECTION"]
-const VALID_TYPES: $Enums.ActivityType[] = ["UPLOAD", "COMMENT", "RECOMMEND", "FAVORITE", ...DIR_TYPES, "ANNOUNCEMENT"]
+const VALID_TYPES: $Enums.ActivityType[] = ["UPLOAD", "COMMENT", "RECOMMEND", "READING_STATUS", ...DIR_TYPES, "ANNOUNCEMENT"]
 
 // 与 timeline-list 客户端分组规则一致：同一用户同类型相邻 10 分钟内合并为一组；评论/推荐/公告不合并
 const GROUP_WINDOW_MS = 10 * 60 * 1000
@@ -69,7 +69,7 @@ const emptyLabels: Record<string, string> = {
   UPLOAD: "还没有人上传资源",
   COMMENT: "还没有评论动态",
   RECOMMEND: "还没有推荐动态",
-  FAVORITE: "还没有收藏动态",
+  READING_STATUS: "还没有阅读状态动态",
   DIR: "还没有目录动态",
   ANNOUNCEMENT: "还没有公告",
 }
@@ -133,7 +133,7 @@ export default async function HomePage({
   let offset = 0
   while (true) {
     const batch = await prisma.activity.findMany({
-      where: typeFilter,
+      where: { ...(typeFilter ?? {}), type: typeFilter?.type ?? { not: "FAVORITE" } },
       orderBy,
       skip: offset,
       take: 1000,

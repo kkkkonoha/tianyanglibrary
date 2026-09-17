@@ -22,6 +22,11 @@ export default async function ComicsPage({
   const { q, page, source } = await searchParams
   const currentPage = Math.max(1, parseInt(page ?? "1") || 1)
   const selectedSource = COMIC_SOURCES.find((s) => s.id === source)?.id ?? DEFAULT_SOURCE_ID
+  const currentListUrl = `/comics?${[
+    q ? `q=${encodeURIComponent(q)}` : "",
+    page && Number(page) > 1 ? `page=${currentPage}` : "",
+    `source=${selectedSource}`,
+  ].filter(Boolean).join("&")}`
   let result: { mangas: Array<any>; hasNextPage: boolean } | null = null
   let error = ""
 
@@ -88,7 +93,7 @@ export default async function ComicsPage({
           ) : (
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
               {result.mangas.map((m, i) => (
-                <Link key={m.id} href={`/comics/${m.id}`} className="animate-lib-rise-in" style={{ animationDelay: `${Math.min(i, 12) * 60}ms` }}>
+                <Link key={m.id} href={`/comics/${m.id}?return=${encodeURIComponent(currentListUrl)}`} className="animate-lib-rise-in" style={{ animationDelay: `${Math.min(i, 12) * 60}ms` }}>
                   <Card className="h-full overflow-hidden transition-shadow hover:shadow-md">
                     <div className="flex h-56 items-center justify-center bg-muted/30">
                       {m.thumbnailUrl ? (
@@ -145,7 +150,7 @@ export default async function ComicsPage({
           ) : (
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
               {localComics.map((m, i) => (
-                <Link key={m.id} href={`/comics/${m.comicMangaId}`} className="animate-lib-rise-in" style={{ animationDelay: `${Math.min(i, 12) * 60}ms` }}>
+                <Link key={m.id} href={`/comics/${m.comicMangaId}?return=${encodeURIComponent(currentListUrl)}`} className="animate-lib-rise-in" style={{ animationDelay: `${Math.min(i, 12) * 60}ms` }}>
                   <Card className="h-full overflow-hidden transition-shadow hover:shadow-md">
                     <div className="flex h-56 items-center justify-center bg-muted/30">
                       {m.coverImage ? (

@@ -79,6 +79,8 @@ export default async function ExplorePage({
     return parts.length ? `/explore?${parts.join("&")}` : "/explore"
   }
 
+  const currentListUrl = buildUrl({ type: type ?? "", q: q ?? "", tag, page: currentPage, sort: sort ?? "new" })
+
   return (
     <div className="container mx-auto max-w-6xl px-4 py-12">
       <div className="mb-10">
@@ -152,7 +154,7 @@ export default async function ExplorePage({
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {resources.map((resource, i) => (
             <div key={resource.id} className="group relative animate-lib-rise-in" style={{ animationDelay: `${Math.min(i, 12) * 60}ms` }}>
-              <Link href={`/resource/${resource.id}`} className="absolute inset-0 z-10">
+              <Link href={`/resource/${resource.id}?return=${encodeURIComponent(currentListUrl)}`} className="absolute inset-0 z-10">
                 <span className="sr-only">{resource.title}</span>
               </Link>
               <Card className="h-full overflow-hidden border-transparent shadow-sm transition-all duration-200 group-hover:-translate-y-0.5 group-hover:border-border group-hover:shadow-md">

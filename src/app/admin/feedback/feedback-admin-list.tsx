@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Textarea } from "@/components/ui/textarea"
 import { Card, CardContent } from "@/components/ui/card"
-import { Bug, Sparkles } from "lucide-react"
+import { Bug, Sparkles, Wrench } from "lucide-react"
 
 const statusLabels: Record<string, string> = {
   pending: "待处理",
@@ -70,8 +70,8 @@ export function FeedbackAdminList({
             <div className="flex flex-wrap items-center gap-2">
               <Badge variant={f.type === "BUG" ? "destructive" : "default"}>
                 <span className="inline-flex items-center gap-1">
-                  {f.type === "BUG" ? <Bug className="h-3.5 w-3.5" aria-hidden="true" /> : <Sparkles className="h-3.5 w-3.5" aria-hidden="true" />}
-                  {f.type === "BUG" ? "Bug" : "需求"}
+                  {f.type === "BUG" ? <Bug className="h-3.5 w-3.5" aria-hidden="true" /> : f.type === "OPTIMIZATION" ? <Wrench className="h-3.5 w-3.5" aria-hidden="true" /> : <Sparkles className="h-3.5 w-3.5" aria-hidden="true" />}
+                  {f.type === "BUG" ? "Bug" : f.type === "OPTIMIZATION" ? "功能优化" : "新功能"}
                 </span>
               </Badge>
               <span className="font-medium">{f.title}</span>

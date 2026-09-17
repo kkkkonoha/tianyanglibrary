@@ -10,15 +10,25 @@ import { ExpandableText } from "@/components/expandable-text"
 
 import { Button } from "@/components/ui/button"
 import { ResourceTypeIcon, ResourceTypeLabel } from "@/components/resource-type"
+import { READING_STATUS_LABELS } from "@/lib/reading-status-constants"
 
 const SECTION_LIMIT = 6
+const PROFILE_STATUS_OPTIONS = [
+  { value: "WANT", label: READING_STATUS_LABELS.WANT },
+  { value: "READING", label: READING_STATUS_LABELS.READING },
+  { value: "READ", label: READING_STATUS_LABELS.READ },
+  { value: "DROPPED", label: READING_STATUS_LABELS.DROPPED },
+] as const
 
 export default async function ProfilePage({
   params,
+  searchParams,
 }: {
   params: Promise<{ username: string }>
+  searchParams: Promise<{ readingStatus?: string }>
 }) {
   const { username } = await params
+  const { readingStatus } = await searchParams
   const decodedUsername = decodeURIComponent(username)
   const session = await auth()
 
@@ -37,6 +47,10 @@ export default async function ProfilePage({
 
   if (!user) notFound()
 
+  const selectedStatus = PROFILE_STATUS_OPTIONS.some((option) => option.value === readingStatus)
+    ? readingStatus as (typeof PROFILE_STATUS_OPTIONS)[number]["value"]
+    : "WANT"
+
   const isOwner = session?.user
     ? (session.user as { id: string }).id === user.id
     : false
@@ -47,7 +61,7 @@ export default async function ProfilePage({
     recommendations, totalRecommendations,
     comments, totalComments,
     favorites, totalFavorites,
-    favoriteResources, totalFavoriteResources,
+    readingStatuses, totalReadingStatuses,
   ] = await Promise.all([
     prisma.resource.findMany({
       where: { uploaderId: user.id },
@@ -85,13 +99,13 @@ export default async function ProfilePage({
       include: { collection: { include: { creator: { select: { username: true } }, _count: { select: { resources: true, favorites: true } } } } },
     }),
     prisma.favoriteCollection.count({ where: { userId: user.id } }),
-    prisma.favoriteResource.findMany({
-      where: { userId: user.id },
-      orderBy: { createdAt: "desc" },
+    prisma.readingStatusEntry.findMany({
+      where: { userId: user.id, status: selectedStatus },
+      orderBy: { updatedAt: "desc" },
       take: SECTION_LIMIT,
-      include: { resource: { select: { id: true, title: true, type: true, coverImage: true, comicMangaId: true } } },
+      include: { resource: { select: { id: true, title: true, type: true, coverImage: true, comicMangaId: true }, }, },
     }),
-    prisma.favoriteResource.count({ where: { userId: user.id } }),
+    prisma.readingStatusEntry.count({ where: { userId: user.id, status: selectedStatus } }),
   ])
 
   return (
@@ -109,7 +123,6 @@ export default async function ProfilePage({
             <span>{totalCollections} 目录</span>
             <span>{totalRecommendations} 推荐</span>
             <span>{totalComments} 评论</span>
-            <span>{totalFavoriteResources} 书架</span>
             <span>{totalFavorites} 收藏</span>
           </div>
         </div>
@@ -261,18 +274,33 @@ export default async function ProfilePage({
         )}
       </Section>
 
-      {/* Shelf (FavoriteResources) */}
-      <Section title="书架" count={totalFavoriteResources}>
-        {favoriteResources.length === 0 ? (
-          <Empty>书架还是空的</Empty>
+      {/* Reading status shelf */}
+      <Section title={`阅读状态 · ${READING_STATUS_LABELS[selectedStatus]}`} count={totalReadingStatuses}>
+        <div className="mb-4 flex flex-wrap gap-2">
+          {PROFILE_STATUS_OPTIONS.map((option) => (
+            <Link
+              key={option.value}
+              href={`/profile/${encodeURIComponent(user.username)}?readingStatus=${option.value}`}
+              className={`rounded-full px-3 py-1 text-xs font-medium transition-colors ${
+                selectedStatus === option.value
+                  ? "bg-primary text-primary-foreground"
+                  : "bg-secondary text-secondary-foreground hover:bg-secondary/80"
+              }`}
+            >
+              {option.label}
+            </Link>
+          ))}
+        </div>
+        {readingStatuses.length === 0 ? (
+          <Empty>还没有“{READING_STATUS_LABELS[selectedStatus]}”状态的资源</Empty>
         ) : (
           <>
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-              {favoriteResources.map((fav, i) => {
-                const r = fav.resource
+              {readingStatuses.map((entry, i) => {
+                const r = entry.resource
                 const href = r.type === "COMIC" && r.comicMangaId ? `/comics/${r.comicMangaId}` : `/resource/${r.id}`
                 return (
-                  <Link key={fav.id} href={href} className="animate-lib-rise-in" style={{ animationDelay: `${Math.min(i, 12) * 60}ms` }}>
+                  <Link key={entry.id} href={href} className="animate-lib-rise-in" style={{ animationDelay: `${Math.min(i, 12) * 60}ms` }}>
                     <Card className="h-full overflow-hidden transition-shadow hover:shadow-md">
                       {r.coverImage ? (
                         <img src={r.coverImage} alt={r.title} loading="lazy" decoding="async" className="h-32 w-full object-contain bg-muted/30" />
@@ -284,16 +312,17 @@ export default async function ProfilePage({
                       <CardContent className="p-3">
                         <Badge variant="secondary" className="mb-1 text-xs"><ResourceTypeLabel type={r.type} iconClassName="h-3 w-3" /></Badge>
                         <h3 className="font-medium text-sm line-clamp-1">{r.title}</h3>
+                        {entry.note && <p className="mt-1 line-clamp-2 text-xs text-muted-foreground">{entry.note}</p>}
                       </CardContent>
                     </Card>
                   </Link>
                 )
               })}
             </div>
-            {totalFavoriteResources > SECTION_LIMIT && (
+            {totalReadingStatuses > SECTION_LIMIT && (
               <div className="mt-3 text-center">
-                <Link href="/favorites">
-                  <Button variant="outline" size="sm">查看完整书架 ({totalFavoriteResources})</Button>
+                <Link href={`/favorites?status=${selectedStatus}`}>
+                  <Button variant="outline" size="sm">查看完整列表 ({totalReadingStatuses})</Button>
                 </Link>
               </div>
             )}
